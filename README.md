@@ -1,36 +1,34 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ADS Wholesale Ops
 
-## Getting Started
+Staff operations system for Atlantic Devices Solutions: purchase orders, IMEI stock, supplier hisab, customers, dual-currency invoices, RMA, shipping/tracking, and search.
 
-First, run the development server:
+The public catalog site (`mobile-ecommerce`) is a separate repo.
+
+## Setup
 
 ```bash
+npm install
+npx prisma db push
+npx prisma db seed
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Default login
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- Email: `admin@ads.local`
+- Password: `admin1234`
 
-## Learn More
+Change this after first login in production. Set `AUTH_SECRET` in `.env`.
 
-To learn more about Next.js, take a look at the following resources:
+## Modules
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Suppliers** — credit / debit hisab and running balance (GBP + EUR)
+- **Purchase orders** — auto `PO-0001`, receive stock by grade
+- **Stock** — one row per IMEI, colour, network, grade, cost
+- **Customers** — auto Client ID `CL-0001`, name autofetch on invoices
+- **Invoices** — auto `INV-0001`, Pending / Awaiting payment / Paid, printable A4
+- **Returns** — RMA against invoice IMEIs
+- **Shipments** — tracking, quoted shipping vs actual courier cost
+- **Search** — IMEI, invoice, PO, RMA, client ID, name, tracking

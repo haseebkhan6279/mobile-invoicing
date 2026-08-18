@@ -1,0 +1,89 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { updateCustomer } from "@/actions/customers";
+import { Notice } from "@/components/notice";
+import { PageHeader } from "@/components/page-header";
+import { StatusBadge } from "@/components/status-badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { requireUser } from "@/lib/auth-guard";
+import { prisma } from "@/lib/prisma";
+
+export default async function CustomerDetailPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ ok?: string; error?: string }>;
+}) {
+  await requireUser();
+  const { id } = await params;
+  const { ok, error } = await searchParams;
+  const customer = await prisma.customer.findUnique({
+    where: { id },
+    include: { invoices: { orderBy: { createdAt: "desc" } } },
+  });
+  if (!customer) notFound();
+
+  return (
+    <div className="space-y-6">
+      <PageHeader title={customer.name} description={`Client ID ${customer.clientId}`} />
+      <Notice ok={ok} error={error} />
+      <Card>
+        <form action={updateCustomer} className="space-y-4">
+          <input type="hidden" name="id" value={customer.id} />
+          <div>
+            <Label htmlFor="name">Name</Label>
+            <Input id="name" name="name" defaultValue={customer.name} required />
+          </div>
+          <div>
+            <Label htmlFor="businessName">Business name</Label>
+            <Input id="businessName" name="businessName" defaultValue={customer.businessName ?? ""} />
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <Label htmlFor="phone">Phone</Label>
+              <Input id="phone" name="phone" defaultValue={customer.phone ?? ""} />
+            </div>
+            <div>
+              <Label htmlFor="email">Email</Label>
+              <Input id="email" name="email" defaultValue={customer.email ?? ""} />
+            </div>
+          </div>
+          <div>
+            <Label htmlFor="vatNumber">VAT</Label>
+            <Input id="vatNumber" name="vatNumber" defaultValue={customer.vatNumber ?? ""} />
+          </div>
+          <div>
+            <Label htmlFor="address">Address</Label>
+            <Textarea id="address" name="address" defaultValue={customer.address ?? ""} />
+          </div>
+          <div>
+            <Label htmlFor="notes">Notes</Label>
+            <Textarea id="notes" name="notes" defaultValue={customer.notes ?? ""} />
+          </div>
+          <Button type="submit">Save</Button>
+        </form>
+      </Card>
+      <Card>
+        <h2 className="mb-3 font-medium">Invoices</h2>
+        <ul className="space-y-2 text-sm">
+          {customer.invoices.map((invoice) => (
+            <li key={invoice.id} className="flex justify-between">
+              <Link className="text-[#0b3a6e] hover:underline" href={`/invoices/${invoice.id}`}>
+                {invoice.invoiceNumber}
+              </Link>
+              <StatusBadge status={invoice.status} />
+            </li>
+          ))}
+          {!customer.invoices.length ? (
+            <li className="text-slate-500">No invoices yet.</li>
+          ) : null}
+        </ul>
+      </Card>
+    </div>
+  );
+}

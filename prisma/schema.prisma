@@ -1,0 +1,219 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String
+  createdAt    DateTime @default(now())
+}
+
+model NumberCounter {
+  key   String @id
+  value Int    @default(0)
+}
+
+model Grade {
+  id        String @id @default(cuid())
+  code      String @unique
+  label     String
+  sortOrder Int
+}
+
+model Color {
+  id   String @id @default(cuid())
+  name String @unique
+}
+
+model Network {
+  id   String @id @default(cuid())
+  name String @unique
+}
+
+model Supplier {
+  id             String           @id @default(cuid())
+  name           String
+  phone          String?
+  email          String?
+  address        String?
+  vatNumber      String?
+  notes          String?
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  purchaseOrders PurchaseOrder[]
+  ledger         SupplierLedger[]
+  stockUnits     StockUnit[]
+}
+
+model SupplierLedger {
+  id              String         @id @default(cuid())
+  supplierId      String
+  supplier        Supplier       @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  type            String
+  amountGbp       Float
+  amountEur       Float
+  date            DateTime       @default(now())
+  reference       String?
+  notes           String?
+  purchaseOrderId String?
+  createdAt       DateTime       @default(now())
+}
+
+model PurchaseOrder {
+  id              String              @id @default(cuid())
+  poNumber        String              @unique
+  supplierId      String
+  supplier        Supplier            @relation(fields: [supplierId], references: [id])
+  status          String              @default("DRAFT")
+  notes           String?
+  shippingCostGbp Float               @default(0)
+  shippingCostEur Float               @default(0)
+  actualCostGbp   Float               @default(0)
+  actualCostEur   Float               @default(0)
+  fxRate          Float               @default(1.15)
+  orderedAt       DateTime?
+  receivedAt      DateTime?
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+  lines           PurchaseOrderLine[]
+  stockUnits      StockUnit[]
+}
+
+model PurchaseOrderLine {
+  id              String        @id @default(cuid())
+  purchaseOrderId String
+  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  productName     String
+  color           String?
+  network         String?
+  grade           String?
+  qty             Int
+  unitCostGbp     Float
+  unitCostEur     Float
+}
+
+model StockUnit {
+  id              String          @id @default(cuid())
+  imei            String          @unique
+  productName     String
+  brand           String?
+  color           String
+  network         String
+  grade           String
+  costGbp         Float
+  costEur         Float
+  status          String          @default("IN_STOCK")
+  supplierId      String?
+  supplier        Supplier?       @relation(fields: [supplierId], references: [id])
+  purchaseOrderId String?
+  purchaseOrder   PurchaseOrder?  @relation(fields: [purchaseOrderId], references: [id])
+  invoiceId       String?
+  invoice         Invoice?        @relation(fields: [invoiceId], references: [id])
+  invoiceLineId   String?
+  invoiceLine     InvoiceLine?    @relation(fields: [invoiceLineId], references: [id])
+  notes           String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  rmaItems        RmaItem[]
+}
+
+model Customer {
+  id           String    @id @default(cuid())
+  clientId     String    @unique
+  name         String
+  businessName String?
+  phone        String?
+  email        String?
+  vatNumber    String?
+  address      String?
+  notes        String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  invoices     Invoice[]
+  rmas         Rma[]
+}
+
+model Invoice {
+  id              String        @id @default(cuid())
+  invoiceNumber   String        @unique
+  customerId      String
+  customer        Customer      @relation(fields: [customerId], references: [id])
+  status          String        @default("PENDING")
+  fxRate          Float         @default(1.15)
+  shippingCostGbp Float         @default(0)
+  shippingCostEur Float         @default(0)
+  notes           String?
+  issuedAt        DateTime      @default(now())
+  paidAt          DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  lines           InvoiceLine[]
+  stockUnits      StockUnit[]
+  rmas            Rma[]
+  shipments       Shipment[]
+}
+
+model InvoiceLine {
+  id           String      @id @default(cuid())
+  invoiceId    String
+  invoice      Invoice     @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  qty          Int
+  productName  String
+  color        String
+  network      String
+  grade        String
+  unitPriceGbp Float
+  unitPriceEur Float
+  sortOrder    Int         @default(0)
+  stockUnits   StockUnit[]
+}
+
+model Rma {
+  id         String    @id @default(cuid())
+  rmaNumber  String    @unique
+  invoiceId  String
+  invoice    Invoice   @relation(fields: [invoiceId], references: [id])
+  customerId String
+  customer   Customer  @relation(fields: [customerId], references: [id])
+  status     String    @default("OPEN")
+  reason     String?
+  notes      String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  items      RmaItem[]
+}
+
+model RmaItem {
+  id          String    @id @default(cuid())
+  rmaId       String
+  rma         Rma       @relation(fields: [rmaId], references: [id], onDelete: Cascade)
+  stockUnitId String
+  stockUnit   StockUnit @relation(fields: [stockUnitId], references: [id])
+  action      String    @default("RESTOCK")
+}
+
+model Shipment {
+  id              String   @id @default(cuid())
+  shipmentNumber  String   @unique
+  invoiceId       String
+  invoice         Invoice  @relation(fields: [invoiceId], references: [id])
+  trackingNumber  String?
+  carrier         String?
+  shippingCostGbp Float    @default(0)
+  shippingCostEur Float    @default(0)
+  actualCostGbp   Float    @default(0)
+  actualCostEur   Float    @default(0)
+  status          String   @default("PREPARING")
+  notes           String?
+  shippedAt       DateTime?
+  deliveredAt     DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}

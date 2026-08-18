@@ -1,0 +1,13 @@
+import { AppShell } from "@/components/app-shell";
+import { requireUser } from "@/lib/auth-guard";
+
+export default async function AppLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const user = await requireUser();
+  return (
+    <AppShell userName={user.name ?? user.email ?? "Staff"}>{children}</AppShell>
+  );
+}
