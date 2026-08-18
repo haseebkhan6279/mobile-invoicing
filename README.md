@@ -6,21 +6,30 @@ The public catalog site (`mobile-ecommerce`) is a separate repo.
 
 ## Setup
 
+1. Create a project at [supabase.com](https://supabase.com).
+2. Copy `.env.example` to `.env`.
+3. In Supabase go to **Project Settings → Database** and paste:
+   - **Transaction pooler** URI into `DATABASE_URL` (port `6543`). Add `?pgbouncer=true` if it is not already there.
+   - **Direct** URI (or Session pooler, port `5432`) into `DIRECT_URL`.
+4. Set `AUTH_SECRET` to a long random string.
+
 ```bash
 npm install
-npx prisma db push
+npx prisma migrate deploy
 npx prisma db seed
 npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
 
+If migrate fails with an IPv6 / connection error, use the **Session pooler** URI for `DIRECT_URL`.
+
 ### Default login
 
 - Email: `admin@ads.local`
 - Password: `admin1234`
 
-Change this after first login in production. Set `AUTH_SECRET` in `.env`.
+Change this after first login in production.
 
 ## Modules
 
