@@ -59,7 +59,7 @@ export async function createPurchaseOrder(formData: FormData) {
   });
 
   revalidatePath("/purchase-orders");
-  redirect(`/purchase-orders/${po.id}`);
+  redirect(`/purchase-orders/${po.id}?ok=Purchase order created`);
 }
 
 export async function updatePurchaseOrderMeta(formData: FormData) {

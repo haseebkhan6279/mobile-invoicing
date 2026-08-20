@@ -5,11 +5,11 @@ import { MoneyPair } from "@/components/money-pair";
 import { Notice } from "@/components/notice";
 import { PageHeader } from "@/components/page-header";
 import { StatusBadge } from "@/components/status-badge";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { Table, THead, Th, Td } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { requireUser } from "@/lib/auth-guard";
@@ -165,7 +165,7 @@ export default async function PurchaseOrderDetailPage({
             <Textarea name="notes" defaultValue={po.notes ?? ""} />
           </div>
           <div>
-            <Button type="submit">Save</Button>
+            <SubmitButton pendingText="Saving…">Save</SubmitButton>
           </div>
         </form>
       </Card>

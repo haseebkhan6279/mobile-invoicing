@@ -126,19 +126,20 @@ model StockUnit {
 }
 
 model Customer {
-  id           String    @id @default(cuid())
-  clientId     String    @unique
-  name         String
-  businessName String?
-  phone        String?
-  email        String?
-  vatNumber    String?
-  address      String?
-  notes        String?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
-  invoices     Invoice[]
-  rmas         Rma[]
+  id              String    @id @default(cuid())
+  clientId        String    @unique
+  name            String
+  businessName    String?
+  phone           String?
+  email           String?
+  vatNumber       String?
+  address         String?
+  shippingAddress String?
+  notes           String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  invoices        Invoice[]
+  rmas            Rma[]
 }
 
 model Invoice {
@@ -150,6 +151,11 @@ model Invoice {
   fxRate          Float         @default(1.15)
   shippingCostGbp Float         @default(0)
   shippingCostEur Float         @default(0)
+  shippingLabel   String?
+  paymentTerms    String?       @default("Immediate")
+  warrantyTerms   String?       @default("3 months")
+  paidAmountGbp   Float         @default(0)
+  paidAmountEur   Float         @default(0)
   notes           String?
   issuedAt        DateTime      @default(now())
   paidAt          DateTime?
@@ -159,6 +165,7 @@ model Invoice {
   stockUnits      StockUnit[]
   rmas            Rma[]
   shipments       Shipment[]
+  appliedCredits  Rma[]         @relation("RmaAppliedInvoice")
 }
 
 model InvoiceLine {
@@ -177,27 +184,36 @@ model InvoiceLine {
 }
 
 model Rma {
-  id         String    @id @default(cuid())
-  rmaNumber  String    @unique
-  invoiceId  String
-  invoice    Invoice   @relation(fields: [invoiceId], references: [id])
-  customerId String
-  customer   Customer  @relation(fields: [customerId], references: [id])
-  status     String    @default("OPEN")
-  reason     String?
-  notes      String?
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-  items      RmaItem[]
+  id               String    @id @default(cuid())
+  rmaNumber        String    @unique
+  invoiceId        String
+  invoice          Invoice   @relation(fields: [invoiceId], references: [id])
+  customerId       String
+  customer         Customer  @relation(fields: [customerId], references: [id])
+  status           String    @default("OPEN")
+  reason           String?
+  notes            String?
+  paymentType      String    @default("PENDING")
+  paymentDate      DateTime?
+  paymentAmountGbp Float     @default(0)
+  paymentAmountEur Float     @default(0)
+  appliedInvoiceId String?
+  appliedInvoice   Invoice?  @relation("RmaAppliedInvoice", fields: [appliedInvoiceId], references: [id])
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  items            RmaItem[]
 }
 
 model RmaItem {
-  id          String    @id @default(cuid())
-  rmaId       String
-  rma         Rma       @relation(fields: [rmaId], references: [id], onDelete: Cascade)
-  stockUnitId String
-  stockUnit   StockUnit @relation(fields: [stockUnitId], references: [id])
-  action      String    @default("RESTOCK")
+  id           String    @id @default(cuid())
+  rmaId        String
+  rma          Rma       @relation(fields: [rmaId], references: [id], onDelete: Cascade)
+  stockUnitId  String
+  stockUnit    StockUnit @relation(fields: [stockUnitId], references: [id])
+  action       String    @default("RESTOCK")
+  unitPriceGbp Float     @default(0)
+  unitPriceEur Float     @default(0)
+  reason       String?
 }
 
 model Shipment {

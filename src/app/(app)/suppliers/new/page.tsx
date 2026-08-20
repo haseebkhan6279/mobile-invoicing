@@ -1,8 +1,8 @@
 import { createSupplier } from "@/actions/suppliers";
 import { Notice } from "@/components/notice";
 import { PageHeader } from "@/components/page-header";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -47,7 +47,7 @@ export default async function NewSupplierPage({
             <Label htmlFor="notes">Notes</Label>
             <Textarea id="notes" name="notes" />
           </div>
-          <Button type="submit">Save supplier</Button>
+          <SubmitButton pendingText="Adding…">Save supplier</SubmitButton>
         </form>
       </Card>
     </div>

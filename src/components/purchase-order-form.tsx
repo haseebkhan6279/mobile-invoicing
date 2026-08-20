@@ -20,6 +20,88 @@ const emptyLine = {
   unitCostEur: 0,
 };
 
+function PoLine({
+  colors,
+  networks,
+  grades,
+  fx,
+}: {
+  colors: Lookup[];
+  networks: Lookup[];
+  grades: Lookup[];
+  fx: number;
+}) {
+  const [costGbp, setCostGbp] = useState(emptyLine.unitCostGbp);
+  const [costEur, setCostEur] = useState(emptyLine.unitCostEur);
+
+  return (
+    <div className="grid gap-3 rounded-lg border border-slate-200 p-3 md:grid-cols-7">
+      <div className="md:col-span-2">
+        <Label>Product</Label>
+        <Input name="lineProduct" required defaultValue={emptyLine.productName} />
+      </div>
+      <div>
+        <Label>Color</Label>
+        <Select name="lineColor" defaultValue={emptyLine.color}>
+          {colors.map((color) => (
+            <option key={color.id} value={color.name}>
+              {color.name}
+            </option>
+          ))}
+        </Select>
+      </div>
+      <div>
+        <Label>Network</Label>
+        <Select name="lineNetwork" defaultValue={emptyLine.network}>
+          {networks.map((network) => (
+            <option key={network.id} value={network.name}>
+              {network.name}
+            </option>
+          ))}
+        </Select>
+      </div>
+      <div>
+        <Label>Grade</Label>
+        <Select name="lineGrade" defaultValue={emptyLine.grade}>
+          {grades.map((grade) => (
+            <option key={grade.id} value={grade.code}>
+              {grade.code}
+            </option>
+          ))}
+        </Select>
+      </div>
+      <div>
+        <Label>Qty</Label>
+        <Input name="lineQty" type="number" min={1} defaultValue={emptyLine.qty} />
+      </div>
+      <div>
+        <Label>Unit GBP</Label>
+        <Input
+          name="lineCostGbp"
+          type="number"
+          step="0.01"
+          value={costGbp}
+          onChange={(event) => {
+            const next = Number(event.target.value) || 0;
+            setCostGbp(next);
+            if (costEur === 0) setCostEur(eurFromGbp(next, fx));
+          }}
+        />
+      </div>
+      <div>
+        <Label>Unit EUR</Label>
+        <Input
+          name="lineCostEur"
+          type="number"
+          step="0.01"
+          value={costEur}
+          onChange={(event) => setCostEur(Number(event.target.value) || 0)}
+        />
+      </div>
+    </div>
+  );
+}
+
 export function PurchaseOrderForm({
   suppliers,
   grades,
@@ -31,8 +113,10 @@ export function PurchaseOrderForm({
   colors: Lookup[];
   networks: Lookup[];
 }) {
-  const [lines, setLines] = useState([emptyLine]);
+  const [lineCount, setLineCount] = useState(1);
   const [fx, setFx] = useState(DEFAULT_FX_RATE);
+  const [shippingGbp, setShippingGbp] = useState(0);
+  const [shippingEur, setShippingEur] = useState(0);
 
   return (
     <div className="space-y-6">
@@ -75,14 +159,11 @@ export function PurchaseOrderForm({
             name="shippingCostGbp"
             type="number"
             step="0.01"
-            defaultValue="0"
-            onBlur={(event) => {
-              const eur = document.getElementById(
-                "shippingCostEur",
-              ) as HTMLInputElement | null;
-              if (eur && !eur.value) {
-                eur.value = String(eurFromGbp(Number(event.target.value), fx));
-              }
+            value={shippingGbp}
+            onChange={(event) => {
+              const next = Number(event.target.value) || 0;
+              setShippingGbp(next);
+              if (shippingEur === 0) setShippingEur(eurFromGbp(next, fx));
             }}
           />
         </div>
@@ -93,7 +174,8 @@ export function PurchaseOrderForm({
             name="shippingCostEur"
             type="number"
             step="0.01"
-            defaultValue="0"
+            value={shippingEur}
+            onChange={(event) => setShippingEur(Number(event.target.value) || 0)}
           />
         </div>
       </div>
@@ -105,98 +187,13 @@ export function PurchaseOrderForm({
             type="button"
             variant="secondary"
             size="sm"
-            onClick={() => setLines((current) => [...current, { ...emptyLine }])}
+            onClick={() => setLineCount((current) => current + 1)}
           >
             Add line
           </Button>
         </div>
-        {lines.map((line, index) => (
-          <div
-            key={index}
-            className="grid gap-3 rounded-lg border border-slate-200 p-3 md:grid-cols-7"
-          >
-            <div className="md:col-span-2">
-              <Label>Product</Label>
-              <Input
-                name="lineProduct"
-                required
-                value={line.productName}
-                onChange={(event) =>
-                  setLines((current) =>
-                    current.map((item, i) =>
-                      i === index
-                        ? { ...item, productName: event.target.value }
-                        : item,
-                    ),
-                  )
-                }
-              />
-            </div>
-            <div>
-              <Label>Color</Label>
-              <Select name="lineColor" defaultValue={line.color}>
-                {colors.map((color) => (
-                  <option key={color.id} value={color.name}>
-                    {color.name}
-                  </option>
-                ))}
-              </Select>
-            </div>
-            <div>
-              <Label>Network</Label>
-              <Select name="lineNetwork" defaultValue={line.network}>
-                {networks.map((network) => (
-                  <option key={network.id} value={network.name}>
-                    {network.name}
-                  </option>
-                ))}
-              </Select>
-            </div>
-            <div>
-              <Label>Grade</Label>
-              <Select name="lineGrade" defaultValue={line.grade}>
-                {grades.map((grade) => (
-                  <option key={grade.id} value={grade.code}>
-                    {grade.code}
-                  </option>
-                ))}
-              </Select>
-            </div>
-            <div>
-              <Label>Qty</Label>
-              <Input name="lineQty" type="number" min={1} defaultValue={line.qty} />
-            </div>
-            <div>
-              <Label>Unit GBP</Label>
-              <Input
-                name="lineCostGbp"
-                type="number"
-                step="0.01"
-                defaultValue={line.unitCostGbp}
-                onBlur={(event) => {
-                  const sibling = event.currentTarget
-                    .closest("div")
-                    ?.parentElement?.querySelector(
-                      'input[name="lineCostEur"]',
-                    ) as HTMLInputElement | null;
-                  if (sibling && Number(sibling.value) === 0) {
-                    sibling.value = String(
-                      eurFromGbp(Number(event.target.value), fx),
-                    );
-                  }
-                }}
-              />
-            </div>
-            <div>
-              <Label>Unit EUR</Label>
-              <Input
-                name="lineCostEur"
-                type="number"
-                step="0.01"
-                defaultValue={line.unitCostEur}
-              />
-            </div>
-          </div>
+        {Array.from({ length: lineCount }).map((_, index) => (
+          <PoLine key={index} colors={colors} networks={networks} grades={grades} fx={fx} />
         ))}
       </div>
 

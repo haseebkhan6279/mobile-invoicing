@@ -35,12 +35,10 @@ export function Th({
 export function Td({
   children,
   className,
-}: {
-  children?: React.ReactNode;
-  className?: string;
-}) {
+  ...props
+}: React.TdHTMLAttributes<HTMLTableCellElement>) {
   return (
-    <td className={cn("border-b border-slate-100 px-3 py-2.5 text-slate-800", className)}>
+    <td className={cn("border-b border-slate-100 px-3 py-2.5 text-slate-800", className)} {...props}>
       {children}
     </td>
   );

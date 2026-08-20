@@ -21,7 +21,7 @@ export async function createSupplier(formData: FormData) {
     },
   });
   revalidatePath("/suppliers");
-  redirect(`/suppliers/${supplier.id}`);
+  redirect(`/suppliers/${supplier.id}?ok=Supplier added`);
 }
 
 export async function updateSupplier(formData: FormData) {
@@ -42,6 +42,24 @@ export async function updateSupplier(formData: FormData) {
   });
   revalidatePath(`/suppliers/${id}`);
   redirect(`/suppliers/${id}?ok=Saved`);
+}
+
+export async function deleteSupplier(formData: FormData) {
+  await requireUser();
+  const id = String(formData.get("id") ?? "");
+  const supplier = await prisma.supplier.findUnique({
+    where: { id },
+    include: { _count: { select: { purchaseOrders: true, stockUnits: true } } },
+  });
+  if (!supplier) redirect("/suppliers");
+  if (supplier._count.purchaseOrders > 0 || supplier._count.stockUnits > 0) {
+    redirect(
+      `/suppliers/${id}?error=${encodeURIComponent("Cannot delete a supplier with purchase orders or stock on record")}`,
+    );
+  }
+  await prisma.supplier.delete({ where: { id } });
+  revalidatePath("/suppliers");
+  redirect("/suppliers?ok=Supplier deleted");
 }
 
 export async function addLedgerEntry(formData: FormData) {

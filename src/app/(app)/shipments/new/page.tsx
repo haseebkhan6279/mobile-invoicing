@@ -1,11 +1,11 @@
 import { createShipment } from "@/actions/shipments";
 import { Notice } from "@/components/notice";
 import { PageHeader } from "@/components/page-header";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
 import { requireUser } from "@/lib/auth-guard";
 import { prisma } from "@/lib/prisma";
@@ -84,7 +84,7 @@ export default async function NewShipmentPage({
             <Label htmlFor="notes">Notes</Label>
             <Textarea id="notes" name="notes" />
           </div>
-          <Button type="submit">Save shipment</Button>
+          <SubmitButton pendingText="Adding…">Save shipment</SubmitButton>
         </form>
       </Card>
     </div>

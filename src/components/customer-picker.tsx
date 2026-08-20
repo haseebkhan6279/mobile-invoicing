@@ -1,11 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { searchCustomers } from "@/actions/customers";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-type CustomerHit = {
+export type CustomerHit = {
   id: string;
   clientId: string;
   name: string;
@@ -19,9 +20,11 @@ type CustomerHit = {
 export function CustomerPicker({
   name = "customerId",
   initial,
+  returnTo,
 }: {
   name?: string;
   initial?: CustomerHit | null;
+  returnTo?: string;
 }) {
   const [query, setQuery] = useState(initial?.name ?? "");
   const [hits, setHits] = useState<CustomerHit[]>([]);
@@ -68,7 +71,7 @@ export function CustomerPicker({
           }}
           onFocus={() => hits.length && setOpen(true)}
         />
-        {open && hits.length > 0 ? (
+        {open && (hits.length > 0 || query.trim()) ? (
           <ul className="absolute z-20 mt-1 w-full overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg">
             {hits.map((hit) => (
               <li key={hit.id}>
@@ -91,6 +94,18 @@ export function CustomerPicker({
                 </button>
               </li>
             ))}
+            {hits.length === 0 && query.trim() ? (
+              <li className="border-t border-slate-100">
+                <Link
+                  href={`/customers/new?name=${encodeURIComponent(query.trim())}${
+                    returnTo ? `&returnTo=${encodeURIComponent(returnTo)}` : ""
+                  }`}
+                  className="block px-3 py-2 text-sm font-medium text-[#0b3a6e] hover:bg-slate-50"
+                >
+                  No match — add &ldquo;{query.trim()}&rdquo; as a new customer
+                </Link>
+              </li>
+            ) : null}
           </ul>
         ) : null}
       </div>

@@ -175,3 +175,40 @@ export async function receiveStockBatches(
 export async function addStock(formData: FormData) {
   await receiveStockBatches(formData);
 }
+
+export async function getAvailableImeis(
+  spec: { productName: string; color: string; network: string; grade: string },
+  limit = 50,
+) {
+  await requireUser();
+  const units = await prisma.stockUnit.findMany({
+    where: { status: "IN_STOCK", ...spec },
+    select: { imei: true },
+    orderBy: { createdAt: "asc" },
+    take: limit,
+  });
+  return units.map((u) => u.imei);
+}
+
+export async function searchStockProducts(query: string) {
+  await requireUser();
+  const q = query.trim();
+  if (!q) return [];
+  const groups = await prisma.stockUnit.groupBy({
+    by: ["productName", "color", "network", "grade"],
+    where: { status: "IN_STOCK", productName: { contains: q, mode: "insensitive" } },
+    _count: { _all: true },
+    _avg: { costGbp: true, costEur: true },
+    orderBy: { productName: "asc" },
+    take: 10,
+  });
+  return groups.map((g) => ({
+    productName: g.productName,
+    color: g.color,
+    network: g.network,
+    grade: g.grade,
+    count: g._count._all,
+    costGbp: roundMoney(g._avg.costGbp ?? 0),
+    costEur: roundMoney(g._avg.costEur ?? 0),
+  }));
+}

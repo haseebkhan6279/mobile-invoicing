@@ -3,8 +3,8 @@ import { receivePurchaseOrder } from "@/actions/purchase-orders";
 import { Notice } from "@/components/notice";
 import { PageHeader } from "@/components/page-header";
 import { StockBatchForm } from "@/components/stock-batch-form";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { requireUser } from "@/lib/auth-guard";
 import { getLookups } from "@/lib/lookups";
 import { prisma } from "@/lib/prisma";
@@ -57,7 +57,7 @@ export default async function ReceivePoPage({
             showLedgerToggle={false}
           />
           <div className="mt-6">
-            <Button type="submit">Receive stock</Button>
+            <SubmitButton pendingText="Receiving…">Receive stock</SubmitButton>
           </div>
         </form>
       </Card>

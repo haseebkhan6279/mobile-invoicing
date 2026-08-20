@@ -29,7 +29,12 @@ export async function searchCustomers(query: string) {
 export async function createCustomer(formData: FormData) {
   await requireUser();
   const name = String(formData.get("name") ?? "").trim();
-  if (!name) redirect("/customers/new?error=Name is required");
+  const returnTo = toOptionalString(formData.get("returnTo"));
+  if (!name) {
+    redirect(
+      `/customers/new?error=Name is required${returnTo ? `&returnTo=${encodeURIComponent(returnTo)}` : ""}`,
+    );
+  }
   const customer = await prisma.$transaction(async (tx) => {
     const clientId = await nextNumberTx(tx, "CL", "CL");
     return tx.customer.create({
@@ -41,12 +46,18 @@ export async function createCustomer(formData: FormData) {
         email: toOptionalString(formData.get("email")),
         vatNumber: toOptionalString(formData.get("vatNumber")),
         address: toOptionalString(formData.get("address")),
+        shippingAddress: toOptionalString(formData.get("shippingAddress")),
         notes: toOptionalString(formData.get("notes")),
       },
     });
   });
   revalidatePath("/customers");
-  redirect(`/customers/${customer.id}`);
+  if (returnTo) {
+    const url = new URL(returnTo, "http://internal");
+    url.searchParams.set("customerId", customer.id);
+    redirect(`${url.pathname}${url.search}`);
+  }
+  redirect(`/customers/${customer.id}?ok=Customer added`);
 }
 
 export async function updateCustomer(formData: FormData) {
@@ -63,6 +74,7 @@ export async function updateCustomer(formData: FormData) {
       email: toOptionalString(formData.get("email")),
       vatNumber: toOptionalString(formData.get("vatNumber")),
       address: toOptionalString(formData.get("address")),
+      shippingAddress: toOptionalString(formData.get("shippingAddress")),
       notes: toOptionalString(formData.get("notes")),
     },
   });

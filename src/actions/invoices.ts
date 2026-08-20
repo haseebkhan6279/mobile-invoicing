@@ -88,6 +88,9 @@ export async function createInvoice(formData: FormData) {
         fxRate: toNumber(formData.get("fxRate"), DEFAULT_FX_RATE),
         shippingCostGbp: toNumber(formData.get("shippingCostGbp")),
         shippingCostEur: toNumber(formData.get("shippingCostEur")),
+        shippingLabel: toOptionalString(formData.get("shippingLabel")),
+        paymentTerms: toOptionalString(formData.get("paymentTerms")) ?? "Immediate",
+        warrantyTerms: toOptionalString(formData.get("warrantyTerms")) ?? "3 months",
         notes: toOptionalString(formData.get("notes")),
         paidAt: status === "PAID" ? new Date() : null,
         lines: {
@@ -128,7 +131,7 @@ export async function createInvoice(formData: FormData) {
 
   revalidatePath("/invoices");
   revalidatePath("/stock");
-  redirect(`/invoices/${invoice.id}`);
+  redirect(`/invoices/${invoice.id}?ok=Invoice created`);
 }
 
 export async function updateInvoiceStatus(formData: FormData) {

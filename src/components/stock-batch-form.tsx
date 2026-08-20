@@ -21,6 +21,94 @@ const emptyBatch = {
   imeis: "",
 };
 
+function StockBatchLine({
+  grades,
+  colors,
+  networks,
+  fx,
+}: {
+  grades: Lookup[];
+  colors: Lookup[];
+  networks: Lookup[];
+  fx: number;
+}) {
+  const [costGbp, setCostGbp] = useState(emptyBatch.costGbp);
+  const [costEur, setCostEur] = useState(emptyBatch.costEur);
+
+  return (
+    <div className="space-y-3 rounded-xl border border-slate-200 p-4">
+      <div className="grid gap-3 md:grid-cols-4">
+        <div className="md:col-span-2">
+          <Label>Product name</Label>
+          <Input name="batchProduct" required placeholder="iPhone 14 128GB" />
+        </div>
+        <div>
+          <Label>Brand</Label>
+          <Input name="batchBrand" placeholder="Apple" />
+        </div>
+        <div>
+          <Label>Grade</Label>
+          <Select name="batchGrade" defaultValue={emptyBatch.grade}>
+            {grades.map((grade) => (
+              <option key={grade.id} value={grade.code}>
+                {grade.code}
+              </option>
+            ))}
+          </Select>
+        </div>
+        <div>
+          <Label>Color</Label>
+          <Select name="batchColor" defaultValue={emptyBatch.color}>
+            {colors.map((color) => (
+              <option key={color.id} value={color.name}>
+                {color.name}
+              </option>
+            ))}
+          </Select>
+        </div>
+        <div>
+          <Label>Network</Label>
+          <Select name="batchNetwork" defaultValue={emptyBatch.network}>
+            {networks.map((network) => (
+              <option key={network.id} value={network.name}>
+                {network.name}
+              </option>
+            ))}
+          </Select>
+        </div>
+        <div>
+          <Label>Unit cost GBP</Label>
+          <Input
+            name="batchCostGbp"
+            type="number"
+            step="0.01"
+            value={costGbp}
+            onChange={(event) => {
+              const next = Number(event.target.value) || 0;
+              setCostGbp(next);
+              if (costEur === 0) setCostEur(eurFromGbp(next, fx));
+            }}
+          />
+        </div>
+        <div>
+          <Label>Unit cost EUR</Label>
+          <Input
+            name="batchCostEur"
+            type="number"
+            step="0.01"
+            value={costEur}
+            onChange={(event) => setCostEur(Number(event.target.value) || 0)}
+          />
+        </div>
+      </div>
+      <div>
+        <Label>IMEIs (one per line, 15 digits)</Label>
+        <Textarea name="batchImeis" required placeholder="353456789012345" />
+      </div>
+    </div>
+  );
+}
+
 export function StockBatchForm({
   grades,
   colors,
@@ -40,7 +128,7 @@ export function StockBatchForm({
   defaultPurchaseOrderId?: string;
   showLedgerToggle?: boolean;
 }) {
-  const [batches, setBatches] = useState([{ ...emptyBatch }]);
+  const [batchCount, setBatchCount] = useState(1);
   const [fx] = useState(DEFAULT_FX_RATE);
   const [supplierId, setSupplierId] = useState(defaultSupplierId ?? "");
 
@@ -97,92 +185,13 @@ export function StockBatchForm({
             type="button"
             variant="secondary"
             size="sm"
-            onClick={() => setBatches((current) => [...current, { ...emptyBatch }])}
+            onClick={() => setBatchCount((current) => current + 1)}
           >
             Add grade batch
           </Button>
         </div>
-        {batches.map((batch, index) => (
-          <div key={index} className="space-y-3 rounded-xl border border-slate-200 p-4">
-            <div className="grid gap-3 md:grid-cols-4">
-              <div className="md:col-span-2">
-                <Label>Product name</Label>
-                <Input name="batchProduct" required placeholder="iPhone 14 128GB" />
-              </div>
-              <div>
-                <Label>Brand</Label>
-                <Input name="batchBrand" placeholder="Apple" />
-              </div>
-              <div>
-                <Label>Grade</Label>
-                <Select name="batchGrade" defaultValue={batch.grade}>
-                  {grades.map((grade) => (
-                    <option key={grade.id} value={grade.code}>
-                      {grade.code}
-                    </option>
-                  ))}
-                </Select>
-              </div>
-              <div>
-                <Label>Color</Label>
-                <Select name="batchColor" defaultValue={batch.color}>
-                  {colors.map((color) => (
-                    <option key={color.id} value={color.name}>
-                      {color.name}
-                    </option>
-                  ))}
-                </Select>
-              </div>
-              <div>
-                <Label>Network</Label>
-                <Select name="batchNetwork" defaultValue={batch.network}>
-                  {networks.map((network) => (
-                    <option key={network.id} value={network.name}>
-                      {network.name}
-                    </option>
-                  ))}
-                </Select>
-              </div>
-              <div>
-                <Label>Unit cost GBP</Label>
-                <Input
-                  name="batchCostGbp"
-                  type="number"
-                  step="0.01"
-                  defaultValue="0"
-                  onBlur={(event) => {
-                    const eur = event.currentTarget
-                      .closest("div")
-                      ?.parentElement?.querySelector(
-                        'input[name="batchCostEur"]',
-                      ) as HTMLInputElement | null;
-                    if (eur && Number(eur.value) === 0) {
-                      eur.value = String(
-                        eurFromGbp(Number(event.target.value), fx),
-                      );
-                    }
-                  }}
-                />
-              </div>
-              <div>
-                <Label>Unit cost EUR</Label>
-                <Input
-                  name="batchCostEur"
-                  type="number"
-                  step="0.01"
-                  defaultValue="0"
-                />
-              </div>
-            </div>
-            <div>
-              <Label>IMEIs (one per line, 15 digits)</Label>
-              <Textarea
-                name="batchImeis"
-                required
-                placeholder="353456789012345"
-              />
-            </div>
-          </div>
+        {Array.from({ length: batchCount }).map((_, index) => (
+          <StockBatchLine key={index} grades={grades} colors={colors} networks={networks} fx={fx} />
         ))}
       </div>
     </div>

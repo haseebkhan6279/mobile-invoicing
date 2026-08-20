@@ -4,10 +4,10 @@ import { updateCustomer } from "@/actions/customers";
 import { Notice } from "@/components/notice";
 import { PageHeader } from "@/components/page-header";
 import { StatusBadge } from "@/components/status-badge";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
 import { requireUser } from "@/lib/auth-guard";
 import { prisma } from "@/lib/prisma";
@@ -58,14 +58,22 @@ export default async function CustomerDetailPage({
             <Input id="vatNumber" name="vatNumber" defaultValue={customer.vatNumber ?? ""} />
           </div>
           <div>
-            <Label htmlFor="address">Address</Label>
+            <Label htmlFor="address">Billing address</Label>
             <Textarea id="address" name="address" defaultValue={customer.address ?? ""} />
+          </div>
+          <div>
+            <Label htmlFor="shippingAddress">Shipping address (if different)</Label>
+            <Textarea
+              id="shippingAddress"
+              name="shippingAddress"
+              defaultValue={customer.shippingAddress ?? ""}
+            />
           </div>
           <div>
             <Label htmlFor="notes">Notes</Label>
             <Textarea id="notes" name="notes" defaultValue={customer.notes ?? ""} />
           </div>
-          <Button type="submit">Save</Button>
+          <SubmitButton pendingText="Saving…">Save</SubmitButton>
         </form>
       </Card>
       <Card>

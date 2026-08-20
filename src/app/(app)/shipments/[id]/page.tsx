@@ -4,11 +4,11 @@ import { updateShipment } from "@/actions/shipments";
 import { MoneyPair } from "@/components/money-pair";
 import { Notice } from "@/components/notice";
 import { PageHeader } from "@/components/page-header";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
 import { requireUser } from "@/lib/auth-guard";
 import { prisma } from "@/lib/prisma";
@@ -95,7 +95,7 @@ export default async function ShipmentDetailPage({
             <Label>Notes</Label>
             <Textarea name="notes" defaultValue={shipment.notes ?? ""} />
           </div>
-          <Button type="submit">Save tracking</Button>
+          <SubmitButton pendingText="Saving…">Save tracking</SubmitButton>
         </form>
       </Card>
     </div>

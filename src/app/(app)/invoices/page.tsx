@@ -1,9 +1,9 @@
-import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
 import { MoneyPair } from "@/components/money-pair";
 import { StatusBadge } from "@/components/status-badge";
 import { Select } from "@/components/ui/select";
 import { Table, THead, Th, Td } from "@/components/ui/table";
+import { ClickableRow } from "@/components/ui/clickable-row";
 import { requireUser } from "@/lib/auth-guard";
 import { invoiceTotals } from "@/lib/invoice";
 import { prisma } from "@/lib/prisma";
@@ -56,12 +56,8 @@ export default async function InvoicesPage({
             {invoices.map((invoice) => {
               const totals = invoiceTotals(invoice);
               return (
-                <tr key={invoice.id}>
-                  <Td>
-                    <Link className="font-medium text-[#0b3a6e] hover:underline" href={`/invoices/${invoice.id}`}>
-                      {invoice.invoiceNumber}
-                    </Link>
-                  </Td>
+                <ClickableRow key={invoice.id} href={`/invoices/${invoice.id}`}>
+                  <Td className="font-medium text-[#0b3a6e]">{invoice.invoiceNumber}</Td>
                   <Td className="font-mono">{invoice.customer.clientId}</Td>
                   <Td>{invoice.customer.name}</Td>
                   <Td>
@@ -71,7 +67,7 @@ export default async function InvoicesPage({
                     <MoneyPair gbp={totals.totalGbp} eur={totals.totalEur} stacked />
                   </Td>
                   <Td>{formatDate(invoice.issuedAt)}</Td>
-                </tr>
+                </ClickableRow>
               );
             })}
           </tbody>

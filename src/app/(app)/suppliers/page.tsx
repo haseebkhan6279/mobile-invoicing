@@ -1,13 +1,19 @@
 import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
 import { MoneyPair } from "@/components/money-pair";
+import { Notice } from "@/components/notice";
 import { Table, THead, Th, Td } from "@/components/ui/table";
 import { requireUser } from "@/lib/auth-guard";
 import { totalsFromLedger } from "@/lib/ledger";
 import { prisma } from "@/lib/prisma";
 
-export default async function SuppliersPage() {
+export default async function SuppliersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ ok?: string; error?: string }>;
+}) {
   await requireUser();
+  const { ok, error } = await searchParams;
   const suppliers = await prisma.supplier.findMany({
     include: { ledger: true, _count: { select: { purchaseOrders: true } } },
     orderBy: { name: "asc" },
@@ -20,6 +26,7 @@ export default async function SuppliersPage() {
         description="Credit, debit, and running hisab for each supplier."
         action={{ href: "/suppliers/new", label: "Add supplier" }}
       />
+      <Notice ok={ok} error={error} />
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
         <Table>
           <THead>
@@ -35,14 +42,14 @@ export default async function SuppliersPage() {
             {suppliers.map((supplier) => {
               const t = totalsFromLedger(supplier.ledger);
               return (
-                <tr key={supplier.id}>
+                <tr key={supplier.id} className="relative hover:bg-slate-50">
                   <Td>
                     <Link
-                      className="font-medium text-[#0b3a6e] hover:underline"
                       href={`/suppliers/${supplier.id}`}
-                    >
-                      {supplier.name}
-                    </Link>
+                      className="absolute inset-0"
+                      aria-label={`View ${supplier.name}`}
+                    />
+                    <span className="font-medium text-[#0b3a6e]">{supplier.name}</span>
                     <div className="text-xs text-slate-500">
                       {supplier.phone || supplier.email || "—"}
                     </div>

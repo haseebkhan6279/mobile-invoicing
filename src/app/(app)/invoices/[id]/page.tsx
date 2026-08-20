@@ -4,9 +4,9 @@ import { updateInvoiceStatus } from "@/actions/invoices";
 import { InvoiceDocument } from "@/components/invoice-document";
 import { Notice } from "@/components/notice";
 import { PageHeader } from "@/components/page-header";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Select } from "@/components/ui/select";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { requireUser } from "@/lib/auth-guard";
 import { prisma } from "@/lib/prisma";
 import { INVOICE_STATUSES } from "@/lib/status";
@@ -48,7 +48,7 @@ export default async function InvoiceDetailPage({
               ))}
             </Select>
           </div>
-          <Button type="submit">Update status</Button>
+          <SubmitButton pendingText="Updating…">Update status</SubmitButton>
         </form>
         <Link
           href={`/invoices/${invoice.id}/print`}

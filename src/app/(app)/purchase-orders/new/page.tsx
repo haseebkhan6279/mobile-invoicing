@@ -2,8 +2,8 @@ import { createPurchaseOrder } from "@/actions/purchase-orders";
 import { Notice } from "@/components/notice";
 import { PageHeader } from "@/components/page-header";
 import { PurchaseOrderForm } from "@/components/purchase-order-form";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { requireUser } from "@/lib/auth-guard";
 import { getLookups } from "@/lib/lookups";
 
@@ -27,7 +27,7 @@ export default async function NewPurchaseOrderPage({
             colors={lookups.colors}
             networks={lookups.networks}
           />
-          <Button type="submit">Save purchase order</Button>
+          <SubmitButton pendingText="Saving…">Save purchase order</SubmitButton>
         </form>
       </Card>
     </div>

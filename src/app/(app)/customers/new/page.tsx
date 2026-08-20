@@ -1,29 +1,30 @@
 import { createCustomer } from "@/actions/customers";
 import { Notice } from "@/components/notice";
 import { PageHeader } from "@/components/page-header";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
 import { requireUser } from "@/lib/auth-guard";
 
 export default async function NewCustomerPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; name?: string; returnTo?: string }>;
 }) {
   await requireUser();
-  const { error } = await searchParams;
+  const { error, name, returnTo } = await searchParams;
   return (
     <div className="max-w-2xl">
       <PageHeader title="Add customer" description="Client ID is generated automatically." />
       <Notice error={error} />
       <Card>
         <form action={createCustomer} className="space-y-4">
+          {returnTo ? <input type="hidden" name="returnTo" value={returnTo} /> : null}
           <div>
             <Label htmlFor="name">Name</Label>
-            <Input id="name" name="name" required />
+            <Input id="name" name="name" defaultValue={name ?? ""} required />
           </div>
           <div>
             <Label htmlFor="businessName">Business name</Label>
@@ -44,14 +45,18 @@ export default async function NewCustomerPage({
             <Input id="vatNumber" name="vatNumber" />
           </div>
           <div>
-            <Label htmlFor="address">Address</Label>
+            <Label htmlFor="address">Billing address</Label>
             <Textarea id="address" name="address" />
+          </div>
+          <div>
+            <Label htmlFor="shippingAddress">Shipping address (if different)</Label>
+            <Textarea id="shippingAddress" name="shippingAddress" />
           </div>
           <div>
             <Label htmlFor="notes">Notes</Label>
             <Textarea id="notes" name="notes" />
           </div>
-          <Button type="submit">Save customer</Button>
+          <SubmitButton pendingText="Adding…">Save customer</SubmitButton>
         </form>
       </Card>
     </div>

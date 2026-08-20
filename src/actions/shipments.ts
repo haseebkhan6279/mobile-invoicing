@@ -36,7 +36,7 @@ export async function createShipment(formData: FormData) {
   });
 
   revalidatePath("/shipments");
-  redirect(`/shipments/${shipment.id}`);
+  redirect(`/shipments/${shipment.id}?ok=Shipment added`);
 }
 
 export async function updateShipment(formData: FormData) {

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { BackButton } from "@/components/ui/back-button";
 
 export function PageHeader({
   title,
@@ -11,13 +12,16 @@ export function PageHeader({
 }) {
   return (
     <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
-          {title}
-        </h1>
-        {description ? (
-          <p className="mt-1 text-sm text-slate-500">{description}</p>
-        ) : null}
+      <div className="flex items-start gap-2">
+        <BackButton />
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+            {title}
+          </h1>
+          {description ? (
+            <p className="mt-1 text-sm text-slate-500">{description}</p>
+          ) : null}
+        </div>
       </div>
       {action ? (
         <Link

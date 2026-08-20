@@ -3,8 +3,10 @@ import { Notice } from "@/components/notice";
 import { PageHeader } from "@/components/page-header";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
 import { requireUser } from "@/lib/auth-guard";
 import { RMA_ACTIONS } from "@/lib/status";
@@ -69,6 +71,11 @@ export default async function NewRmaPage({
                   <span>
                     {unit.productName} · {unit.color} · {unit.grade}
                   </span>
+                  <Input
+                    name={`reason-${unit.id}`}
+                    placeholder="e.g. Back glass broken"
+                    className="w-56"
+                  />
                   <Select name={`action-${unit.id}`} defaultValue="RESTOCK" className="w-40">
                     {RMA_ACTIONS.map((action) => (
                       <option key={action} value={action}>
@@ -83,7 +90,7 @@ export default async function NewRmaPage({
               <Label htmlFor="notes">Notes</Label>
               <Textarea id="notes" name="notes" />
             </div>
-            <Button type="submit">Create RMA</Button>
+            <SubmitButton pendingText="Creating…">Create RMA</SubmitButton>
           </form>
         </Card>
       ) : null}

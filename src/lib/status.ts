@@ -30,6 +30,8 @@ export const RMA_STATUSES = [
 
 export const RMA_ACTIONS = ["RESTOCK", "CREDIT", "WRITE_OFF"] as const;
 
+export const RMA_PAYMENT_TYPES = ["PENDING", "APPLIED_TO_INVOICE", "REFUNDED"] as const;
+
 export const SHIPMENT_STATUSES = [
   "PREPARING",
   "SHIPPED",
