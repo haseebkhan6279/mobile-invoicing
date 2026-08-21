@@ -3,23 +3,26 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth-guard";
-import { prisma } from "@/lib/prisma";
 import { toNumber, toOptionalString } from "@/lib/lookups";
+import * as supplierService from "@/lib/modules/suppliers/suppliers.service";
+import { NotFoundError, ServiceError } from "@/lib/api/errors";
 
 export async function createSupplier(formData: FormData) {
   await requireUser();
-  const name = String(formData.get("name") ?? "").trim();
-  if (!name) redirect("/suppliers/new?error=Name is required");
-  const supplier = await prisma.supplier.create({
-    data: {
-      name,
+  let supplier;
+  try {
+    supplier = await supplierService.createSupplier({
+      name: String(formData.get("name") ?? "").trim(),
       phone: toOptionalString(formData.get("phone")),
       email: toOptionalString(formData.get("email")),
       address: toOptionalString(formData.get("address")),
       vatNumber: toOptionalString(formData.get("vatNumber")),
       notes: toOptionalString(formData.get("notes")),
-    },
-  });
+    });
+  } catch (err) {
+    if (err instanceof ServiceError) redirect(`/suppliers/new?error=${encodeURIComponent(err.message)}`);
+    throw err;
+  }
   revalidatePath("/suppliers");
   redirect(`/suppliers/${supplier.id}?ok=Supplier added`);
 }
@@ -27,19 +30,19 @@ export async function createSupplier(formData: FormData) {
 export async function updateSupplier(formData: FormData) {
   await requireUser();
   const id = String(formData.get("id") ?? "");
-  const name = String(formData.get("name") ?? "").trim();
-  if (!id || !name) redirect(`/suppliers/${id}?error=Name is required`);
-  await prisma.supplier.update({
-    where: { id },
-    data: {
-      name,
+  try {
+    await supplierService.updateSupplier(id, {
+      name: String(formData.get("name") ?? "").trim(),
       phone: toOptionalString(formData.get("phone")),
       email: toOptionalString(formData.get("email")),
       address: toOptionalString(formData.get("address")),
       vatNumber: toOptionalString(formData.get("vatNumber")),
       notes: toOptionalString(formData.get("notes")),
-    },
-  });
+    });
+  } catch (err) {
+    if (err instanceof ServiceError) redirect(`/suppliers/${id}?error=${encodeURIComponent(err.message)}`);
+    throw err;
+  }
   revalidatePath(`/suppliers/${id}`);
   redirect(`/suppliers/${id}?ok=Saved`);
 }
@@ -47,17 +50,13 @@ export async function updateSupplier(formData: FormData) {
 export async function deleteSupplier(formData: FormData) {
   await requireUser();
   const id = String(formData.get("id") ?? "");
-  const supplier = await prisma.supplier.findUnique({
-    where: { id },
-    include: { _count: { select: { purchaseOrders: true, stockUnits: true } } },
-  });
-  if (!supplier) redirect("/suppliers");
-  if (supplier._count.purchaseOrders > 0 || supplier._count.stockUnits > 0) {
-    redirect(
-      `/suppliers/${id}?error=${encodeURIComponent("Cannot delete a supplier with purchase orders or stock on record")}`,
-    );
+  try {
+    await supplierService.deleteSupplier(id);
+  } catch (err) {
+    if (err instanceof NotFoundError) redirect("/suppliers");
+    if (err instanceof ServiceError) redirect(`/suppliers/${id}?error=${encodeURIComponent(err.message)}`);
+    throw err;
   }
-  await prisma.supplier.delete({ where: { id } });
   revalidatePath("/suppliers");
   redirect("/suppliers?ok=Supplier deleted");
 }
@@ -65,28 +64,21 @@ export async function deleteSupplier(formData: FormData) {
 export async function addLedgerEntry(formData: FormData) {
   await requireUser();
   const supplierId = String(formData.get("supplierId") ?? "");
-  const type = String(formData.get("type") ?? "DEBIT");
-  const amountGbp = toNumber(formData.get("amountGbp"));
-  const amountEur = toNumber(formData.get("amountEur"));
-  if (!supplierId || amountGbp < 0 || amountEur < 0) {
-    redirect(`/suppliers/${supplierId}?error=Enter valid amounts`);
-  }
-  if (amountGbp === 0 && amountEur === 0) {
-    redirect(`/suppliers/${supplierId}?error=Amount cannot be zero`);
-  }
-  await prisma.supplierLedger.create({
-    data: {
-      supplierId,
-      type: type === "CREDIT" ? "CREDIT" : "DEBIT",
-      amountGbp,
-      amountEur,
-      date: formData.get("date")
-        ? new Date(String(formData.get("date")))
-        : new Date(),
+  try {
+    await supplierService.addLedgerEntry(supplierId, {
+      type: String(formData.get("type") ?? "DEBIT"),
+      amountGbp: toNumber(formData.get("amountGbp")),
+      amountEur: toNumber(formData.get("amountEur")),
+      date: toOptionalString(formData.get("date")),
       reference: toOptionalString(formData.get("reference")),
       notes: toOptionalString(formData.get("notes")),
-    },
-  });
+    });
+  } catch (err) {
+    if (err instanceof ServiceError) {
+      redirect(`/suppliers/${supplierId}?error=${encodeURIComponent(err.message)}`);
+    }
+    throw err;
+  }
   revalidatePath(`/suppliers/${supplierId}`);
   redirect(`/suppliers/${supplierId}?ok=Hisab updated`);
 }

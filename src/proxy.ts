@@ -4,7 +4,12 @@ import type { NextRequest } from "next/server";
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isPublic =
-    pathname.startsWith("/login") || pathname.startsWith("/api/auth");
+    pathname.startsWith("/login") ||
+    pathname.startsWith("/api/auth") ||
+    // The mobile REST API authenticates itself via `Authorization: Bearer <JWT>`
+    // (see requireApiUser in src/lib/api-auth.ts), not the dashboard's cookie
+    // session, so it must bypass this cookie-based redirect entirely.
+    pathname.startsWith("/api/v1");
   const session =
     request.cookies.get("authjs.session-token") ??
     request.cookies.get("__Secure-authjs.session-token");

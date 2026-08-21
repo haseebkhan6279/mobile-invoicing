@@ -21,3 +21,9 @@ export function toOptionalString(value: FormDataEntryValue | null) {
   const text = String(value ?? "").trim();
   return text ? text : null;
 }
+
+export function toOptionalNumber(value: FormDataEntryValue | null) {
+  if (value == null || value === "") return undefined;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : undefined;
+}

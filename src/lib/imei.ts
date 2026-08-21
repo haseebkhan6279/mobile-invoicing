@@ -10,8 +10,7 @@ export function isValidImei(imei: string) {
   return /^\d{15}$/.test(imei);
 }
 
-export function validateImeis(raw: string) {
-  const imeis = parseImeis(raw);
+export function validateImeiList(imeis: string[]) {
   const invalid = imeis.filter((imei) => !isValidImei(imei));
   const unique = new Set(imeis);
   if (invalid.length) {
@@ -21,4 +20,8 @@ export function validateImeis(raw: string) {
     return { error: "Duplicate IMEIs in this list." };
   }
   return { imeis };
+}
+
+export function validateImeis(raw: string) {
+  return validateImeiList(parseImeis(raw));
 }
