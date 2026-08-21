@@ -46,7 +46,7 @@ export function CreditNoteDocument({ rma }: { rma: CreditNoteDoc }) {
 
   return (
     <div className="mx-auto max-w-[210mm] bg-white p-8 text-slate-900 print:p-0">
-      <div className="flex justify-between gap-6 border-b border-slate-200 pb-6">
+      <div className="flex flex-col gap-6 border-b border-slate-200 pb-6 sm:flex-row sm:justify-between">
         <div>
           <div className="text-xs font-semibold tracking-[0.25em] text-sky-700">
             {creditNoteCompany.shortName}
@@ -75,7 +75,8 @@ export function CreditNoteDocument({ rma }: { rma: CreditNoteDoc }) {
         </div>
       </div>
 
-      <table className="mt-8 w-full text-left text-sm">
+      <div className="mt-8 overflow-x-auto">
+      <table className="w-full text-left text-sm">
         <thead>
           <tr className="border-y border-slate-300 text-xs uppercase tracking-wide text-slate-500">
             <th className="py-2 pr-2">Item</th>
@@ -109,6 +110,7 @@ export function CreditNoteDocument({ rma }: { rma: CreditNoteDoc }) {
           ))}
         </tbody>
       </table>
+      </div>
 
       <div className="mt-4 text-sm text-slate-600">Total: {rma.items.length}</div>
 
