@@ -8,7 +8,7 @@ import {
   Min,
   ValidateNested,
 } from "class-validator";
-import { INVOICE_STATUSES } from "../../common/status";
+import { INVOICE_ENTITIES, INVOICE_STATUSES } from "../../common/status";
 
 class InvoiceLineDto {
   @IsString()
@@ -49,6 +49,10 @@ export class CreateInvoiceDto {
   @IsOptional()
   @IsIn(INVOICE_STATUSES)
   status?: string;
+
+  @IsOptional()
+  @IsIn(INVOICE_ENTITIES)
+  entity?: string;
 
   @IsOptional()
   @IsNumber()

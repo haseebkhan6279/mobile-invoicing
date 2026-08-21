@@ -189,6 +189,13 @@ export function InvoiceForm({
       <CustomerPicker initial={initialCustomer} returnTo="/invoices/new" />
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div>
+          <Label htmlFor="entity">Billing entity</Label>
+          <Select id="entity" name="entity" defaultValue="UK">
+            <option value="UK">UK — £ (Animus Corporation Limited)</option>
+            <option value="NI">NI — € (Animus Corporation NI Limited)</option>
+          </Select>
+        </div>
+        <div>
           <Label htmlFor="status">Payment status</Label>
           <Select id="status" name="status" defaultValue="PENDING">
             <option value="PENDING">Pending</option>

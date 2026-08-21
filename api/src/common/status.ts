@@ -4,6 +4,8 @@ export const PO_STATUSES = ["DRAFT", "ORDERED", "PARTIAL", "RECEIVED", "CANCELLE
 
 export const INVOICE_STATUSES = ["PENDING", "AWAITING_PAYMENT", "PAID"] as const;
 
+export const INVOICE_ENTITIES = ["UK", "NI"] as const;
+
 export const RMA_STATUSES = ["OPEN", "APPROVED", "RECEIVED", "REFUNDED", "CLOSED"] as const;
 
 export const RMA_ACTIONS = ["RESTOCK", "CREDIT", "WRITE_OFF"] as const;

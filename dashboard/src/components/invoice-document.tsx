@@ -1,4 +1,4 @@
-import { addressLines, sellerCompany } from "@/lib/company";
+import { addressLines, companyForEntity } from "@/lib/company";
 import { invoiceTotals } from "@/lib/invoice";
 import { formatEur, formatGbp } from "@/lib/money";
 import { INVOICE_INVALID_UNTIL_PAID_NOTICE, INVOICE_MARGIN_NOTICE, INVOICE_TERMS } from "@/lib/terms";
@@ -7,6 +7,7 @@ import { labelStatus } from "@/lib/status";
 
 export type InvoiceDoc = {
   invoiceNumber: string;
+  entity: string;
   status: string;
   issuedAt: Date | string;
   fxRate: number;
@@ -44,19 +45,22 @@ export type InvoiceDoc = {
 export function InvoiceDocument({ invoice }: { invoice: InvoiceDoc }) {
   const totals = invoiceTotals(invoice);
   const hasShipping = invoice.shippingCostGbp > 0 || invoice.shippingCostEur > 0;
+  const company = companyForEntity(invoice.entity);
+  const money = (gbp: number, eur: number) =>
+    invoice.entity === "NI" ? formatEur(eur) : formatGbp(gbp);
 
   return (
     <div className="mx-auto max-w-[210mm] bg-white p-8 text-slate-900 print:p-0">
       <div className="flex flex-col gap-6 border-b border-slate-200 pb-6 sm:flex-row sm:justify-between">
         <div>
           <div className="text-xs font-semibold tracking-[0.25em] text-sky-700">
-            {sellerCompany.shortName}
+            {company.shortName}
           </div>
-          <h1 className="mt-1 text-2xl font-semibold">{sellerCompany.tradingName}</h1>
+          <h1 className="mt-1 text-2xl font-semibold">{company.tradingName}</h1>
           <p className="mt-2 text-sm text-slate-600">
-            {addressLines(sellerCompany).join(", ")}
+            {addressLines(company).join(", ")}
             <br />
-            Telephone: {sellerCompany.phoneDisplay} · Whatsapp: {sellerCompany.whatsappDisplay}
+            Telephone: {company.phoneDisplay} · Whatsapp: {company.whatsappDisplay}
           </p>
         </div>
         <div className="text-right">
@@ -123,14 +127,10 @@ export function InvoiceDocument({ invoice }: { invoice: InvoiceDoc }) {
               <td className="py-2 pr-2">{line.network}</td>
               <td className="py-2 pr-2">{line.grade}</td>
               <td className="py-2 pr-2 text-right tabular-nums">
-                {formatGbp(line.unitPriceGbp)}
-                <div className="text-xs text-slate-500">{formatEur(line.unitPriceEur)}</div>
+                {money(line.unitPriceGbp, line.unitPriceEur)}
               </td>
               <td className="py-2 text-right tabular-nums">
-                {formatGbp(line.qty * line.unitPriceGbp)}
-                <div className="text-xs text-slate-500">
-                  {formatEur(line.qty * line.unitPriceEur)}
-                </div>
+                {money(line.qty * line.unitPriceGbp, line.qty * line.unitPriceEur)}
               </td>
             </tr>
           ))}
@@ -141,12 +141,10 @@ export function InvoiceDocument({ invoice }: { invoice: InvoiceDoc }) {
                 {invoice.shippingLabel || "Shipping"}
               </td>
               <td className="py-2 pr-2 text-right tabular-nums">
-                {formatGbp(invoice.shippingCostGbp)}
-                <div className="text-xs text-slate-500">{formatEur(invoice.shippingCostEur)}</div>
+                {money(invoice.shippingCostGbp, invoice.shippingCostEur)}
               </td>
               <td className="py-2 text-right tabular-nums">
-                {formatGbp(invoice.shippingCostGbp)}
-                <div className="text-xs text-slate-500">{formatEur(invoice.shippingCostEur)}</div>
+                {money(invoice.shippingCostGbp, invoice.shippingCostEur)}
               </td>
             </tr>
           ) : null}
@@ -163,10 +161,10 @@ export function InvoiceDocument({ invoice }: { invoice: InvoiceDoc }) {
       <div className="mt-6 flex flex-wrap justify-between gap-6">
         <div className="max-w-sm text-sm text-slate-600">
           <div className="text-xs uppercase tracking-wide text-slate-500">Bank details</div>
-          <div>Bank Name: {sellerCompany.bank.bankName}</div>
-          <div>Account Name: {sellerCompany.bank.accountName}</div>
-          <div>Sort code: {sellerCompany.bank.sortCode}</div>
-          <div>Account: {sellerCompany.bank.accountNumber}</div>
+          <div>Bank Name: {company.bank.bankName}</div>
+          <div>Account Name: {company.bank.accountName}</div>
+          <div>Sort code: {company.bank.sortCode}</div>
+          <div>Account: {company.bank.accountNumber}</div>
           <div className="mt-2">
             Payment Reference: {invoice.invoiceNumber}
             <br />
@@ -176,27 +174,19 @@ export function InvoiceDocument({ invoice }: { invoice: InvoiceDoc }) {
         <div className="ml-auto w-full max-w-sm text-sm">
           <div className="flex justify-between py-1">
             <span>Subtotal</span>
-            <span>
-              {formatGbp(totals.subGbp)} / {formatEur(totals.subEur)}
-            </span>
+            <span>{money(totals.subGbp, totals.subEur)}</span>
           </div>
           <div className="flex justify-between py-1">
             <span>Shipping</span>
-            <span>
-              {formatGbp(totals.shippingGbp)} / {formatEur(totals.shippingEur)}
-            </span>
+            <span>{money(totals.shippingGbp, totals.shippingEur)}</span>
           </div>
           <div className="flex justify-between border-t border-slate-300 py-2 text-base font-semibold">
             <span>Grand Total</span>
-            <span>
-              {formatGbp(totals.totalGbp)} / {formatEur(totals.totalEur)}
-            </span>
+            <span>{money(totals.totalGbp, totals.totalEur)}</span>
           </div>
           <div className="flex justify-between py-1">
             <span>Payment Due</span>
-            <span>
-              {formatGbp(totals.dueGbp)} / {formatEur(totals.dueEur)}
-            </span>
+            <span>{money(totals.dueGbp, totals.dueEur)}</span>
           </div>
         </div>
       </div>
@@ -220,9 +210,9 @@ export function InvoiceDocument({ invoice }: { invoice: InvoiceDoc }) {
           ))}
         </ol>
         <p className="mt-6">
-          Company Registration number: {sellerCompany.companyNo}
+          Company Registration number: {company.companyNo}
           <br />
-          Company VAT Number: {sellerCompany.vatNumber}
+          Company VAT Number: {company.vatNumber}
         </p>
       </div>
     </div>

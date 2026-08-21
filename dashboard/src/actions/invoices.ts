@@ -43,6 +43,7 @@ export async function createInvoice(formData: FormData) {
       {
         customerId: String(formData.get("customerId") ?? ""),
         status: String(formData.get("status") ?? "PENDING"),
+        entity: String(formData.get("entity") ?? "UK"),
         fxRate: toOptionalNumber(formData.get("fxRate")),
         shippingCostGbp: toNumber(formData.get("shippingCostGbp")),
         shippingCostEur: toNumber(formData.get("shippingCostEur")),

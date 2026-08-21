@@ -45,7 +45,7 @@ export class CustomersService {
     const name = input.name.trim();
     if (!name) throw new BadRequestException("Name is required");
     return this.prisma.$transaction(async (tx) => {
-      const clientId = await nextNumberTx(tx, "CL", "CL");
+      const clientId = await nextNumberTx(tx, "CL", "", "");
       return tx.customer.create({
         data: {
           clientId,

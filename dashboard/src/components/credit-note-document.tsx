@@ -1,4 +1,4 @@
-import { addressLines, creditNoteCompany } from "@/lib/company";
+import { addressLines, companyForEntity } from "@/lib/company";
 import { formatEur, formatGbp } from "@/lib/money";
 import { groupRmaSummary, rmaTotals } from "@/lib/rma";
 import { labelStatus } from "@/lib/status";
@@ -14,7 +14,7 @@ export type CreditNoteDoc = {
   paymentAmountGbp: number;
   paymentAmountEur: number;
   notes: string | null;
-  invoice: { invoiceNumber: string };
+  invoice: { invoiceNumber: string; entity: string };
   appliedInvoice: { invoiceNumber: string } | null;
   customer: {
     clientId: string;
@@ -43,16 +43,19 @@ export function CreditNoteDocument({ rma }: { rma: CreditNoteDoc }) {
   const totals = rmaTotals(rma);
   const summary = groupRmaSummary(rma.items);
   const due = rma.paymentType === "PENDING" ? totals : { totalGbp: 0, totalEur: 0 };
+  const entity = rma.invoice.entity;
+  const company = companyForEntity(entity);
+  const money = (gbp: number, eur: number) => (entity === "NI" ? formatEur(eur) : formatGbp(gbp));
 
   return (
     <div className="mx-auto max-w-[210mm] bg-white p-8 text-slate-900 print:p-0">
       <div className="flex flex-col gap-6 border-b border-slate-200 pb-6 sm:flex-row sm:justify-between">
         <div>
           <div className="text-xs font-semibold tracking-[0.25em] text-sky-700">
-            {creditNoteCompany.shortName}
+            {company.shortName}
           </div>
-          <h1 className="mt-1 text-2xl font-semibold">{creditNoteCompany.tradingName}</h1>
-          <p className="mt-2 text-sm text-slate-600">{addressLines(creditNoteCompany).join(", ")}</p>
+          <h1 className="mt-1 text-2xl font-semibold">{company.tradingName}</h1>
+          <p className="mt-2 text-sm text-slate-600">{addressLines(company).join(", ")}</p>
         </div>
         <div className="text-right">
           <div className="text-3xl font-semibold">CREDIT NOTE</div>
@@ -103,8 +106,7 @@ export function CreditNoteDocument({ rma }: { rma: CreditNoteDoc }) {
               <td className="py-2 pr-2">{item.stockUnit.color}</td>
               <td className="py-2 pr-2">{item.stockUnit.grade}</td>
               <td className="py-2 text-right tabular-nums">
-                {formatGbp(item.unitPriceGbp)}
-                <div className="text-xs text-slate-500">{formatEur(item.unitPriceEur)}</div>
+                {money(item.unitPriceGbp, item.unitPriceEur)}
               </td>
             </tr>
           ))}
@@ -116,7 +118,7 @@ export function CreditNoteDocument({ rma }: { rma: CreditNoteDoc }) {
 
       <div className="mt-4 flex justify-end">
         <div className="w-full max-w-sm border-t border-slate-300 py-2 text-right text-base font-semibold">
-          Grand Total: {formatGbp(totals.totalGbp)} / {formatEur(totals.totalEur)}
+          Grand Total: {money(totals.totalGbp, totals.totalEur)}
         </div>
       </div>
 
@@ -132,12 +134,10 @@ export function CreditNoteDocument({ rma }: { rma: CreditNoteDoc }) {
       </div>
 
       <div className="mt-8 grid gap-2 text-sm text-slate-600 sm:grid-cols-2">
-        <div>Payment Due: {formatGbp(due.totalGbp)} / {formatEur(due.totalEur)}</div>
+        <div>Payment Due: {money(due.totalGbp, due.totalEur)}</div>
         <div>Payment Type: {labelStatus(rma.paymentType)}</div>
         <div>Payment Date: {rma.paymentDate ? formatDate(rma.paymentDate) : "—"}</div>
-        <div>
-          Payment Amount: {formatGbp(rma.paymentAmountGbp)} / {formatEur(rma.paymentAmountEur)}
-        </div>
+        <div>Payment Amount: {money(rma.paymentAmountGbp, rma.paymentAmountEur)}</div>
         <div>Invoice Applied: {rma.appliedInvoice?.invoiceNumber ?? "—"}</div>
       </div>
 
@@ -150,9 +150,9 @@ export function CreditNoteDocument({ rma }: { rma: CreditNoteDoc }) {
           ))}
         </ol>
         <p className="mt-6">
-          Company Registration number: {creditNoteCompany.companyNo}
+          Company Registration number: {company.companyNo}
           <br />
-          Company VAT Number: {creditNoteCompany.vatNumber}
+          Company VAT Number: {company.vatNumber}
         </p>
       </div>
     </div>

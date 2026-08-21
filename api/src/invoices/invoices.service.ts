@@ -99,11 +99,17 @@ export class InvoicesService {
       throw new BadRequestException(`Not in stock: ${unavailable.map((u) => u.imei).join(", ")}`);
     }
 
+    const entity = input.entity ?? "UK";
+
     return this.prisma.$transaction(async (tx) => {
-      const invoiceNumber = await nextNumberTx(tx, "INV", "INV");
+      const invoiceNumber =
+        entity === "NI"
+          ? await nextNumberTx(tx, "INV_NI", "N", "")
+          : await nextNumberTx(tx, "INV_UK", "", "");
       const created = await tx.invoice.create({
         data: {
           invoiceNumber,
+          entity,
           customerId,
           status,
           fxRate: input.fxRate ?? DEFAULT_FX_RATE,

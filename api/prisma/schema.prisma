@@ -146,6 +146,7 @@ model Customer {
 model Invoice {
   id              String        @id @default(cuid())
   invoiceNumber   String        @unique
+  entity          String        @default("UK")
   customerId      String
   customer        Customer      @relation(fields: [customerId], references: [id])
   status          String        @default("PENDING")

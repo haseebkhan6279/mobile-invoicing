@@ -54,7 +54,10 @@ export class RmaService {
     const itemByUnitId = new Map(items.map((item) => [item.stockUnitId, item]));
 
     return this.prisma.$transaction(async (tx) => {
-      const rmaNumber = await nextNumberTx(tx, "RMA", "RMA");
+      const rmaNumber =
+        invoice.entity === "NI"
+          ? await nextNumberTx(tx, "RMA_NI", "N", "")
+          : await nextNumberTx(tx, "RMA_UK", "", "");
       const created = await tx.rma.create({
         data: {
           rmaNumber,

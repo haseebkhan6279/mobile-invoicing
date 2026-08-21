@@ -1,6 +1,5 @@
 import { MobileListRow } from "@/components/mobile-list-row";
 import { PageHeader } from "@/components/page-header";
-import { MoneyPair } from "@/components/money-pair";
 import { StatusBadge } from "@/components/status-badge";
 import { Select } from "@/components/ui/select";
 import { Table, THead, Th, Td } from "@/components/ui/table";
@@ -8,11 +7,13 @@ import { ClickableRow } from "@/components/ui/clickable-row";
 import { requireUser } from "@/lib/auth-guard";
 import { invoiceTotals } from "@/lib/invoice";
 import { apiClient } from "@/lib/api-client";
+import { formatEur, formatGbp } from "@/lib/money";
 import { formatDate } from "@/lib/utils";
 
 type InvoiceRow = {
   id: string;
   invoiceNumber: string;
+  entity: string;
   status: string;
   issuedAt: string;
   shippingCostGbp: number;
@@ -37,7 +38,7 @@ export default async function InvoicesPage({
     <div>
       <PageHeader
         title="Invoices"
-        description="Pending, awaiting payment, and paid. Amounts in GBP and EUR."
+        description="Pending, awaiting payment, and paid. Amount shown in the invoice's billing currency."
         action={{ href: "/invoices/new", label: "Create invoice" }}
       />
       <form className="mb-4">
@@ -75,7 +76,7 @@ export default async function InvoicesPage({
                     <StatusBadge status={invoice.status} />
                   </Td>
                   <Td>
-                    <MoneyPair gbp={totals.totalGbp} eur={totals.totalEur} stacked />
+                    {invoice.entity === "NI" ? formatEur(totals.totalEur) : formatGbp(totals.totalGbp)}
                   </Td>
                   <Td>{formatDate(invoice.issuedAt)}</Td>
                 </ClickableRow>
@@ -94,7 +95,7 @@ export default async function InvoicesPage({
               title={invoice.invoiceNumber}
               subtitle={invoice.customer.name}
               trailing={<StatusBadge status={invoice.status} />}
-              meta={<MoneyPair gbp={totals.totalGbp} eur={totals.totalEur} stacked />}
+              meta={invoice.entity === "NI" ? formatEur(totals.totalEur) : formatGbp(totals.totalGbp)}
             />
           );
         })}

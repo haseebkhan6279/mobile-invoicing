@@ -29,7 +29,7 @@ type RmaDetail = {
   paymentDate: string | null;
   appliedInvoiceId: string | null;
   customer: { name: string };
-  invoice: { invoiceNumber: string };
+  invoice: { invoiceNumber: string; entity: string };
   appliedInvoice: { id: string; invoiceNumber: string } | null;
   items: {
     id: string;

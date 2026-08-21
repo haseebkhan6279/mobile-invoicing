@@ -14,6 +14,7 @@ import { INVOICE_STATUSES } from "@/lib/status";
 type InvoiceDetail = {
   id: string;
   invoiceNumber: string;
+  entity: string;
   status: string;
   issuedAt: string;
   fxRate: number;

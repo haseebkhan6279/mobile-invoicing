@@ -40,6 +40,9 @@ export const creditNoteCompany = {
   whatsappDisplay: sellerCompany.whatsappDisplay,
   email: sellerCompany.email,
   tagline: "Returns & credit notes",
+  // No real NI bank account details were provided — reusing the UK account as a
+  // placeholder. Replace with the actual NI Corporation bank details when known.
+  bank: sellerCompany.bank,
 } as const;
 
 type CompanyEntity = typeof sellerCompany | typeof creditNoteCompany;
@@ -47,4 +50,8 @@ type CompanyEntity = typeof sellerCompany | typeof creditNoteCompany;
 export function addressLines(entity: CompanyEntity) {
   const { line1, line2, postcode, city, country } = entity.address;
   return [line1, line2, `${postcode} ${city}`, country].filter(Boolean) as string[];
+}
+
+export function companyForEntity(entity: string): CompanyEntity {
+  return entity === "NI" ? creditNoteCompany : sellerCompany;
 }
