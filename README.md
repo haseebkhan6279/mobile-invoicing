@@ -4,23 +4,39 @@ Staff operations system for Atlantic Devices Solutions: purchase orders, IMEI st
 
 The public catalog site (`mobile-ecommerce`) is a separate repo.
 
+## Structure
+
+This is an npm-workspaces monorepo of two independently deployable apps:
+
+```
+api/          NestJS + Prisma/Postgres — the REST API, owns the database entirely
+dashboard/    Next.js — the staff web dashboard, talks to api/ over HTTP only
+```
+
+Nothing else touches Postgres directly, and the dashboard has no Prisma dependency —
+every read/write goes through `api/`'s HTTP endpoints. A separate mobile app also talks
+to the same `api/`.
+
 ## Setup
 
 1. Create a project at [supabase.com](https://supabase.com).
-2. Copy `.env.example` to `.env`.
-3. In Supabase go to **Project Settings → Database** and paste:
+2. Copy `api/.env.example` to `api/.env` and `dashboard/.env.example` to `dashboard/.env`.
+3. In Supabase go to **Project Settings → Database** and paste into `api/.env`:
    - **Transaction pooler** URI into `DATABASE_URL` (port `6543`). Add `?pgbouncer=true` if it is not already there.
    - **Direct** URI (or Session pooler, port `5432`) into `DIRECT_URL`.
-4. Set `AUTH_SECRET` to a long random string.
+4. Set `AUTH_SECRET` (in `dashboard/.env`) and `API_JWT_SECRET` (in `api/.env`) to two
+   different long random strings — `openssl rand -base64 32`.
 
 ```bash
 npm install
-npx prisma migrate deploy
-npx prisma db seed
-npm run dev
+npm run db:migrate --workspace=api
+npm run db:seed --workspace=api
+npm run dev:api        # terminal 1 — http://localhost:3000
+npm run dev:dashboard  # terminal 2 — http://localhost:5173
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Open [http://localhost:5173](http://localhost:5173). The dashboard calls the API at
+`API_URL` (defaults to `http://localhost:3000/api/v1`).
 
 If migrate fails with an IPv6 / connection error, use the **Session pooler** URI for `DIRECT_URL`.
 
@@ -42,19 +58,25 @@ Change this after first login in production.
 - **Shipments** — tracking, quoted shipping vs actual courier cost
 - **Search** — IMEI, invoice, PO, RMA, client ID, name, tracking
 
-## Mobile REST API (`/api/v1`)
+## REST API (`api/`, mounted at `/api/v1`)
 
-A JSON REST API lives under `src/app/api/v1/**` for the separate mobile app. It is purely
-additive: the dashboard's pages and server actions are untouched and keep working exactly
-as before. Every business rule (validation, number generation, IMEI checks, stock status
-transitions, ledger math) lives once in `src/lib/services/*.ts`; both the dashboard's
-server actions (`src/actions/*.ts`) and the API routes call those same functions.
+A NestJS app, structured as one module per resource
+(`api/src/<resource>/{*.controller,*.service,dto/*}.ts`), backed by Prisma/Postgres.
+Both the staff dashboard and the separate mobile app are just HTTP clients of this API —
+there is exactly one implementation of every business rule (validation, number
+generation, IMEI checks, stock status transitions, ledger math), living in the
+`*.service.ts` files.
+
+Runs on `PORT` (default `3000`); every route is mounted under the `/api/v1` prefix
+except `GET /health`.
 
 ### Auth
 
-The API does not use the dashboard's cookie session. It issues its own signed JWTs (via
-`jose`) verified with a dedicated `API_JWT_SECRET` — independent from the web session's
-`AUTH_SECRET`, so either can be rotated without affecting the other.
+Stateless JWTs signed with `@nestjs/jwt`, verified via a `passport-jwt` strategy, using
+a dedicated `API_JWT_SECRET` — independent from the dashboard's own `AUTH_SECRET`
+(the dashboard's NextAuth session internally holds a copy of the API's access/refresh
+tokens so its server actions and pages can call the API on the signed-in user's behalf;
+see `dashboard/src/auth.ts`).
 
 **1. Log in**
 
@@ -88,7 +110,8 @@ POST /api/v1/auth/refresh
 Returns the same shape as login (a fresh access + refresh token pair).
 
 Every other `/api/v1/**` route requires `Authorization: Bearer <accessToken>` and returns
-`401` if it's missing, malformed, expired, or the user no longer exists.
+`401` if it's missing, malformed, expired, or the user no longer exists (re-checked on
+every request, not just trusted from the token payload).
 
 ### Response envelope
 
@@ -99,20 +122,23 @@ Every other `/api/v1/**` route requires `Authorization: Bearer <accessToken>` an
 
 ### CORS
 
-- Allow-list comes from `MOBILE_APP_ORIGIN` (comma-separated), defaulting to the
-  Expo/Metro dev origins `http://localhost:8081,http://localhost:19006` if unset.
+- Allow-list comes from `CORS_ORIGIN` (comma-separated, in `api/.env`), defaulting to
+  the dashboard's dev origin plus the Expo/Metro dev origins:
+  `http://localhost:5173,http://localhost:8081,http://localhost:19006`.
 - Any `https://*.vercel.app` preview origin is auto-allowed.
 - Requests with no `Origin` header (native app, server-to-server) are always let through.
 - `Access-Control-Allow-Credentials: true` is set and the matching origin is echoed back
-  exactly (never `*`, since credentials are involved).
-- Every `/api/v1/**` route answers `OPTIONS` preflight.
+  exactly (never `*`, since credentials are involved). A disallowed-but-present origin
+  is rejected server-side (`500` on the preflight) rather than silently stripped.
 
 ### Endpoints
 
 | Method | Path | Body / query | Notes |
 | --- | --- | --- | --- |
+| GET | `/health` | | no `/api/v1` prefix, no auth |
 | POST | `/api/v1/auth/login` | `{ email, password }` | public |
 | POST | `/api/v1/auth/refresh` | `{ refreshToken }` | public |
+| GET | `/api/v1/lookups` | | grades, colors, networks, suppliers, customers (dropdown data) |
 | GET | `/api/v1/customers` | `?q=` optional search (top 8) | no `q` → full list |
 | GET | `/api/v1/customers/:id` | | includes `invoices` |
 | POST | `/api/v1/customers` | see below | |
@@ -128,6 +154,8 @@ Every other `/api/v1/**` route requires `Authorization: Bearer <accessToken>` an
 | POST | `/api/v1/purchase-orders/:id/receive` | `{ supplierId?, batches }` | ledger always posted (`postLedger` forced on) |
 | GET | `/api/v1/stock` | `?status=&grade=&q=` | |
 | POST | `/api/v1/stock` | see below | `409` if an IMEI already exists |
+| GET | `/api/v1/stock/available-imeis` | `?productName=&color=&network=&grade=&limit=` | in-stock IMEIs matching a spec |
+| GET | `/api/v1/stock/search-products` | `?q=` | grouped product/grade typeahead |
 | GET | `/api/v1/suppliers` | | includes `ledger`, `_count.purchaseOrders` |
 | GET | `/api/v1/suppliers/:id` | | includes `ledger`, `purchaseOrders` |
 | POST | `/api/v1/suppliers` | `{ name, phone?, email?, address?, vatNumber?, notes? }` | |
@@ -227,9 +255,16 @@ the request are `400`, an IMEI already on file is `409`.
 }
 ```
 
-### Env vars
+### `api/` env vars (`api/.env`)
 
-Add these alongside the existing ones (see `.env.example`):
+- `DATABASE_URL` / `DIRECT_URL` — Postgres (Supabase).
+- `PORT` — default `3000`.
+- `API_JWT_SECRET` — signing secret for the API's JWTs. Different from the dashboard's `AUTH_SECRET`.
+- `CORS_ORIGIN` — comma-separated browser origins allowed to call the API with credentials.
 
-- `API_JWT_SECRET` — signing secret for the API's JWTs. Generate with `openssl rand -base64 32`. Keep it different from `AUTH_SECRET`.
-- `MOBILE_APP_ORIGIN` — comma-separated browser origins allowed to call the API with credentials (native app requests don't need this).
+### `dashboard/` env vars (`dashboard/.env`)
+
+- `AUTH_SECRET` / `AUTH_URL` — NextAuth session (cookie-based, web-only).
+- `API_URL` — base URL of `api/`, e.g. `http://localhost:3000/api/v1`.
+
+**Mobile app developers:** point your HTTP client at the `api/` origin (`http://localhost:3000` in dev) — the `/api/v1/**` paths and request/response shapes above are the full contract.

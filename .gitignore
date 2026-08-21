@@ -1,8 +1,8 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# dependencies
-/node_modules
-/.pnp
+# dependencies (unanchored: covers the workspace root and api/, dashboard/)
+node_modules/
+.pnp
 .pnp.*
 .yarn/*
 !.yarn/patches
@@ -11,14 +11,17 @@
 !.yarn/versions
 
 # testing
-/coverage
+coverage/
 
-# next.js
-/.next/
-/out/
+# next.js (dashboard/)
+.next/
+out/
+
+# nest (api/)
+dist/
 
 # production
-/build
+build/
 
 # misc
 .DS_Store
@@ -36,8 +39,8 @@ yarn-error.log*
 !.env.example
 
 # prisma
-/prisma/dev.db
-/prisma/dev.db-journal
+prisma/dev.db
+prisma/dev.db-journal
 *.db
 *.db-journal
 

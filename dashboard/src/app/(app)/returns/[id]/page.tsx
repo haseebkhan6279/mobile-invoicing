@@ -1,0 +1,219 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { applyRmaCredit, processRma } from "@/actions/rma";
+import { Notice } from "@/components/notice";
+import { PageHeader } from "@/components/page-header";
+import { StatusBadge } from "@/components/status-badge";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select } from "@/components/ui/select";
+import { SubmitButton } from "@/components/ui/submit-button";
+import { Table, THead, Th, Td } from "@/components/ui/table";
+import { requireUser } from "@/lib/auth-guard";
+import { formatEur, formatGbp } from "@/lib/money";
+import { apiClient, ApiError } from "@/lib/api-client";
+import { rmaTotals } from "@/lib/rma";
+import { RMA_PAYMENT_TYPES, RMA_STATUSES } from "@/lib/status";
+
+type RmaDetail = {
+  id: string;
+  rmaNumber: string;
+  status: string;
+  reason: string | null;
+  notes: string | null;
+  invoiceId: string;
+  paymentType: string;
+  paymentAmountGbp: number;
+  paymentAmountEur: number;
+  paymentDate: string | null;
+  appliedInvoiceId: string | null;
+  customer: { name: string };
+  invoice: { invoiceNumber: string };
+  appliedInvoice: { id: string; invoiceNumber: string } | null;
+  items: {
+    id: string;
+    reason: string | null;
+    unitPriceGbp: number;
+    unitPriceEur: number;
+    action: string;
+    stockUnit: { imei: string; productName: string; grade: string; status: string };
+  }[];
+};
+type InvoiceOption = { id: string; invoiceNumber: string; customer: { name: string } };
+
+export default async function RmaDetailPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ ok?: string; error?: string }>;
+}) {
+  const { apiToken } = await requireUser();
+  const { id } = await params;
+  const { ok, error } = await searchParams;
+  let rma: RmaDetail;
+  try {
+    rma = await apiClient.get<RmaDetail>(`/rma/${id}`, apiToken);
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 404) notFound();
+    throw err;
+  }
+
+  const totals = rmaTotals(rma);
+  const invoices = (await apiClient.get<InvoiceOption[]>("/invoices", apiToken)).slice(0, 100);
+
+  return (
+    <div className="space-y-6">
+      <PageHeader
+        title={rma.rmaNumber}
+        description={`${rma.customer.name} · ${rma.invoice.invoiceNumber}`}
+      />
+      <Notice ok={ok} error={error} />
+      <div className="no-print">
+        <Link
+          href={`/returns/${rma.id}/print`}
+          className="inline-flex h-10 items-center rounded-lg bg-white px-4 text-sm font-medium ring-1 ring-slate-200"
+        >
+          Format / print
+        </Link>
+      </div>
+      <Card>
+        <p className="text-sm text-slate-600">
+          Reason: {rma.reason || "—"}
+          {rma.notes ? <span> · {rma.notes}</span> : null}
+        </p>
+        <p className="mt-2">
+          Invoice:{" "}
+          <Link className="text-[#0b3a6e] hover:underline" href={`/invoices/${rma.invoiceId}`}>
+            {rma.invoice.invoiceNumber}
+          </Link>
+        </p>
+        <p className="mt-2 text-sm font-medium">
+          Credit value: {formatGbp(totals.totalGbp)} / {formatEur(totals.totalEur)}
+        </p>
+      </Card>
+      <Card>
+        <Table>
+          <THead>
+            <tr>
+              <Th>IMEI</Th>
+              <Th>Product</Th>
+              <Th>Reason</Th>
+              <Th>Unit price</Th>
+              <Th>Action</Th>
+              <Th>Stock status</Th>
+            </tr>
+          </THead>
+          <tbody>
+            {rma.items.map((item) => (
+              <tr key={item.id}>
+                <Td className="font-mono">{item.stockUnit.imei}</Td>
+                <Td>
+                  {item.stockUnit.productName} · {item.stockUnit.grade}
+                </Td>
+                <Td>{item.reason || "—"}</Td>
+                <Td>
+                  {formatGbp(item.unitPriceGbp)} / {formatEur(item.unitPriceEur)}
+                </Td>
+                <Td>{item.action}</Td>
+                <Td>
+                  <StatusBadge status={item.stockUnit.status} />
+                </Td>
+              </tr>
+            ))}
+          </tbody>
+        </Table>
+      </Card>
+      <Card>
+        <form action={processRma} className="flex flex-wrap items-end gap-3">
+          <input type="hidden" name="id" value={rma.id} />
+          <div>
+            <Select name="status" defaultValue={rma.status}>
+              {RMA_STATUSES.map((status) => (
+                <option key={status} value={status}>
+                  {status}
+                </option>
+              ))}
+            </Select>
+          </div>
+          <SubmitButton pendingText="Updating…">Update RMA</SubmitButton>
+        </form>
+        <p className="mt-2 text-xs text-slate-500">
+          Set to Received, Refunded, or Closed to restock, credit, or write off units.
+        </p>
+      </Card>
+      <Card>
+        <h2 className="mb-3 font-medium">Apply credit</h2>
+        <form action={applyRmaCredit} className="space-y-3">
+          <input type="hidden" name="rmaId" value={rma.id} />
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div>
+              <Label htmlFor="paymentType">Payment type</Label>
+              <Select id="paymentType" name="paymentType" defaultValue={rma.paymentType}>
+                {RMA_PAYMENT_TYPES.map((type) => (
+                  <option key={type} value={type}>
+                    {type.replaceAll("_", " ")}
+                  </option>
+                ))}
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="appliedInvoiceId">Apply to invoice</Label>
+              <Select
+                id="appliedInvoiceId"
+                name="appliedInvoiceId"
+                defaultValue={rma.appliedInvoiceId ?? ""}
+              >
+                <option value="">Select invoice</option>
+                {invoices.map((invoice) => (
+                  <option key={invoice.id} value={invoice.id}>
+                    {invoice.invoiceNumber} · {invoice.customer.name}
+                  </option>
+                ))}
+              </Select>
+            </div>
+            <div>
+              <Label htmlFor="paymentAmountGbp">Amount GBP</Label>
+              <Input
+                id="paymentAmountGbp"
+                name="paymentAmountGbp"
+                type="number"
+                step="0.01"
+                defaultValue={rma.paymentAmountGbp || totals.totalGbp}
+              />
+            </div>
+            <div>
+              <Label htmlFor="paymentAmountEur">Amount EUR</Label>
+              <Input
+                id="paymentAmountEur"
+                name="paymentAmountEur"
+                type="number"
+                step="0.01"
+                defaultValue={rma.paymentAmountEur || totals.totalEur}
+              />
+            </div>
+            <div>
+              <Label htmlFor="paymentDate">Payment date</Label>
+              <Input
+                id="paymentDate"
+                name="paymentDate"
+                type="date"
+                defaultValue={rma.paymentDate ? rma.paymentDate.slice(0, 10) : ""}
+              />
+            </div>
+          </div>
+          <SubmitButton pendingText="Saving…">Save credit</SubmitButton>
+        </form>
+        {rma.appliedInvoice ? (
+          <p className="mt-2 text-xs text-slate-500">
+            Currently applied to{" "}
+            <Link className="text-[#0b3a6e] hover:underline" href={`/invoices/${rma.appliedInvoice.id}`}>
+              {rma.appliedInvoice.invoiceNumber}
+            </Link>
+          </p>
+        ) : null}
+      </Card>
+    </div>
+  );
+}
