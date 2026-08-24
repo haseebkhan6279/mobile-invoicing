@@ -29,14 +29,14 @@ export default async function NewSupplierPage({
   await requireUser();
   const { error } = await searchParams;
   return (
-    <div className="max-w-2xl">
+    <div className="max-w-4xl">
       <PageHeader title="Add supplier" />
       <Notice error={error} />
       <Card>
         <form action={createSupplier} className="space-y-6">
           <div className="space-y-3">
             <SectionLabel>Contact</SectionLabel>
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               <div>
                 <Label htmlFor="name">Name</Label>
                 <div className="relative">

@@ -29,7 +29,7 @@ export default async function NewCustomerPage({
   await requireUser();
   const { error, name, returnTo } = await searchParams;
   return (
-    <div className="max-w-2xl">
+    <div className="max-w-4xl">
       <PageHeader title="Add customer" description="Client ID is generated automatically." />
       <Notice error={error} />
       <Card>
@@ -38,7 +38,7 @@ export default async function NewCustomerPage({
 
           <div className="space-y-3">
             <SectionLabel>Contact</SectionLabel>
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               <div>
                 <Label htmlFor="name">Name</Label>
                 <div className="relative">
