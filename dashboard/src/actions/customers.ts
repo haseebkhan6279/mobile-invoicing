@@ -80,3 +80,19 @@ export async function updateCustomer(formData: FormData) {
   revalidatePath(`/customers/${id}`);
   redirect(`/customers/${id}?ok=Saved`);
 }
+
+export async function deleteCustomer(formData: FormData) {
+  const { apiToken } = await requireUser();
+  const id = String(formData.get("id") ?? "");
+  try {
+    await apiClient.delete(`/customers/${id}`, apiToken);
+  } catch (err) {
+    if (err instanceof ApiError) {
+      if (err.status === 404) redirect("/customers");
+      redirect(`/customers/${id}?error=${encodeURIComponent(err.message)}`);
+    }
+    throw err;
+  }
+  revalidatePath("/customers");
+  redirect("/customers?ok=Customer deleted");
+}

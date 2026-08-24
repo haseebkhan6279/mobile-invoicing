@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { updateCustomer } from "@/actions/customers";
+import { deleteCustomer, updateCustomer } from "@/actions/customers";
 import { Notice } from "@/components/notice";
 import { PageHeader } from "@/components/page-header";
 import { StatusBadge } from "@/components/status-badge";
 import { Card } from "@/components/ui/card";
+import { ConfirmSubmitButton } from "@/components/ui/confirm-submit-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SubmitButton } from "@/components/ui/submit-button";
@@ -98,6 +99,23 @@ export default async function CustomerDetailPage({
             <li className="text-slate-500">No invoices yet.</li>
           ) : null}
         </ul>
+      </Card>
+      <Card className="border-red-100">
+        <h2 className="mb-1 font-medium text-red-700">Delete customer</h2>
+        <p className="mb-4 text-sm text-slate-500">
+          Only possible while this customer has no invoices or RMAs on record.
+        </p>
+        <form action={deleteCustomer}>
+          <input type="hidden" name="id" value={customer.id} />
+          <ConfirmSubmitButton
+            variant="danger"
+            pendingText="Deleting…"
+            confirmTitle={`Delete customer "${customer.name}"?`}
+            confirmMessage="This cannot be undone."
+          >
+            Delete customer
+          </ConfirmSubmitButton>
+        </form>
       </Card>
     </div>
   );

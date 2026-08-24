@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { nextNumberTx } from "../common/numbers";
 import { CustomerDto } from "./dto/customer.dto";
@@ -78,5 +78,18 @@ export class CustomersService {
         notes: input.notes ?? null,
       },
     });
+  }
+
+  async deleteCustomer(id: string) {
+    const customer = await this.prisma.customer.findUnique({
+      where: { id },
+      include: { _count: { select: { invoices: true, rmas: true } } },
+    });
+    if (!customer) throw new NotFoundException("Customer not found");
+    if (customer._count.invoices > 0 || customer._count.rmas > 0) {
+      throw new ConflictException("Cannot delete a customer with invoices or RMAs on record");
+    }
+    await this.prisma.customer.delete({ where: { id } });
+    return { deleted: true };
   }
 }

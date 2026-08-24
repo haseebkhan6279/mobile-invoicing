@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { MobileListRow } from "@/components/mobile-list-row";
+import { Notice } from "@/components/notice";
 import { PageHeader } from "@/components/page-header";
 import { Table, THead, Th, Td } from "@/components/ui/table";
 import { requireUser } from "@/lib/auth-guard";
@@ -8,8 +9,13 @@ import type { CustomerLookup } from "@/lib/lookups";
 
 type CustomerRow = CustomerLookup & { _count: { invoices: number } };
 
-export default async function CustomersPage() {
+export default async function CustomersPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ ok?: string; error?: string }>;
+}) {
   const { apiToken } = await requireUser();
+  const { ok, error } = await searchParams;
   const customers = await apiClient.get<CustomerRow[]>("/customers", apiToken);
 
   return (
@@ -19,6 +25,7 @@ export default async function CustomersPage() {
         description="Client ID is assigned automatically. Type a name on invoices to auto-fetch details."
         action={{ href: "/customers/new", label: "Add customer" }}
       />
+      <Notice ok={ok} error={error} />
       <div className="hidden overflow-hidden rounded-xl border border-slate-200 bg-white lg:block">
         <Table>
           <THead>
@@ -29,6 +36,7 @@ export default async function CustomersPage() {
               <Th>Phone</Th>
               <Th>Email</Th>
               <Th>Invoices</Th>
+              <Th>Actions</Th>
             </tr>
           </THead>
           <tbody>
@@ -44,6 +52,14 @@ export default async function CustomersPage() {
                 <Td>{customer.phone || "—"}</Td>
                 <Td>{customer.email || "—"}</Td>
                 <Td>{customer._count.invoices}</Td>
+                <Td>
+                  <Link
+                    href={`/customers/${customer.id}`}
+                    className="inline-flex h-8 items-center rounded-lg bg-white px-3 text-xs font-medium text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50"
+                  >
+                    Edit
+                  </Link>
+                </Td>
               </tr>
             ))}
           </tbody>
