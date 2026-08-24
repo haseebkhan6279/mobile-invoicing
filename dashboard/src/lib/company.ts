@@ -24,24 +24,26 @@ export const sellerCompany = {
 } as const;
 
 export const creditNoteCompany = {
-  legalName: "Animus Corporation NI Limited",
-  tradingName: "Animus Corporation NI Limited",
-  shortName: "Animus NI",
+  legalName: "EU Mobile Wholesalers",
+  tradingName: "EU Mobile Wholesalers",
+  shortName: "EU Mobile Wholesalers",
+  // Company number and VAT number were not provided for this trading name —
+  // keeping the previous entity's numbers as placeholders. Replace once known.
   companyNo: "NI675814",
   vatNumber: "XI 375676253",
   address: {
-    line1: "Regus Forsyth House",
-    line2: "Cromac Square",
-    postcode: "BT2 8LA",
-    city: "Belfast, Northern Ireland",
+    line1: "12-16 Bridge Street",
+    line2: "",
+    postcode: "BT1 1LU",
+    city: "Belfast",
     country: "United Kingdom",
   },
-  phoneDisplay: sellerCompany.phoneDisplay,
-  whatsappDisplay: sellerCompany.whatsappDisplay,
-  email: sellerCompany.email,
+  phoneDisplay: "+447561400005",
+  whatsappDisplay: "+447561400005",
+  email: "team@eumobilewholesalers.com",
   tagline: "Returns & credit notes",
-  // No real NI bank account details were provided — reusing the UK account as a
-  // placeholder. Replace with the actual NI Corporation bank details when known.
+  // No real bank account details were provided for this trading name —
+  // reusing the UK account as a placeholder. Replace when known.
   bank: sellerCompany.bank,
 } as const;
 
