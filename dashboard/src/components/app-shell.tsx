@@ -12,6 +12,7 @@ import {
   Package,
   RotateCcw,
   Search,
+  Settings,
   Truck,
   Users,
   Warehouse,
@@ -30,6 +31,7 @@ const nav = [
   { href: "/returns", label: "Returns / RMA", icon: RotateCcw },
   { href: "/shipments", label: "Shipments", icon: Truck },
   { href: "/search", label: "Search", icon: Search },
+  { href: "/settings", label: "Settings", icon: Settings },
 ];
 
 const PRIMARY_HREFS = ["/", "/stock", "/invoices", "/customers"];
