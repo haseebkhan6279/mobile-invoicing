@@ -24,12 +24,12 @@ export const sellerCompany = {
 } as const;
 
 export const creditNoteCompany = {
-  legalName: "EU Mobile Wholesalers",
-  tradingName: "EU Mobile Wholesalers",
-  shortName: "EU Mobile Wholesalers",
-  // Company number and VAT number were not provided for this trading name —
-  // keeping the previous entity's numbers as placeholders. Replace once known.
-  companyNo: "NI675814",
+  legalName: "Atlantic Devices Solutions LTD",
+  tradingName: "Atlantic Devices Solutions LTD",
+  shortName: "Atlantic Devices Solutions",
+  companyNo: "NI742244",
+  // VAT number was not provided for this trading name — keeping the previous
+  // entity's number as a placeholder. Replace once known.
   vatNumber: "XI 375676253",
   address: {
     line1: "12-16 Bridge Street",
@@ -40,7 +40,7 @@ export const creditNoteCompany = {
   },
   phoneDisplay: "+447561400005",
   whatsappDisplay: "+447561400005",
-  email: "team@eumobilewholesalers.com",
+  email: "atlanticdevicessolutions@gmail.com",
   tagline: "Returns & credit notes",
   // No real bank account details were provided for this trading name —
   // reusing the UK account as a placeholder. Replace when known.
