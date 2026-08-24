@@ -2,6 +2,7 @@ export const sellerCompany = {
   legalName: "Animus Corporation Limited",
   tradingName: "Animus Corporation Limited",
   shortName: "Animus",
+  logo: null as string | null,
   companyNo: "11115138",
   vatNumber: "GB299538630",
   address: {
@@ -27,6 +28,7 @@ export const creditNoteCompany = {
   legalName: "Atlantic Devices Solutions LTD",
   tradingName: "Atlantic Devices Solutions LTD",
   shortName: "Atlantic Devices Solutions",
+  logo: "/logo.jpeg" as string | null,
   companyNo: "NI742244",
   // VAT number was not provided for this trading name — keeping the previous
   // entity's number as a placeholder. Replace once known.
@@ -47,7 +49,7 @@ export const creditNoteCompany = {
   bank: sellerCompany.bank,
 } as const;
 
-type CompanyEntity = typeof sellerCompany | typeof creditNoteCompany;
+export type CompanyEntity = typeof sellerCompany | typeof creditNoteCompany;
 
 export function addressLines(entity: CompanyEntity) {
   const { line1, line2, postcode, city, country } = entity.address;

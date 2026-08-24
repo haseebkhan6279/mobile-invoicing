@@ -1,3 +1,4 @@
+import { CompanyBrand } from "@/components/company-brand";
 import { addressLines, companyForEntity } from "@/lib/company";
 import { formatEur, formatGbp } from "@/lib/money";
 import { groupRmaSummary, rmaTotals } from "@/lib/rma";
@@ -51,10 +52,7 @@ export function CreditNoteDocument({ rma }: { rma: CreditNoteDoc }) {
     <div className="mx-auto max-w-[210mm] bg-white p-8 text-slate-900 print:p-0">
       <div className="flex flex-col gap-6 border-b border-slate-200 pb-6 sm:flex-row sm:justify-between">
         <div>
-          <div className="text-xs font-semibold tracking-[0.25em] text-sky-700">
-            {company.shortName}
-          </div>
-          <h1 className="mt-1 text-2xl font-semibold">{company.tradingName}</h1>
+          <CompanyBrand company={company} />
           <p className="mt-2 text-sm text-slate-600">{addressLines(company).join(", ")}</p>
         </div>
         <div className="text-right">
