@@ -3,6 +3,7 @@ import { MobileListRow } from "@/components/mobile-list-row";
 import { PageHeader } from "@/components/page-header";
 import { MoneyPair } from "@/components/money-pair";
 import { Notice } from "@/components/notice";
+import { EditLink } from "@/components/ui/edit-link";
 import { Table, THead, Th, Td } from "@/components/ui/table";
 import { requireUser } from "@/lib/auth-guard";
 import { totalsFromLedger, type LedgerEntry } from "@/lib/ledger";
@@ -37,6 +38,7 @@ export default async function SuppliersPage({
               <Th>Debit</Th>
               <Th>Balance (payable)</Th>
               <Th>POs</Th>
+              <Th>Actions</Th>
             </tr>
           </THead>
           <tbody>
@@ -65,6 +67,13 @@ export default async function SuppliersPage({
                     <MoneyPair gbp={t.balanceGbp} eur={t.balanceEur} stacked />
                   </Td>
                   <Td>{supplier._count.purchaseOrders}</Td>
+                  <Td>
+                    <EditLink
+                      href={`/suppliers/${supplier.id}`}
+                      label={`Edit ${supplier.name}`}
+                      className="relative z-10"
+                    />
+                  </Td>
                 </tr>
               );
             })}

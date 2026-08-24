@@ -2,6 +2,7 @@ import Link from "next/link";
 import { MobileListRow } from "@/components/mobile-list-row";
 import { Notice } from "@/components/notice";
 import { PageHeader } from "@/components/page-header";
+import { EditLink } from "@/components/ui/edit-link";
 import { Table, THead, Th, Td } from "@/components/ui/table";
 import { requireUser } from "@/lib/auth-guard";
 import { apiClient } from "@/lib/api-client";
@@ -53,12 +54,7 @@ export default async function CustomersPage({
                 <Td>{customer.email || "—"}</Td>
                 <Td>{customer._count.invoices}</Td>
                 <Td>
-                  <Link
-                    href={`/customers/${customer.id}`}
-                    className="inline-flex h-8 items-center rounded-lg bg-white px-3 text-xs font-medium text-slate-700 ring-1 ring-slate-200 hover:bg-slate-50"
-                  >
-                    Edit
-                  </Link>
+                  <EditLink href={`/customers/${customer.id}`} label={`Edit ${customer.name}`} />
                 </Td>
               </tr>
             ))}

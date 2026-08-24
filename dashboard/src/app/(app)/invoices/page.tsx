@@ -1,6 +1,7 @@
 import { MobileListRow } from "@/components/mobile-list-row";
 import { PageHeader } from "@/components/page-header";
 import { StatusBadge } from "@/components/status-badge";
+import { EditLink } from "@/components/ui/edit-link";
 import { Select } from "@/components/ui/select";
 import { Table, THead, Th, Td } from "@/components/ui/table";
 import { ClickableRow } from "@/components/ui/clickable-row";
@@ -62,6 +63,7 @@ export default async function InvoicesPage({
               <Th>Status</Th>
               <Th>Total</Th>
               <Th>Date</Th>
+              <Th>Actions</Th>
             </tr>
           </THead>
           <tbody>
@@ -79,6 +81,12 @@ export default async function InvoicesPage({
                     {invoice.entity === "NI" ? formatEur(totals.totalEur) : formatGbp(totals.totalGbp)}
                   </Td>
                   <Td>{formatDate(invoice.issuedAt)}</Td>
+                  <Td>
+                    <EditLink
+                      href={`/invoices/${invoice.id}`}
+                      label={`Edit ${invoice.invoiceNumber}`}
+                    />
+                  </Td>
                 </ClickableRow>
               );
             })}

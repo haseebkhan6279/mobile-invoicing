@@ -3,6 +3,7 @@ import { MobileListRow } from "@/components/mobile-list-row";
 import { PageHeader } from "@/components/page-header";
 import { MoneyPair } from "@/components/money-pair";
 import { StatusBadge } from "@/components/status-badge";
+import { EditLink } from "@/components/ui/edit-link";
 import { Table, THead, Th, Td } from "@/components/ui/table";
 import { requireUser } from "@/lib/auth-guard";
 import { apiClient } from "@/lib/api-client";
@@ -44,6 +45,7 @@ export default async function PurchaseOrdersPage() {
               <Th>Actual cost</Th>
               <Th>Received</Th>
               <Th>Date</Th>
+              <Th>Actions</Th>
             </tr>
           </THead>
           <tbody>
@@ -70,6 +72,9 @@ export default async function PurchaseOrdersPage() {
                     {po.stockUnits.length}/{ordered}
                   </Td>
                   <Td>{formatDate(po.createdAt)}</Td>
+                  <Td>
+                    <EditLink href={`/purchase-orders/${po.id}`} label={`Edit ${po.poNumber}`} />
+                  </Td>
                 </tr>
               );
             })}
