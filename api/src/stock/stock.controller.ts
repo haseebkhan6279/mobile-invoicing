@@ -1,7 +1,7 @@
-import { Body, Controller, Get, Post, Query, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from "@nestjs/common";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import { StockService } from "./stock.service";
-import { ReceiveStockDto } from "./dto/stock.dto";
+import { ReceiveStockDto, UpdateStockUnitImeiDto } from "./dto/stock.dto";
 
 @Controller("stock")
 @UseGuards(JwtAuthGuard)
@@ -16,6 +16,11 @@ export class StockController {
   @Post()
   receive(@Body() dto: ReceiveStockDto) {
     return this.stock.receiveStockBatches(dto);
+  }
+
+  @Patch(":id/imei")
+  updateImei(@Param("id") id: string, @Body() dto: UpdateStockUnitImeiDto) {
+    return this.stock.updateStockUnitImei(id, dto.imei);
   }
 
   // Used by the dashboard's invoice line builder (typeahead IMEI picker).

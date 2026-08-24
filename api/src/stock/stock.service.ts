@@ -1,6 +1,6 @@
-import { BadRequestException, ConflictException, Injectable } from "@nestjs/common";
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
-import { validateImeiList } from "../common/imei";
+import { isValidImei, validateImeiList } from "../common/imei";
 import { roundMoney } from "../common/money";
 import { ReceiveStockDto } from "./dto/stock.dto";
 
@@ -12,20 +12,35 @@ type NormalizedBatch = {
   grade: string;
   costGbp: number;
   costEur: number;
-  imeis: string[];
+  // One entry per unit to create; null means "no IMEI yet".
+  imeis: (string | null)[];
 };
 
 function normalizeBatches(batches: ReceiveStockDto["batches"]): NormalizedBatch[] {
   const normalized: NormalizedBatch[] = [];
   for (const batch of batches) {
     const productName = (batch.productName ?? "").trim();
-    const imeis = batch.imeis ?? [];
-    if (!productName && !imeis.length) continue;
-
-    const parsed = validateImeiList(imeis);
-    if ("error" in parsed) throw new BadRequestException(parsed.error ?? "Invalid IMEI list");
+    const rawImeis = batch.imeis ?? [];
+    const qty = Number(batch.qty) || 0;
+    if (!productName && !rawImeis.length && qty <= 0) continue;
     if (!productName) throw new BadRequestException("Product name is required for each grade batch.");
-    if (!parsed.imeis?.length) throw new BadRequestException("Enter at least one IMEI per batch.");
+
+    let knownImeis: string[] = [];
+    if (rawImeis.length) {
+      const parsed = validateImeiList(rawImeis);
+      if ("error" in parsed) throw new BadRequestException(parsed.error ?? "Invalid IMEI list");
+      knownImeis = parsed.imeis ?? [];
+    }
+
+    const totalQty = Math.max(knownImeis.length, qty);
+    if (totalQty <= 0) {
+      throw new BadRequestException("Enter at least one IMEI or a quantity for each grade batch.");
+    }
+
+    const imeis: (string | null)[] = [
+      ...knownImeis,
+      ...Array<null>(totalQty - knownImeis.length).fill(null),
+    ];
 
     normalized.push({
       productName,
@@ -35,7 +50,7 @@ function normalizeBatches(batches: ReceiveStockDto["batches"]): NormalizedBatch[
       grade: (batch.grade ?? "").toString().trim() || "A",
       costGbp: Number(batch.costGbp) || 0,
       costEur: Number(batch.costEur) || 0,
-      imeis: parsed.imeis,
+      imeis,
     });
   }
   return normalized;
@@ -66,7 +81,7 @@ export class StockService {
 
     if (!batches.length) throw new BadRequestException("Add at least one grade batch");
 
-    const allImeis = batches.flatMap((batch) => batch.imeis);
+    const allImeis = batches.flatMap((batch) => batch.imeis).filter((imei): imei is string => imei !== null);
     if (new Set(allImeis).size !== allImeis.length) {
       throw new BadRequestException("Duplicate IMEIs across batches");
     }
@@ -149,7 +164,8 @@ export class StockService {
         });
       }
 
-      return { unitsAdded: allImeis.length, purchaseOrderId };
+      const unitsAdded = batches.reduce((sum, batch) => sum + batch.imeis.length, 0);
+      return { unitsAdded, purchaseOrderId };
     });
   }
 
@@ -158,12 +174,28 @@ export class StockService {
     limit = 50,
   ) {
     const units = await this.prisma.stockUnit.findMany({
-      where: { status: "IN_STOCK", ...spec },
+      where: { status: "IN_STOCK", imei: { not: null }, ...spec },
       select: { imei: true },
       orderBy: { createdAt: "asc" },
       take: limit,
     });
-    return units.map((u) => u.imei);
+    return units.map((u) => u.imei as string);
+  }
+
+  async updateStockUnitImei(id: string, imei: string) {
+    const trimmed = imei.trim();
+    if (!isValidImei(trimmed)) {
+      throw new BadRequestException("Invalid IMEI. Use 15 digits.");
+    }
+    const unit = await this.prisma.stockUnit.findUnique({ where: { id } });
+    if (!unit) throw new NotFoundException("Stock unit not found");
+
+    const existing = await this.prisma.stockUnit.findUnique({ where: { imei: trimmed } });
+    if (existing && existing.id !== id) {
+      throw new ConflictException(`IMEI already in stock: ${trimmed}`);
+    }
+
+    return this.prisma.stockUnit.update({ where: { id }, data: { imei: trimmed } });
   }
 
   async searchStockProducts(query: string) {

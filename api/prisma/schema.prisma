@@ -103,7 +103,7 @@ model PurchaseOrderLine {
 
 model StockUnit {
   id              String          @id @default(cuid())
-  imei            String          @unique
+  imei            String?         @unique
   productName     String
   brand           String?
   color           String

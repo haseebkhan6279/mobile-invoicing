@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,17 +26,25 @@ function StockBatchLine({
   colors,
   networks,
   fx,
+  onRemove,
 }: {
   grades: Lookup[];
   colors: Lookup[];
   networks: Lookup[];
   fx: number;
+  onRemove: () => void;
 }) {
-  const [costGbp, setCostGbp] = useState(emptyBatch.costGbp);
-  const [costEur, setCostEur] = useState(emptyBatch.costEur);
+  const [eurValue, setEurValue] = useState(emptyBatch.costEur);
+  const [eurKey, setEurKey] = useState(0);
+  const eurTouched = useRef(false);
 
   return (
     <div className="space-y-3 rounded-xl border border-slate-200 p-4">
+      <div className="flex justify-end">
+        <Button type="button" variant="ghost" size="sm" onClick={onRemove}>
+          Remove batch
+        </Button>
+      </div>
       <div className="grid gap-3 md:grid-cols-4">
         <div className="md:col-span-2">
           <Label>Product name</Label>
@@ -82,29 +90,51 @@ function StockBatchLine({
             name="batchCostGbp"
             type="number"
             step="0.01"
-            value={costGbp}
+            defaultValue={emptyBatch.costGbp}
             onChange={(event) => {
-              const next = Number(event.target.value) || 0;
-              setCostGbp(next);
-              if (costEur === 0) setCostEur(eurFromGbp(next, fx));
+              if (eurTouched.current) return;
+              const raw = event.target.value;
+              if (raw === "") return;
+              const n = Number(raw);
+              if (!Number.isFinite(n)) return;
+              setEurValue(eurFromGbp(n, fx));
+              setEurKey((k) => k + 1);
             }}
           />
         </div>
         <div>
           <Label>Unit cost EUR</Label>
           <Input
+            key={eurKey}
             name="batchCostEur"
             type="number"
             step="0.01"
-            value={costEur}
-            onChange={(event) => setCostEur(Number(event.target.value) || 0)}
+            defaultValue={eurValue}
+            onChange={() => {
+              eurTouched.current = true;
+            }}
           />
         </div>
       </div>
-      <div>
-        <Label>IMEIs (one per line, 15 digits)</Label>
-        <Textarea name="batchImeis" required placeholder="353456789012345" />
+      <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
+        <div>
+          <Label>IMEIs (one per line, 15 digits, optional)</Label>
+          <Textarea name="batchImeis" placeholder="353456789012345" />
+        </div>
+        <div>
+          <Label>Qty without IMEI</Label>
+          <Input
+            name="batchQty"
+            type="number"
+            min={0}
+            placeholder="0"
+            className="sm:w-28"
+          />
+        </div>
       </div>
+      <p className="text-xs text-slate-500">
+        IMEIs are optional — leave blank and set a quantity to add units you&rsquo;ll IMEI-tag later.
+      </p>
     </div>
   );
 }
@@ -128,7 +158,8 @@ export function StockBatchForm({
   defaultPurchaseOrderId?: string;
   showLedgerToggle?: boolean;
 }) {
-  const [batchCount, setBatchCount] = useState(1);
+  const nextBatchId = useRef(1);
+  const [batchIds, setBatchIds] = useState<number[]>([0]);
   const [fx] = useState(DEFAULT_FX_RATE);
   const [supplierId, setSupplierId] = useState(defaultSupplierId ?? "");
 
@@ -185,13 +216,20 @@ export function StockBatchForm({
             type="button"
             variant="secondary"
             size="sm"
-            onClick={() => setBatchCount((current) => current + 1)}
+            onClick={() => setBatchIds((current) => [...current, nextBatchId.current++])}
           >
             Add grade batch
           </Button>
         </div>
-        {Array.from({ length: batchCount }).map((_, index) => (
-          <StockBatchLine key={index} grades={grades} colors={colors} networks={networks} fx={fx} />
+        {batchIds.map((batchId) => (
+          <StockBatchLine
+            key={batchId}
+            grades={grades}
+            colors={colors}
+            networks={networks}
+            fx={fx}
+            onRemove={() => setBatchIds((current) => current.filter((id) => id !== batchId))}
+          />
         ))}
       </div>
     </div>

@@ -37,7 +37,7 @@ type PurchaseOrderDetail = {
     unitCostGbp: number;
     unitCostEur: number;
   }[];
-  stockUnits: { id: string; imei: string; productName: string; grade: string; status: string }[];
+  stockUnits: { id: string; imei: string | null; productName: string; grade: string; status: string }[];
 };
 
 export default async function PurchaseOrderDetailPage({
@@ -110,7 +110,7 @@ export default async function PurchaseOrderDetailPage({
           <tbody>
             {po.stockUnits.map((unit) => (
               <tr key={unit.id}>
-                <Td className="font-mono">{unit.imei}</Td>
+                <Td className="font-mono">{unit.imei ?? "—"}</Td>
                 <Td>{unit.productName}</Td>
                 <Td>{unit.grade}</Td>
                 <Td>

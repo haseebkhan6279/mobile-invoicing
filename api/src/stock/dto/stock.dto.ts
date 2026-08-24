@@ -29,9 +29,22 @@ class StockBatchDto {
   @IsNumber()
   costEur?: number;
 
+  @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  imeis: string[];
+  imeis?: string[];
+
+  // Number of units to add without a known IMEI yet. Only used for the
+  // portion of the batch beyond however many real IMEIs were supplied —
+  // e.g. imeis.length 2 + qty 5 creates 2 identified units and 3 blank ones.
+  @IsOptional()
+  @IsNumber()
+  qty?: number;
+}
+
+export class UpdateStockUnitImeiDto {
+  @IsString()
+  imei: string;
 }
 
 export class ReceiveStockDto {

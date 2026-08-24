@@ -16,6 +16,7 @@ function parseBatches(formData: FormData) {
   const gbp = formData.getAll("batchCostGbp");
   const eur = formData.getAll("batchCostEur");
   const imeiFields = formData.getAll("batchImeis");
+  const qtys = formData.getAll("batchQty");
   const batches = [];
   for (let i = 0; i < products.length; i += 1) {
     batches.push({
@@ -27,6 +28,7 @@ function parseBatches(formData: FormData) {
       costGbp: toNumber(gbp[i]),
       costEur: toNumber(eur[i]),
       imeis: parseImeis(String(imeiFields[i] ?? "")),
+      qty: toNumber(qtys[i]),
     });
   }
   return batches;
@@ -73,6 +75,22 @@ export async function getAvailableImeis(
   const { apiToken } = await requireUser();
   const params = new URLSearchParams({ ...spec, limit: String(limit) });
   return apiClient.get<string[]>(`/stock/available-imeis?${params}`, apiToken);
+}
+
+export async function updateStockUnitImei(formData: FormData) {
+  const { apiToken } = await requireUser();
+  const id = String(formData.get("id") ?? "");
+  const imei = String(formData.get("imei") ?? "").trim();
+
+  try {
+    await apiClient.patch(`/stock/${id}/imei`, { imei }, apiToken);
+  } catch (err) {
+    if (err instanceof ApiError) redirect(`/stock?error=${encodeURIComponent(err.message)}`);
+    throw err;
+  }
+
+  revalidatePath("/stock");
+  redirect("/stock?ok=IMEI updated");
 }
 
 export async function searchStockProducts(query: string) {

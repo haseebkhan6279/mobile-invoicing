@@ -1,17 +1,20 @@
 import Link from "next/link";
+import { updateStockUnitImei } from "@/actions/stock";
 import { MobileListRow } from "@/components/mobile-list-row";
 import { PageHeader } from "@/components/page-header";
 import { MoneyPair } from "@/components/money-pair";
 import { Notice } from "@/components/notice";
 import { StatusBadge } from "@/components/status-badge";
+import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
+import { SubmitButton } from "@/components/ui/submit-button";
 import { Table, THead, Th, Td } from "@/components/ui/table";
 import { requireUser } from "@/lib/auth-guard";
 import { apiClient } from "@/lib/api-client";
 
 type StockUnitRow = {
   id: string;
-  imei: string;
+  imei: string | null;
   productName: string;
   color: string;
   network: string;
@@ -88,7 +91,21 @@ export default async function StockPage({
           <tbody>
             {units.map((unit) => (
               <tr key={unit.id}>
-                <Td className="font-mono text-xs">{unit.imei}</Td>
+                <Td className="font-mono text-xs">
+                  {unit.imei ?? (
+                    <form action={updateStockUnitImei} className="flex items-center gap-1">
+                      <input type="hidden" name="id" value={unit.id} />
+                      <Input
+                        name="imei"
+                        placeholder="Add IMEI"
+                        className="h-7 w-32 px-2 text-xs"
+                      />
+                      <SubmitButton pendingText="…" size="sm" variant="ghost" className="h-7 px-2">
+                        Save
+                      </SubmitButton>
+                    </form>
+                  )}
+                </Td>
                 <Td>{unit.productName}</Td>
                 <Td>{unit.color}</Td>
                 <Td>{unit.network}</Td>
@@ -117,7 +134,7 @@ export default async function StockPage({
           <MobileListRow
             key={unit.id}
             title={unit.productName}
-            subtitle={unit.imei}
+            subtitle={unit.imei ?? "No IMEI yet"}
             trailing={<StatusBadge status={unit.status} />}
             meta={
               <>
