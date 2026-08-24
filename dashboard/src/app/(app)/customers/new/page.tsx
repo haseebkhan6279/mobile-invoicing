@@ -1,3 +1,4 @@
+import { Building2, Hash, Mail, MapPin, Phone, StickyNote, User } from "lucide-react";
 import { createCustomer } from "@/actions/customers";
 import { Notice } from "@/components/notice";
 import { PageHeader } from "@/components/page-header";
@@ -7,6 +8,18 @@ import { Label } from "@/components/ui/label";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
 import { requireUser } from "@/lib/auth-guard";
+
+function FieldIcon({ icon: Icon }: { icon: typeof User }) {
+  return (
+    <Icon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+  );
+}
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500">{children}</h2>
+  );
+}
 
 export default async function NewCustomerPage({
   searchParams,
@@ -20,42 +33,90 @@ export default async function NewCustomerPage({
       <PageHeader title="Add customer" description="Client ID is generated automatically." />
       <Notice error={error} />
       <Card>
-        <form action={createCustomer} className="space-y-4">
+        <form action={createCustomer} className="space-y-6">
           {returnTo ? <input type="hidden" name="returnTo" value={returnTo} /> : null}
-          <div>
-            <Label htmlFor="name">Name</Label>
-            <Input id="name" name="name" defaultValue={name ?? ""} required />
-          </div>
-          <div>
-            <Label htmlFor="businessName">Business name</Label>
-            <Input id="businessName" name="businessName" />
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div>
-              <Label htmlFor="phone">Phone</Label>
-              <Input id="phone" name="phone" />
+
+          <div className="space-y-3">
+            <SectionLabel>Contact</SectionLabel>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <Label htmlFor="name">Name</Label>
+                <div className="relative">
+                  <FieldIcon icon={User} />
+                  <Input
+                    id="name"
+                    name="name"
+                    defaultValue={name ?? ""}
+                    required
+                    className="pl-9"
+                  />
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="businessName">Business name</Label>
+                <div className="relative">
+                  <FieldIcon icon={Building2} />
+                  <Input id="businessName" name="businessName" className="pl-9" />
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="phone">Phone</Label>
+                <div className="relative">
+                  <FieldIcon icon={Phone} />
+                  <Input id="phone" name="phone" className="pl-9" />
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="email">Email</Label>
+                <div className="relative">
+                  <FieldIcon icon={Mail} />
+                  <Input id="email" name="email" type="email" className="pl-9" />
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="vatNumber">VAT number</Label>
+                <div className="relative">
+                  <FieldIcon icon={Hash} />
+                  <Input id="vatNumber" name="vatNumber" className="pl-9" />
+                </div>
+              </div>
             </div>
-            <div>
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" name="email" type="email" />
+          </div>
+
+          <div className="space-y-3 border-t border-slate-100 pt-6">
+            <SectionLabel>Addresses</SectionLabel>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <Label htmlFor="address">
+                  <span className="inline-flex items-center gap-1.5">
+                    <MapPin className="h-3.5 w-3.5 text-slate-400" />
+                    Billing address
+                  </span>
+                </Label>
+                <Textarea id="address" name="address" className="min-h-20" />
+              </div>
+              <div>
+                <Label htmlFor="shippingAddress">
+                  <span className="inline-flex items-center gap-1.5">
+                    <MapPin className="h-3.5 w-3.5 text-slate-400" />
+                    Shipping address (if different)
+                  </span>
+                </Label>
+                <Textarea id="shippingAddress" name="shippingAddress" className="min-h-20" />
+              </div>
             </div>
           </div>
-          <div>
-            <Label htmlFor="vatNumber">VAT number</Label>
-            <Input id="vatNumber" name="vatNumber" />
-          </div>
-          <div>
-            <Label htmlFor="address">Billing address</Label>
-            <Textarea id="address" name="address" />
-          </div>
-          <div>
-            <Label htmlFor="shippingAddress">Shipping address (if different)</Label>
-            <Textarea id="shippingAddress" name="shippingAddress" />
-          </div>
-          <div>
-            <Label htmlFor="notes">Notes</Label>
+
+          <div className="space-y-3 border-t border-slate-100 pt-6">
+            <Label htmlFor="notes">
+              <span className="inline-flex items-center gap-1.5">
+                <StickyNote className="h-3.5 w-3.5 text-slate-400" />
+                Notes
+              </span>
+            </Label>
             <Textarea id="notes" name="notes" />
           </div>
+
           <SubmitButton pendingText="Adding…">Save customer</SubmitButton>
         </form>
       </Card>
