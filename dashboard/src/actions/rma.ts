@@ -6,6 +6,22 @@ import { requireUser } from "@/lib/auth-guard";
 import { toNumber, toOptionalString } from "@/lib/lookups";
 import { apiClient, ApiError } from "@/lib/api-client";
 
+export type AvailableRmaCredit = {
+  id: string;
+  rmaNumber: string;
+  invoice: { invoiceNumber: string };
+  items: { unitPriceGbp: number; unitPriceEur: number }[];
+};
+
+export async function getAvailableRmaCredits(customerId: string) {
+  if (!customerId) return [];
+  const { apiToken } = await requireUser();
+  const rmas = await apiClient.get<
+    (AvailableRmaCredit & { paymentType: string })[]
+  >(`/rma?customerId=${encodeURIComponent(customerId)}`, apiToken);
+  return rmas.filter((rma) => rma.paymentType === "PENDING");
+}
+
 export async function createRma(formData: FormData) {
   const { apiToken } = await requireUser();
   const unitIds = formData.getAll("stockUnitId").map(String).filter(Boolean);

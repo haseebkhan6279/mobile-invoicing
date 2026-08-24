@@ -35,6 +35,7 @@ function parseInvoiceLines(formData: FormData) {
 export async function createInvoice(formData: FormData) {
   const { apiToken } = await requireUser();
   const lines = parseInvoiceLines(formData);
+  const appliedRmaIds = formData.getAll("appliedRmaIds").map(String).filter(Boolean);
 
   let invoice: { id: string };
   try {
@@ -51,6 +52,7 @@ export async function createInvoice(formData: FormData) {
         paymentTerms: toOptionalString(formData.get("paymentTerms")),
         warrantyTerms: toOptionalString(formData.get("warrantyTerms")),
         notes: toOptionalString(formData.get("notes")),
+        appliedRmaIds,
         lines,
       },
       apiToken,

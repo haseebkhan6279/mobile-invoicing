@@ -1,4 +1,4 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Patch, Post, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Patch, Post, Query, UseGuards } from "@nestjs/common";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import { RmaService } from "./rma.service";
 import { ApplyRmaCreditDto, CreateRmaDto, ProcessRmaDto } from "./dto/rma.dto";
@@ -9,8 +9,8 @@ export class RmaController {
   constructor(private rma: RmaService) {}
 
   @Get()
-  findAll() {
-    return this.rma.listRmas();
+  findAll(@Query("customerId") customerId?: string) {
+    return this.rma.listRmas(customerId);
   }
 
   @Get(":id")

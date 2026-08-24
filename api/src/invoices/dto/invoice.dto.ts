@@ -85,6 +85,11 @@ export class CreateInvoiceDto {
   @IsString()
   notes?: string | null;
 
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  appliedRmaIds?: string[];
+
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => InvoiceLineDto)

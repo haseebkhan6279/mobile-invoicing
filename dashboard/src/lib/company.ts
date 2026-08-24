@@ -1,3 +1,14 @@
+// TBD placeholder — no real account has been provided yet for this
+// (entity, currency) pair. Replace with real details when known.
+const TBD_BANK = {
+  bankName: "TBD — add real bank details",
+  accountName: "TBD",
+  sortCode: "TBD",
+  accountNumber: "TBD",
+  iban: "TBD",
+  bic: "TBD",
+} as const;
+
 export const sellerCompany = {
   legalName: "Animus Corporation Limited",
   tradingName: "Animus Corporation Limited",
@@ -17,10 +28,16 @@ export const sellerCompany = {
   email: "sales@mobilephonesfactory.co.uk",
   tagline: "Wholesale operations",
   bank: {
-    bankName: "Counting Up",
-    accountName: "Animus Corporation Limited",
-    sortCode: "23-69-72",
-    accountNumber: "33062914",
+    GBP: {
+      bankName: "Counting Up",
+      accountName: "Animus Corporation Limited",
+      sortCode: "23-69-72",
+      accountNumber: "33062914",
+      iban: "",
+      bic: "",
+    },
+    // No real EUR-receiving account has been provided for this entity yet.
+    EUR: TBD_BANK,
   },
 } as const;
 
@@ -44,12 +61,16 @@ export const creditNoteCompany = {
   whatsappDisplay: "+447561400005",
   email: "atlanticdevicessolutions@gmail.com",
   tagline: "Returns & credit notes",
-  // No real bank account details were provided for this trading name —
-  // reusing the UK account as a placeholder. Replace when known.
-  bank: sellerCompany.bank,
+  // No real bank account details were provided for this trading name yet
+  // in either currency. Replace with real details when known.
+  bank: {
+    GBP: TBD_BANK,
+    EUR: TBD_BANK,
+  },
 } as const;
 
 export type CompanyEntity = typeof sellerCompany | typeof creditNoteCompany;
+export type BankCurrency = "GBP" | "EUR";
 
 export function addressLines(entity: CompanyEntity) {
   const { line1, line2, postcode, city, country } = entity.address;
@@ -58,4 +79,8 @@ export function addressLines(entity: CompanyEntity) {
 
 export function companyForEntity(entity: string): CompanyEntity {
   return entity === "NI" ? creditNoteCompany : sellerCompany;
+}
+
+export function bankForCurrency(company: CompanyEntity, currency: BankCurrency) {
+  return company.bank[currency];
 }

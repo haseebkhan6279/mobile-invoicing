@@ -2,6 +2,7 @@
 
 import { useId, useRef, useState } from "react";
 import { getAvailableImeis } from "@/actions/stock";
+import { getAvailableRmaCredits, type AvailableRmaCredit } from "@/actions/rma";
 import { CustomerPicker, type CustomerHit } from "@/components/customer-picker";
 import { InvoiceLineProductField, type ProductHit } from "@/components/invoice-line-product-field";
 import { Button } from "@/components/ui/button";
@@ -9,7 +10,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { DEFAULT_FX_RATE, eurFromGbp } from "@/lib/money";
+import { DEFAULT_FX_RATE, eurFromGbp, formatEur, formatGbp } from "@/lib/money";
+
+function creditValue(credit: AvailableRmaCredit) {
+  const totalGbp = credit.items.reduce((sum, item) => sum + item.unitPriceGbp, 0);
+  const totalEur = credit.items.reduce((sum, item) => sum + item.unitPriceEur, 0);
+  return { totalGbp, totalEur };
+}
 
 type Lookup = { id: string; name?: string; code?: string };
 
@@ -206,16 +213,53 @@ export function InvoiceForm({
   const nextLineId = useRef(1);
   const [lineIds, setLineIds] = useState<number[]>([0]);
   const [fx, setFx] = useState(DEFAULT_FX_RATE);
+  const [credits, setCredits] = useState<AvailableRmaCredit[]>([]);
+  const [selectedCreditIds, setSelectedCreditIds] = useState<string[]>([]);
 
   return (
     <div className="space-y-6">
-      <CustomerPicker initial={initialCustomer} returnTo="/invoices/new" />
+      <CustomerPicker
+        initial={initialCustomer}
+        returnTo="/invoices/new"
+        onSelect={(customer) => {
+          setSelectedCreditIds([]);
+          getAvailableRmaCredits(customer.id).then(setCredits);
+        }}
+      />
+      {credits.length ? (
+        <div className="space-y-2 rounded-xl border border-slate-200 p-4">
+          <h2 className="font-medium">Available RMA credit</h2>
+          {credits.map((credit) => {
+            const { totalGbp, totalEur } = creditValue(credit);
+            const checked = selectedCreditIds.includes(credit.id);
+            return (
+              <label key={credit.id} className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  name="appliedRmaIds"
+                  value={credit.id}
+                  checked={checked}
+                  onChange={(event) =>
+                    setSelectedCreditIds((current) =>
+                      event.target.checked
+                        ? [...current, credit.id]
+                        : current.filter((id) => id !== credit.id),
+                    )
+                  }
+                />
+                {credit.rmaNumber} — {formatGbp(totalGbp)} / {formatEur(totalEur)} · from Invoice{" "}
+                {credit.invoice.invoiceNumber}
+              </label>
+            );
+          })}
+        </div>
+      ) : null}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div>
           <Label htmlFor="entity">Billing entity</Label>
           <Select id="entity" name="entity" defaultValue="UK">
             <option value="UK">UK — £ (Animus Corporation Limited)</option>
-            <option value="NI">NI — € (Animus Corporation NI Limited)</option>
+            <option value="NI">NI — € (Atlantic Devices Solutions LTD)</option>
           </Select>
         </div>
         <div>

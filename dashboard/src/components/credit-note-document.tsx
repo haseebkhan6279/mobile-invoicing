@@ -1,6 +1,6 @@
 import { CompanyBrand } from "@/components/company-brand";
-import { addressLines, companyForEntity } from "@/lib/company";
-import { formatEur, formatGbp } from "@/lib/money";
+import { addressLines, companyForEntity, type BankCurrency } from "@/lib/company";
+import { DEFAULT_FX_RATE, formatEur, formatGbp } from "@/lib/money";
 import { groupRmaSummary, rmaTotals } from "@/lib/rma";
 import { labelStatus } from "@/lib/status";
 import { RMA_TERMS } from "@/lib/terms";
@@ -40,13 +40,24 @@ export type CreditNoteDoc = {
   }[];
 };
 
-export function CreditNoteDocument({ rma }: { rma: CreditNoteDoc }) {
+export function CreditNoteDocument({
+  rma,
+  currency,
+  rate,
+}: {
+  rma: CreditNoteDoc;
+  currency?: BankCurrency;
+  rate?: number;
+}) {
   const totals = rmaTotals(rma);
   const summary = groupRmaSummary(rma.items);
   const due = rma.paymentType === "PENDING" ? totals : { totalGbp: 0, totalEur: 0 };
   const entity = rma.invoice.entity;
   const company = companyForEntity(entity);
-  const money = (gbp: number, eur: number) => (entity === "NI" ? formatEur(eur) : formatGbp(gbp));
+  const printCurrency = currency ?? (entity === "NI" ? "EUR" : "GBP");
+  const printRate = rate ?? DEFAULT_FX_RATE;
+  const money = (gbp: number) =>
+    printCurrency === "EUR" ? formatEur(gbp * printRate) : formatGbp(gbp);
 
   return (
     <div className="mx-auto max-w-[210mm] bg-white p-8 text-slate-900 print:p-0">
@@ -104,7 +115,7 @@ export function CreditNoteDocument({ rma }: { rma: CreditNoteDoc }) {
               <td className="py-2 pr-2">{item.stockUnit.color}</td>
               <td className="py-2 pr-2">{item.stockUnit.grade}</td>
               <td className="py-2 text-right tabular-nums">
-                {money(item.unitPriceGbp, item.unitPriceEur)}
+                {money(item.unitPriceGbp)}
               </td>
             </tr>
           ))}
@@ -116,7 +127,7 @@ export function CreditNoteDocument({ rma }: { rma: CreditNoteDoc }) {
 
       <div className="mt-4 flex justify-end">
         <div className="w-full max-w-sm border-t border-slate-300 py-2 text-right text-base font-semibold">
-          Grand Total: {money(totals.totalGbp, totals.totalEur)}
+          Grand Total: {money(totals.totalGbp)}
         </div>
       </div>
 
@@ -132,10 +143,10 @@ export function CreditNoteDocument({ rma }: { rma: CreditNoteDoc }) {
       </div>
 
       <div className="mt-8 grid gap-2 text-sm text-slate-600 sm:grid-cols-2">
-        <div>Payment Due: {money(due.totalGbp, due.totalEur)}</div>
+        <div>Payment Due: {money(due.totalGbp)}</div>
         <div>Payment Type: {labelStatus(rma.paymentType)}</div>
         <div>Payment Date: {rma.paymentDate ? formatDate(rma.paymentDate) : "—"}</div>
-        <div>Payment Amount: {money(rma.paymentAmountGbp, rma.paymentAmountEur)}</div>
+        <div>Payment Amount: {money(rma.paymentAmountGbp)}</div>
         <div>Invoice Applied: {rma.appliedInvoice?.invoiceNumber ?? "—"}</div>
       </div>
 

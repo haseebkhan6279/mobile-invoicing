@@ -1,4 +1,39 @@
+import type { Prisma } from "@prisma/client";
+import { invoiceTotals } from "./invoice";
 import { roundMoney } from "./money";
+
+export async function applyCreditToInvoiceTx(
+  tx: Prisma.TransactionClient,
+  invoiceId: string,
+  amountGbp: number,
+  amountEur: number,
+) {
+  const target = await tx.invoice.findUnique({
+    where: { id: invoiceId },
+    include: { lines: true },
+  });
+  if (!target) return null;
+
+  const newPaidGbp = target.paidAmountGbp + amountGbp;
+  const newPaidEur = target.paidAmountEur + amountEur;
+  const totals = invoiceTotals({ ...target, paidAmountGbp: newPaidGbp, paidAmountEur: newPaidEur });
+  const nextStatus =
+    totals.dueGbp <= 0 && totals.dueEur <= 0
+      ? "PAID"
+      : target.status === "PENDING"
+        ? "AWAITING_PAYMENT"
+        : target.status;
+
+  return tx.invoice.update({
+    where: { id: invoiceId },
+    data: {
+      paidAmountGbp: newPaidGbp,
+      paidAmountEur: newPaidEur,
+      status: nextStatus,
+      paidAt: nextStatus === "PAID" ? new Date() : target.paidAt,
+    },
+  });
+}
 
 export function rmaTotals(rma: { items: { unitPriceGbp: number; unitPriceEur: number }[] }) {
   const totalGbp = roundMoney(rma.items.reduce((sum, item) => sum + item.unitPriceGbp, 0));

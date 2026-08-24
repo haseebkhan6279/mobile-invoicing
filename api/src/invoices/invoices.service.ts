@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from "@nestjs/comm
 import { PrismaService } from "../prisma/prisma.service";
 import { nextNumberTx } from "../common/numbers";
 import { DEFAULT_FX_RATE } from "../common/money";
+import { applyCreditToInvoiceTx, rmaTotals } from "../common/rma";
 import { CreateInvoiceDto } from "./dto/invoice.dto";
 
 function stockStatusForInvoice(status: string) {
@@ -151,6 +152,25 @@ export class InvoicesService {
           });
         }
       }
+
+      const appliedRmaIds = (input.appliedRmaIds ?? []).filter(Boolean);
+      for (const rmaId of appliedRmaIds) {
+        const rma = await tx.rma.findUnique({ where: { id: rmaId }, include: { items: true } });
+        if (!rma || rma.customerId !== customerId || rma.paymentType !== "PENDING") continue;
+        const credit = rmaTotals(rma);
+        await tx.rma.update({
+          where: { id: rmaId },
+          data: {
+            paymentType: "APPLIED_TO_INVOICE",
+            appliedInvoiceId: created.id,
+            paymentAmountGbp: credit.totalGbp,
+            paymentAmountEur: credit.totalEur,
+            paymentDate: new Date(),
+          },
+        });
+        await applyCreditToInvoiceTx(tx, created.id, credit.totalGbp, credit.totalEur);
+      }
+
       return created;
     });
   }

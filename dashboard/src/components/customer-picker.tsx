@@ -21,15 +21,23 @@ export function CustomerPicker({
   name = "customerId",
   initial,
   returnTo,
+  onSelect,
 }: {
   name?: string;
   initial?: CustomerHit | null;
   returnTo?: string;
+  onSelect?: (customer: CustomerHit) => void;
 }) {
   const [query, setQuery] = useState(initial?.name ?? "");
   const [hits, setHits] = useState<CustomerHit[]>([]);
   const [selected, setSelected] = useState<CustomerHit | null>(initial ?? null);
   const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (initial) onSelect?.(initial);
+    // Only fire for the initial customer supplied on mount, not on every rerender.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (selected && query === selected.name) return;
@@ -83,6 +91,7 @@ export function CustomerPicker({
                     setQuery(hit.name);
                     setOpen(false);
                     setHits([]);
+                    onSelect?.(hit);
                   }}
                 >
                   <div className="font-medium">{hit.name}</div>

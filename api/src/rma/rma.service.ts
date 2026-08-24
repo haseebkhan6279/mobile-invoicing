@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
-import { invoiceTotals } from "../common/invoice";
+import { applyCreditToInvoiceTx } from "../common/rma";
 import { nextNumberTx } from "../common/numbers";
 import { ApplyRmaCreditDto, CreateRmaDto } from "./dto/rma.dto";
 
@@ -8,8 +8,9 @@ import { ApplyRmaCreditDto, CreateRmaDto } from "./dto/rma.dto";
 export class RmaService {
   constructor(private prisma: PrismaService) {}
 
-  listRmas() {
+  listRmas(customerId?: string) {
     return this.prisma.rma.findMany({
+      where: customerId ? { customerId } : undefined,
       include: { customer: true, invoice: true, items: true },
       orderBy: { createdAt: "desc" },
     });
@@ -111,31 +112,13 @@ export class RmaService {
       });
 
       if (paymentType === "APPLIED_TO_INVOICE" && appliedInvoiceId) {
-        const target = await tx.invoice.findUnique({
-          where: { id: appliedInvoiceId },
-          include: { lines: true },
-        });
+        const target = await applyCreditToInvoiceTx(
+          tx,
+          appliedInvoiceId,
+          paymentAmountGbp,
+          paymentAmountEur,
+        );
         if (!target) throw new BadRequestException("Invoice not found");
-
-        const newPaidGbp = target.paidAmountGbp + paymentAmountGbp;
-        const newPaidEur = target.paidAmountEur + paymentAmountEur;
-        const totals = invoiceTotals({ ...target, paidAmountGbp: newPaidGbp, paidAmountEur: newPaidEur });
-        const nextStatus =
-          totals.dueGbp <= 0 && totals.dueEur <= 0
-            ? "PAID"
-            : target.status === "PENDING"
-              ? "AWAITING_PAYMENT"
-              : target.status;
-
-        await tx.invoice.update({
-          where: { id: appliedInvoiceId },
-          data: {
-            paidAmountGbp: newPaidGbp,
-            paidAmountEur: newPaidEur,
-            status: nextStatus,
-            paidAt: nextStatus === "PAID" ? new Date() : target.paidAt,
-          },
-        });
       }
 
       return updated;
