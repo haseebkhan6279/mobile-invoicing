@@ -86,3 +86,23 @@ export async function updateInvoiceStatus(formData: FormData) {
   revalidatePath("/stock");
   redirect(`/invoices/${id}?ok=Status updated`);
 }
+
+export async function updateInvoiceLineImeis(formData: FormData) {
+  const { apiToken } = await requireUser();
+  const id = String(formData.get("id") ?? "");
+  const lineId = String(formData.get("lineId") ?? "");
+  const imeis = parseImeis(String(formData.get("imeis") ?? ""));
+
+  try {
+    await apiClient.patch(`/invoices/${id}/lines/${lineId}/imeis`, { imeis }, apiToken);
+  } catch (err) {
+    if (err instanceof ApiError) {
+      redirect(`/invoices/${id}?error=${encodeURIComponent(err.message)}`);
+    }
+    throw err;
+  }
+
+  revalidatePath(`/invoices/${id}`);
+  revalidatePath("/stock");
+  redirect(`/invoices/${id}?ok=IMEIs updated`);
+}

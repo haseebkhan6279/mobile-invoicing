@@ -1,16 +1,27 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { DEFAULT_FX_RATE, eurFromGbp } from "@/lib/money";
+import { PO_STATUSES } from "@/lib/status";
 
 type Lookup = { id: string; name?: string; code?: string; label?: string };
 
-const emptyLine = {
+export type PoLineSeed = {
+  productName: string;
+  color: string;
+  network: string;
+  grade: string;
+  qty: number;
+  unitCostGbp: number;
+  unitCostEur: number;
+};
+
+const emptyLine: PoLineSeed = {
   productName: "",
   color: "Black",
   network: "Unlocked",
@@ -25,24 +36,35 @@ function PoLine({
   networks,
   grades,
   fx,
+  initial,
+  onRemove,
 }: {
   colors: Lookup[];
   networks: Lookup[];
   grades: Lookup[];
   fx: number;
+  initial?: PoLineSeed;
+  onRemove: () => void;
 }) {
-  const [costGbp, setCostGbp] = useState(emptyLine.unitCostGbp);
-  const [costEur, setCostEur] = useState(emptyLine.unitCostEur);
+  const seed = initial ?? emptyLine;
+  const [eurValue, setEurValue] = useState(seed.unitCostEur);
+  const [eurKey, setEurKey] = useState(0);
+  const eurTouched = useRef(seed.unitCostEur > 0);
 
   return (
     <div className="grid gap-3 rounded-lg border border-slate-200 p-3 md:grid-cols-7">
+      <div className="flex items-start justify-end md:col-span-7 md:order-last">
+        <Button type="button" variant="ghost" size="sm" onClick={onRemove}>
+          Remove line
+        </Button>
+      </div>
       <div className="md:col-span-2">
         <Label>Product</Label>
-        <Input name="lineProduct" required defaultValue={emptyLine.productName} />
+        <Input name="lineProduct" required defaultValue={seed.productName} />
       </div>
       <div>
         <Label>Color</Label>
-        <Select name="lineColor" defaultValue={emptyLine.color}>
+        <Select name="lineColor" defaultValue={seed.color}>
           {colors.map((color) => (
             <option key={color.id} value={color.name}>
               {color.name}
@@ -52,7 +74,7 @@ function PoLine({
       </div>
       <div>
         <Label>Network</Label>
-        <Select name="lineNetwork" defaultValue={emptyLine.network}>
+        <Select name="lineNetwork" defaultValue={seed.network}>
           {networks.map((network) => (
             <option key={network.id} value={network.name}>
               {network.name}
@@ -62,7 +84,7 @@ function PoLine({
       </div>
       <div>
         <Label>Grade</Label>
-        <Select name="lineGrade" defaultValue={emptyLine.grade}>
+        <Select name="lineGrade" defaultValue={seed.grade}>
           {grades.map((grade) => (
             <option key={grade.id} value={grade.code}>
               {grade.code}
@@ -72,7 +94,7 @@ function PoLine({
       </div>
       <div>
         <Label>Qty</Label>
-        <Input name="lineQty" type="number" min={1} defaultValue={emptyLine.qty} />
+        <Input name="lineQty" type="number" min={1} defaultValue={seed.qty} />
       </div>
       <div>
         <Label>Unit GBP</Label>
@@ -80,22 +102,29 @@ function PoLine({
           name="lineCostGbp"
           type="number"
           step="0.01"
-          value={costGbp}
+          defaultValue={seed.unitCostGbp}
           onChange={(event) => {
-            const next = Number(event.target.value) || 0;
-            setCostGbp(next);
-            if (costEur === 0) setCostEur(eurFromGbp(next, fx));
+            if (eurTouched.current) return;
+            const raw = event.target.value;
+            if (raw === "") return;
+            const n = Number(raw);
+            if (!Number.isFinite(n)) return;
+            setEurValue(eurFromGbp(n, fx));
+            setEurKey((k) => k + 1);
           }}
         />
       </div>
       <div>
         <Label>Unit EUR</Label>
         <Input
+          key={eurKey}
           name="lineCostEur"
           type="number"
           step="0.01"
-          value={costEur}
-          onChange={(event) => setCostEur(Number(event.target.value) || 0)}
+          defaultValue={eurValue}
+          onChange={() => {
+            eurTouched.current = true;
+          }}
         />
       </div>
     </div>
@@ -103,42 +132,73 @@ function PoLine({
 }
 
 export function PurchaseOrderForm({
+  mode = "create",
   suppliers,
+  supplierName,
   grades,
   colors,
   networks,
+  initialLines,
+  initialSupplierId,
+  initialStatus,
+  initialFxRate,
+  initialShippingGbp,
+  initialShippingEur,
+  initialActualCostGbp,
+  initialActualCostEur,
+  initialNotes,
 }: {
+  mode?: "create" | "edit";
   suppliers: { id: string; name: string }[];
+  supplierName?: string;
   grades: Lookup[];
   colors: Lookup[];
   networks: Lookup[];
+  initialLines?: PoLineSeed[];
+  initialSupplierId?: string;
+  initialStatus?: string;
+  initialFxRate?: number;
+  initialShippingGbp?: number;
+  initialShippingEur?: number;
+  initialActualCostGbp?: number;
+  initialActualCostEur?: number;
+  initialNotes?: string;
 }) {
-  const [lineCount, setLineCount] = useState(1);
-  const [fx, setFx] = useState(DEFAULT_FX_RATE);
-  const [shippingGbp, setShippingGbp] = useState(0);
-  const [shippingEur, setShippingEur] = useState(0);
+  const nextLineId = useRef((initialLines?.length ?? 1));
+  const [lineIds, setLineIds] = useState<number[]>(
+    Array.from({ length: initialLines?.length ?? 1 }, (_, i) => i),
+  );
+  const [fx, setFx] = useState(initialFxRate ?? DEFAULT_FX_RATE);
+  const statusOptions = mode === "edit" ? PO_STATUSES : (["DRAFT", "ORDERED"] as const);
 
   return (
     <div className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <Label htmlFor="supplierId">Supplier</Label>
-          <Select id="supplierId" name="supplierId" required defaultValue="">
-            <option value="" disabled>
-              Select supplier
-            </option>
-            {suppliers.map((supplier) => (
-              <option key={supplier.id} value={supplier.id}>
-                {supplier.name}
+          {mode === "edit" ? (
+            <Input value={supplierName ?? ""} disabled />
+          ) : (
+            <Select id="supplierId" name="supplierId" required defaultValue={initialSupplierId ?? ""}>
+              <option value="" disabled>
+                Select supplier
               </option>
-            ))}
-          </Select>
+              {suppliers.map((supplier) => (
+                <option key={supplier.id} value={supplier.id}>
+                  {supplier.name}
+                </option>
+              ))}
+            </Select>
+          )}
         </div>
         <div>
           <Label htmlFor="status">Status</Label>
-          <Select id="status" name="status" defaultValue="ORDERED">
-            <option value="DRAFT">Draft</option>
-            <option value="ORDERED">Ordered</option>
+          <Select id="status" name="status" defaultValue={initialStatus ?? "ORDERED"}>
+            {statusOptions.map((status) => (
+              <option key={status} value={status}>
+                {status}
+              </option>
+            ))}
           </Select>
         </div>
         <div>
@@ -148,8 +208,13 @@ export function PurchaseOrderForm({
             name="fxRate"
             type="number"
             step="0.0001"
-            value={fx}
-            onChange={(event) => setFx(Number(event.target.value) || 0)}
+            defaultValue={initialFxRate ?? DEFAULT_FX_RATE}
+            onChange={(event) => {
+              const raw = event.target.value;
+              if (raw === "") return;
+              const n = Number(raw);
+              if (Number.isFinite(n)) setFx(n);
+            }}
           />
         </div>
         <div>
@@ -159,12 +224,7 @@ export function PurchaseOrderForm({
             name="shippingCostGbp"
             type="number"
             step="0.01"
-            value={shippingGbp}
-            onChange={(event) => {
-              const next = Number(event.target.value) || 0;
-              setShippingGbp(next);
-              if (shippingEur === 0) setShippingEur(eurFromGbp(next, fx));
-            }}
+            defaultValue={initialShippingGbp ?? 0}
           />
         </div>
         <div>
@@ -174,10 +234,33 @@ export function PurchaseOrderForm({
             name="shippingCostEur"
             type="number"
             step="0.01"
-            value={shippingEur}
-            onChange={(event) => setShippingEur(Number(event.target.value) || 0)}
+            defaultValue={initialShippingEur ?? 0}
           />
         </div>
+        {mode === "edit" ? (
+          <>
+            <div>
+              <Label htmlFor="actualCostGbp">Actual cost GBP</Label>
+              <Input
+                id="actualCostGbp"
+                name="actualCostGbp"
+                type="number"
+                step="0.01"
+                defaultValue={initialActualCostGbp ?? 0}
+              />
+            </div>
+            <div>
+              <Label htmlFor="actualCostEur">Actual cost EUR</Label>
+              <Input
+                id="actualCostEur"
+                name="actualCostEur"
+                type="number"
+                step="0.01"
+                defaultValue={initialActualCostEur ?? 0}
+              />
+            </div>
+          </>
+        ) : null}
       </div>
 
       <div className="space-y-3">
@@ -187,19 +270,27 @@ export function PurchaseOrderForm({
             type="button"
             variant="secondary"
             size="sm"
-            onClick={() => setLineCount((current) => current + 1)}
+            onClick={() => setLineIds((current) => [...current, nextLineId.current++])}
           >
             Add line
           </Button>
         </div>
-        {Array.from({ length: lineCount }).map((_, index) => (
-          <PoLine key={index} colors={colors} networks={networks} grades={grades} fx={fx} />
+        {lineIds.map((lineId, index) => (
+          <PoLine
+            key={lineId}
+            colors={colors}
+            networks={networks}
+            grades={grades}
+            fx={fx}
+            initial={initialLines?.[index]}
+            onRemove={() => setLineIds((current) => current.filter((id) => id !== lineId))}
+          />
         ))}
       </div>
 
       <div>
         <Label htmlFor="notes">Notes</Label>
-        <Textarea id="notes" name="notes" />
+        <Textarea id="notes" name="notes" defaultValue={initialNotes ?? ""} />
       </div>
     </div>
   );

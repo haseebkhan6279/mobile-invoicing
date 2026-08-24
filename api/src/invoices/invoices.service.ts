@@ -26,6 +26,7 @@ function normalizeLines(lines: CreateInvoiceDto["lines"]): NormalizedInvoiceLine
     const productName = (line.productName ?? "").trim();
     const qty = Number(line.qty) || 0;
     if (!productName || qty <= 0) return;
+    const imeis = (line.imeis ?? []).map((imei) => imei.trim()).filter(Boolean);
     normalized.push({
       productName,
       color: (line.color ?? "").toString().trim() || "Black",
@@ -34,7 +35,7 @@ function normalizeLines(lines: CreateInvoiceDto["lines"]): NormalizedInvoiceLine
       qty,
       unitPriceGbp: Number(line.unitPriceGbp) || 0,
       unitPriceEur: Number(line.unitPriceEur) || 0,
-      imeis: line.imeis ?? [],
+      imeis,
       sortOrder: i,
     });
   });
@@ -76,9 +77,9 @@ export class InvoicesService {
     if (!lines.length) throw new BadRequestException("Add at least one line");
 
     for (const line of lines) {
-      if (line.imeis.length !== line.qty) {
+      if (line.imeis.length > line.qty) {
         throw new BadRequestException(
-          `Line ${line.productName}: qty ${line.qty} needs ${line.qty} IMEI(s)`,
+          `Line ${line.productName}: cannot list more IMEIs than the qty (${line.qty})`,
         );
       }
     }
@@ -88,16 +89,13 @@ export class InvoicesService {
       throw new BadRequestException("Duplicate IMEIs on this invoice");
     }
 
-    const units = await this.prisma.stockUnit.findMany({ where: { imei: { in: allImeis } } });
-    if (units.length !== allImeis.length) {
-      const found = new Set(units.map((unit) => unit.imei));
-      const missing = allImeis.filter((imei) => !found.has(imei));
-      throw new BadRequestException(`IMEI not in stock: ${missing.join(", ")}`);
-    }
-    const unavailable = units.filter((unit) => unit.status !== "IN_STOCK");
-    if (unavailable.length) {
-      throw new BadRequestException(`Not in stock: ${unavailable.map((u) => u.imei).join(", ")}`);
-    }
+    // Stock levels are not a hard gate here: an invoice can be created even
+    // when the product is out of stock or an IMEI isn't recognised yet.
+    // Any IMEI that does match a real, available StockUnit is still linked
+    // below for inventory tracking (best effort, never blocking).
+    const units = allImeis.length
+      ? await this.prisma.stockUnit.findMany({ where: { imei: { in: allImeis } } })
+      : [];
 
     const entity = input.entity ?? "UK";
 
@@ -129,6 +127,7 @@ export class InvoicesService {
               grade: line.grade,
               unitPriceGbp: line.unitPriceGbp,
               unitPriceEur: line.unitPriceEur,
+              imeis: line.imeis,
               sortOrder: line.sortOrder,
             })),
           },
@@ -142,7 +141,10 @@ export class InvoicesService {
         const source = lines[line.sortOrder];
         for (const imei of source.imeis) {
           const unit = unitByImei.get(imei);
-          if (!unit) continue;
+          // Best effort only: an IMEI with no matching stock unit, or one
+          // that isn't currently IN_STOCK, is still saved on the line but
+          // simply isn't linked for inventory tracking.
+          if (!unit || unit.status !== "IN_STOCK") continue;
           await tx.stockUnit.update({
             where: { id: unit.id },
             data: { status: nextStatus, invoiceId: created.id, invoiceLineId: line.id },
@@ -170,6 +172,48 @@ export class InvoicesService {
         if (unit.status === "RMA" || unit.status === "FAULTY") continue;
         await tx.stockUnit.update({ where: { id: unit.id }, data: { status: unitStatus } });
       }
+      return updated;
+    });
+  }
+
+  async updateInvoiceLineImeis(invoiceId: string, lineId: string, imeis: string[]) {
+    const invoice = await this.prisma.invoice.findUnique({ where: { id: invoiceId } });
+    if (!invoice) throw new NotFoundException("Invoice not found");
+    const line = await this.prisma.invoiceLine.findUnique({ where: { id: lineId } });
+    if (!line || line.invoiceId !== invoiceId) throw new NotFoundException("Invoice line not found");
+
+    const cleaned = Array.from(new Set(imeis.map((imei) => imei.trim()).filter(Boolean)));
+    if (cleaned.length > line.qty) {
+      throw new BadRequestException(`Cannot list more IMEIs than the qty (${line.qty})`);
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      // Release any previously linked stock units that are no longer on this line.
+      await tx.stockUnit.updateMany({
+        where: { invoiceLineId: lineId, imei: { notIn: cleaned } },
+        data: { status: "IN_STOCK", invoiceId: null, invoiceLineId: null },
+      });
+
+      const updated = await tx.invoiceLine.update({
+        where: { id: lineId },
+        data: { imeis: cleaned },
+      });
+
+      // Best effort link: only IMEIs matching a real, IN_STOCK unit get tied
+      // to this invoice for inventory tracking; anything else is still saved
+      // as plain text on the line.
+      if (cleaned.length) {
+        const units = await tx.stockUnit.findMany({ where: { imei: { in: cleaned } } });
+        const nextStatus = stockStatusForInvoice(invoice.status);
+        for (const unit of units) {
+          if (unit.status !== "IN_STOCK") continue;
+          await tx.stockUnit.update({
+            where: { id: unit.id },
+            data: { status: nextStatus, invoiceId, invoiceLineId: lineId },
+          });
+        }
+      }
+
       return updated;
     });
   }

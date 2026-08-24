@@ -38,6 +38,7 @@ export type InvoiceDoc = {
     grade: string;
     unitPriceGbp: number;
     unitPriceEur: number;
+    imeis?: string[];
   }[];
   stockUnits: { imei: string; invoiceLineId: string | null }[];
 };
@@ -152,11 +153,17 @@ export function InvoiceDocument({ invoice }: { invoice: InvoiceDoc }) {
       </table>
       </div>
 
-      {invoice.stockUnits.length ? (
-        <div className="mt-4 text-xs text-slate-500">
-          IMEIs: {invoice.stockUnits.map((unit) => unit.imei).join(", ")}
-        </div>
-      ) : null}
+      {(() => {
+        const allImeis = Array.from(
+          new Set([
+            ...invoice.stockUnits.map((unit) => unit.imei),
+            ...invoice.lines.flatMap((line) => line.imeis ?? []),
+          ]),
+        );
+        return allImeis.length ? (
+          <div className="mt-4 text-xs text-slate-500">IMEIs: {allImeis.join(", ")}</div>
+        ) : null;
+      })()}
 
       <div className="mt-6 flex flex-wrap justify-between gap-6">
         <div className="max-w-sm text-sm text-slate-600">

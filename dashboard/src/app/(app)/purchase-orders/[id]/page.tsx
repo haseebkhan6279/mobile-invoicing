@@ -4,17 +4,14 @@ import { updatePurchaseOrderMeta } from "@/actions/purchase-orders";
 import { MoneyPair } from "@/components/money-pair";
 import { Notice } from "@/components/notice";
 import { PageHeader } from "@/components/page-header";
+import { PurchaseOrderForm } from "@/components/purchase-order-form";
 import { StatusBadge } from "@/components/status-badge";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select } from "@/components/ui/select";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Table, THead, Th, Td } from "@/components/ui/table";
-import { Textarea } from "@/components/ui/textarea";
 import { requireUser } from "@/lib/auth-guard";
 import { apiClient, ApiError } from "@/lib/api-client";
-import { PO_STATUSES } from "@/lib/status";
+import { getLookups } from "@/lib/lookups";
 import { formatDate } from "@/lib/utils";
 
 type PurchaseOrderDetail = {
@@ -60,6 +57,7 @@ export default async function PurchaseOrderDetailPage({
     if (err instanceof ApiError && err.status === 404) notFound();
     throw err;
   }
+  const lookups = await getLookups(apiToken);
 
   return (
     <div className="space-y-6">
@@ -99,36 +97,6 @@ export default async function PurchaseOrderDetailPage({
       </div>
 
       <Card>
-        <h2 className="mb-3 font-medium">Ordered lines</h2>
-        <Table>
-          <THead>
-            <tr>
-              <Th>Qty</Th>
-              <Th>Product</Th>
-              <Th>Color</Th>
-              <Th>Network</Th>
-              <Th>Grade</Th>
-              <Th>Unit cost</Th>
-            </tr>
-          </THead>
-          <tbody>
-            {po.lines.map((line) => (
-              <tr key={line.id}>
-                <Td>{line.qty}</Td>
-                <Td>{line.productName}</Td>
-                <Td>{line.color || "—"}</Td>
-                <Td>{line.network || "—"}</Td>
-                <Td>{line.grade || "—"}</Td>
-                <Td>
-                  <MoneyPair gbp={line.unitCostGbp} eur={line.unitCostEur} />
-                </Td>
-              </tr>
-            ))}
-          </tbody>
-        </Table>
-      </Card>
-
-      <Card>
         <h2 className="mb-3 font-medium">Received IMEIs ({po.stockUnits.length})</h2>
         <Table>
           <THead>
@@ -155,46 +123,34 @@ export default async function PurchaseOrderDetailPage({
       </Card>
 
       <Card>
-        <h2 className="mb-4 font-medium">Update PO</h2>
-        <form action={updatePurchaseOrderMeta} className="grid gap-4 sm:grid-cols-2">
+        <h2 className="mb-4 font-medium">Edit purchase order</h2>
+        <form action={updatePurchaseOrderMeta} className="space-y-6">
           <input type="hidden" name="id" value={po.id} />
-          <div>
-            <Label>Status</Label>
-            <Select name="status" defaultValue={po.status}>
-              {PO_STATUSES.map((status) => (
-                <option key={status} value={status}>
-                  {status}
-                </option>
-              ))}
-            </Select>
-          </div>
-          <div>
-            <Label>FX rate</Label>
-            <Input name="fxRate" type="number" step="0.0001" defaultValue={po.fxRate} />
-          </div>
-          <div>
-            <Label>Shipping GBP</Label>
-            <Input name="shippingCostGbp" type="number" step="0.01" defaultValue={po.shippingCostGbp} />
-          </div>
-          <div>
-            <Label>Shipping EUR</Label>
-            <Input name="shippingCostEur" type="number" step="0.01" defaultValue={po.shippingCostEur} />
-          </div>
-          <div>
-            <Label>Actual cost GBP</Label>
-            <Input name="actualCostGbp" type="number" step="0.01" defaultValue={po.actualCostGbp} />
-          </div>
-          <div>
-            <Label>Actual cost EUR</Label>
-            <Input name="actualCostEur" type="number" step="0.01" defaultValue={po.actualCostEur} />
-          </div>
-          <div className="sm:col-span-2">
-            <Label>Notes</Label>
-            <Textarea name="notes" defaultValue={po.notes ?? ""} />
-          </div>
-          <div>
-            <SubmitButton pendingText="Saving…">Save</SubmitButton>
-          </div>
+          <PurchaseOrderForm
+            mode="edit"
+            suppliers={lookups.suppliers}
+            supplierName={po.supplier.name}
+            grades={lookups.grades}
+            colors={lookups.colors}
+            networks={lookups.networks}
+            initialLines={po.lines.map((line) => ({
+              productName: line.productName,
+              color: line.color || "Black",
+              network: line.network || "Unlocked",
+              grade: line.grade || "A",
+              qty: line.qty,
+              unitCostGbp: line.unitCostGbp,
+              unitCostEur: line.unitCostEur,
+            }))}
+            initialStatus={po.status}
+            initialFxRate={po.fxRate}
+            initialShippingGbp={po.shippingCostGbp}
+            initialShippingEur={po.shippingCostEur}
+            initialActualCostGbp={po.actualCostGbp}
+            initialActualCostEur={po.actualCostEur}
+            initialNotes={po.notes ?? ""}
+          />
+          <SubmitButton pendingText="Saving…">Save changes</SubmitButton>
         </form>
       </Card>
     </div>

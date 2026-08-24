@@ -2,7 +2,7 @@ import { Type } from "class-transformer";
 import { IsArray, IsIn, IsNumber, IsOptional, IsString, Min, ValidateNested } from "class-validator";
 import { PO_STATUSES } from "../../common/status";
 
-class PoLineDto {
+export class PoLineDto {
   @IsString()
   productName: string;
 
@@ -94,4 +94,10 @@ export class UpdatePurchaseOrderMetaDto {
   @IsOptional()
   @IsNumber()
   fxRate?: number;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => PoLineDto)
+  lines?: PoLineDto[];
 }

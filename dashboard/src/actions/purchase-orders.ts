@@ -62,19 +62,29 @@ export async function createPurchaseOrder(formData: FormData) {
 export async function updatePurchaseOrderMeta(formData: FormData) {
   const { apiToken } = await requireUser();
   const id = String(formData.get("id") ?? "");
-  await apiClient.patch(
-    `/purchase-orders/${id}`,
-    {
-      status: String(formData.get("status") ?? "ORDERED"),
-      notes: toOptionalString(formData.get("notes")),
-      shippingCostGbp: toNumber(formData.get("shippingCostGbp")),
-      shippingCostEur: toNumber(formData.get("shippingCostEur")),
-      actualCostGbp: toNumber(formData.get("actualCostGbp")),
-      actualCostEur: toNumber(formData.get("actualCostEur")),
-      fxRate: toOptionalNumber(formData.get("fxRate")),
-    },
-    apiToken,
-  );
+  const lines = formData.has("lineProduct") ? parsePoLines(formData) : undefined;
+
+  try {
+    await apiClient.patch(
+      `/purchase-orders/${id}`,
+      {
+        status: String(formData.get("status") ?? "ORDERED"),
+        notes: toOptionalString(formData.get("notes")),
+        shippingCostGbp: toNumber(formData.get("shippingCostGbp")),
+        shippingCostEur: toNumber(formData.get("shippingCostEur")),
+        actualCostGbp: toNumber(formData.get("actualCostGbp")),
+        actualCostEur: toNumber(formData.get("actualCostEur")),
+        fxRate: toOptionalNumber(formData.get("fxRate")),
+        lines,
+      },
+      apiToken,
+    );
+  } catch (err) {
+    if (err instanceof ApiError) {
+      redirect(`/purchase-orders/${id}?error=${encodeURIComponent(err.message)}`);
+    }
+    throw err;
+  }
   revalidatePath(`/purchase-orders/${id}`);
   redirect(`/purchase-orders/${id}?ok=Updated`);
 }

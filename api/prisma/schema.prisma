@@ -181,6 +181,7 @@ model InvoiceLine {
   grade        String
   unitPriceGbp Float
   unitPriceEur Float
+  imeis        String[]    @default([])
   sortOrder    Int         @default(0)
   stockUnits   StockUnit[]
 }

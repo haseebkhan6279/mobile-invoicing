@@ -37,9 +37,10 @@ class InvoiceLineDto {
   @IsNumber()
   unitPriceEur?: number;
 
+  @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  imeis: string[];
+  imeis?: string[];
 }
 
 export class CreateInvoiceDto {
@@ -93,4 +94,10 @@ export class CreateInvoiceDto {
 export class UpdateInvoiceStatusDto {
   @IsIn(INVOICE_STATUSES)
   status: string;
+}
+
+export class UpdateInvoiceLineImeisDto {
+  @IsArray()
+  @IsString({ each: true })
+  imeis: string[];
 }

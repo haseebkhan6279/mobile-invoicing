@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useRef, useState } from "react";
 import { getAvailableImeis } from "@/actions/stock";
 import { CustomerPicker, type CustomerHit } from "@/components/customer-picker";
 import { InvoiceLineProductField, type ProductHit } from "@/components/invoice-line-product-field";
@@ -13,12 +13,19 @@ import { DEFAULT_FX_RATE, eurFromGbp } from "@/lib/money";
 
 type Lookup = { id: string; name?: string; code?: string };
 
-const emptyLine = {
-  productName: "",
+type LineSeed = {
+  color: string;
+  network: string;
+  grade: string;
+  unitPriceGbp: number;
+  unitPriceEur: number;
+  imeis: string;
+};
+
+const emptySeed: LineSeed = {
   color: "Black",
   network: "Unlocked",
   grade: "A",
-  qty: 1,
   unitPriceGbp: 0,
   unitPriceEur: 0,
   imeis: "",
@@ -29,29 +36,26 @@ function InvoiceLine({
   colors,
   networks,
   fx,
+  onRemove,
 }: {
   grades: Lookup[];
   colors: Lookup[];
   networks: Lookup[];
   fx: number;
+  onRemove: () => void;
 }) {
-  const [productName, setProductName] = useState(emptyLine.productName);
-  const [color, setColor] = useState(emptyLine.color);
-  const [network, setNetwork] = useState(emptyLine.network);
-  const [grade, setGrade] = useState(emptyLine.grade);
-  const [priceGbp, setPriceGbp] = useState(emptyLine.unitPriceGbp);
-  const [priceEur, setPriceEur] = useState(emptyLine.unitPriceEur);
-  const [qty, setQty] = useState(emptyLine.qty);
-  const [imeis, setImeis] = useState(emptyLine.imeis);
+  const uid = useId();
+  const [productName, setProductName] = useState("");
+  const [seed, setSeed] = useState<LineSeed>(emptySeed);
+  const [autofillKey, setAutofillKey] = useState(0);
+  const [eurKey, setEurKey] = useState(0);
   const [availableImeis, setAvailableImeis] = useState<string[]>([]);
+  const qtyRef = useRef<HTMLInputElement>(null);
+  const eurTouched = useRef(false);
 
   const handleSelect = async (hit: ProductHit) => {
     setProductName(hit.productName);
-    setColor(hit.color);
-    setNetwork(hit.network);
-    setGrade(hit.grade);
-    setPriceGbp(hit.costGbp);
-    setPriceEur(hit.costEur);
+    const qty = Math.max(1, Number(qtyRef.current?.value) || 1);
     const imeiList = await getAvailableImeis({
       productName: hit.productName,
       color: hit.color,
@@ -59,11 +63,26 @@ function InvoiceLine({
       grade: hit.grade,
     });
     setAvailableImeis(imeiList);
-    setImeis(imeiList.slice(0, qty).join("\n"));
+    eurTouched.current = false;
+    setSeed({
+      color: hit.color,
+      network: hit.network,
+      grade: hit.grade,
+      unitPriceGbp: hit.costGbp,
+      unitPriceEur: hit.costEur,
+      imeis: imeiList.slice(0, qty).join("\n"),
+    });
+    setAutofillKey((k) => k + 1);
+    setEurKey((k) => k + 1);
   };
 
   return (
     <div className="space-y-3 rounded-xl border border-slate-200 p-4">
+      <div className="flex justify-end">
+        <Button type="button" variant="ghost" size="sm" onClick={onRemove}>
+          Remove line
+        </Button>
+      </div>
       <div className="grid gap-3 md:grid-cols-6">
         <div className="md:col-span-2">
           <Label>Product name</Label>
@@ -73,96 +92,99 @@ function InvoiceLine({
             onSelect={handleSelect}
           />
           <p className="mt-1 text-xs text-slate-500">
-            Start typing to pick from stock on hand and auto-fill details.
+            Start typing to pick from stock on hand and auto-fill details, or enter a new product.
           </p>
         </div>
         <div>
           <Label>Color</Label>
-          <Select name="lineColor" value={color} onChange={(event) => setColor(event.target.value)}>
+          <Input
+            key={`color-${autofillKey}`}
+            name="lineColor"
+            list={`${uid}-colors`}
+            defaultValue={seed.color}
+          />
+          <datalist id={`${uid}-colors`}>
             {colors.map((c) => (
-              <option key={c.id} value={c.name}>
-                {c.name}
-              </option>
+              <option key={c.id} value={c.name} />
             ))}
-          </Select>
+          </datalist>
         </div>
         <div>
           <Label>Network</Label>
-          <Select
+          <Input
+            key={`network-${autofillKey}`}
             name="lineNetwork"
-            value={network}
-            onChange={(event) => setNetwork(event.target.value)}
-          >
+            list={`${uid}-networks`}
+            defaultValue={seed.network}
+          />
+          <datalist id={`${uid}-networks`}>
             {networks.map((n) => (
-              <option key={n.id} value={n.name}>
-                {n.name}
-              </option>
+              <option key={n.id} value={n.name} />
             ))}
-          </Select>
+          </datalist>
         </div>
         <div>
           <Label>Grade</Label>
-          <Select name="lineGrade" value={grade} onChange={(event) => setGrade(event.target.value)}>
+          <Input
+            key={`grade-${autofillKey}`}
+            name="lineGrade"
+            list={`${uid}-grades`}
+            defaultValue={seed.grade}
+          />
+          <datalist id={`${uid}-grades`}>
             {grades.map((g) => (
-              <option key={g.id} value={g.code}>
-                {g.code}
-              </option>
+              <option key={g.id} value={g.code} />
             ))}
-          </Select>
+          </datalist>
         </div>
         <div>
           <Label>Qty</Label>
-          <Input
-            name="lineQty"
-            type="number"
-            min={1}
-            value={qty}
-            onChange={(event) => {
-              const next = Math.max(1, Number(event.target.value) || 1);
-              setQty(next);
-              if (availableImeis.length) setImeis(availableImeis.slice(0, next).join("\n"));
-            }}
-          />
+          <Input ref={qtyRef} name="lineQty" type="number" min={1} defaultValue={1} />
         </div>
         <div>
           <Label>Unit price GBP</Label>
           <Input
+            key={`gbp-${autofillKey}`}
             name="linePriceGbp"
             type="number"
             step="0.01"
-            value={priceGbp}
+            defaultValue={seed.unitPriceGbp}
             onChange={(event) => {
-              const next = Number(event.target.value) || 0;
-              setPriceGbp(next);
-              if (priceEur === 0) setPriceEur(eurFromGbp(next, fx));
+              if (eurTouched.current) return;
+              const raw = event.target.value;
+              if (raw === "") return;
+              const n = Number(raw);
+              if (!Number.isFinite(n)) return;
+              setSeed((s) => ({ ...s, unitPriceEur: eurFromGbp(n, fx) }));
+              setEurKey((k) => k + 1);
             }}
           />
         </div>
         <div>
           <Label>Unit price EUR</Label>
           <Input
+            key={`eur-${eurKey}`}
             name="linePriceEur"
             type="number"
             step="0.01"
-            value={priceEur}
-            onChange={(event) => setPriceEur(Number(event.target.value) || 0)}
+            defaultValue={seed.unitPriceEur}
+            onChange={() => {
+              eurTouched.current = true;
+            }}
           />
         </div>
       </div>
       <div>
-        <Label>IMEIs for this line (qty must match)</Label>
+        <Label>IMEIs for this line (optional — you can add these later)</Label>
         <Textarea
+          key={`imeis-${autofillKey}`}
           name="lineImeis"
-          required
-          placeholder="One 15-digit IMEI per line"
-          value={imeis}
-          onChange={(event) => setImeis(event.target.value)}
+          placeholder="One 15-digit IMEI per line (optional)"
+          defaultValue={seed.imeis}
         />
         {availableImeis.length ? (
           <p className="mt-1 text-xs text-slate-500">
-            {availableImeis.length} available for this spec
-            {availableImeis.length < qty ? " — not enough in stock for this qty" : ""}.
-            Pre-filled; edit to swap specific units.
+            {availableImeis.length} available for this spec. Pre-filled; edit to swap, add, or clear.
           </p>
         ) : null}
       </div>
@@ -181,7 +203,8 @@ export function InvoiceForm({
   networks: Lookup[];
   initialCustomer?: CustomerHit | null;
 }) {
-  const [lineCount, setLineCount] = useState(1);
+  const nextLineId = useRef(1);
+  const [lineIds, setLineIds] = useState<number[]>([0]);
   const [fx, setFx] = useState(DEFAULT_FX_RATE);
 
   return (
@@ -210,8 +233,13 @@ export function InvoiceForm({
             name="fxRate"
             type="number"
             step="0.0001"
-            value={fx}
-            onChange={(event) => setFx(Number(event.target.value) || 0)}
+            defaultValue={DEFAULT_FX_RATE}
+            onChange={(event) => {
+              const raw = event.target.value;
+              if (raw === "") return;
+              const n = Number(raw);
+              if (Number.isFinite(n)) setFx(n);
+            }}
           />
         </div>
         <div>
@@ -259,13 +287,20 @@ export function InvoiceForm({
             type="button"
             variant="secondary"
             size="sm"
-            onClick={() => setLineCount((current) => current + 1)}
+            onClick={() => setLineIds((current) => [...current, nextLineId.current++])}
           >
             Add line
           </Button>
         </div>
-        {Array.from({ length: lineCount }).map((_, index) => (
-          <InvoiceLine key={index} grades={grades} colors={colors} networks={networks} fx={fx} />
+        {lineIds.map((lineId) => (
+          <InvoiceLine
+            key={lineId}
+            grades={grades}
+            colors={colors}
+            networks={networks}
+            fx={fx}
+            onRemove={() => setLineIds((current) => current.filter((id) => id !== lineId))}
+          />
         ))}
       </div>
       <div>

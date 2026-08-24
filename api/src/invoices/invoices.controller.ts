@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from "@nestjs/common";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import { InvoicesService } from "./invoices.service";
-import { CreateInvoiceDto, UpdateInvoiceStatusDto } from "./dto/invoice.dto";
+import { CreateInvoiceDto, UpdateInvoiceLineImeisDto, UpdateInvoiceStatusDto } from "./dto/invoice.dto";
 
 @Controller("invoices")
 @UseGuards(JwtAuthGuard)
@@ -26,5 +26,14 @@ export class InvoicesController {
   @Patch(":id")
   updateStatus(@Param("id") id: string, @Body() dto: UpdateInvoiceStatusDto) {
     return this.invoices.updateInvoiceStatus(id, dto.status);
+  }
+
+  @Patch(":id/lines/:lineId/imeis")
+  updateLineImeis(
+    @Param("id") id: string,
+    @Param("lineId") lineId: string,
+    @Body() dto: UpdateInvoiceLineImeisDto,
+  ) {
+    return this.invoices.updateInvoiceLineImeis(id, lineId, dto.imeis);
   }
 }

@@ -77,18 +77,31 @@ export class PurchaseOrdersService {
     });
   }
 
-  updatePurchaseOrderMeta(id: string, input: UpdatePurchaseOrderMetaDto) {
-    return this.prisma.purchaseOrder.update({
-      where: { id },
-      data: {
-        status: input.status ?? "ORDERED",
-        notes: input.notes ?? null,
-        shippingCostGbp: Number(input.shippingCostGbp) || 0,
-        shippingCostEur: Number(input.shippingCostEur) || 0,
-        actualCostGbp: Number(input.actualCostGbp) || 0,
-        actualCostEur: Number(input.actualCostEur) || 0,
-        fxRate: input.fxRate ?? DEFAULT_FX_RATE,
-      },
+  async updatePurchaseOrderMeta(id: string, input: UpdatePurchaseOrderMetaDto) {
+    const existing = await this.prisma.purchaseOrder.findUnique({ where: { id } });
+    if (!existing) throw new NotFoundException("Purchase order not found");
+
+    const lines = input.lines ? normalizeLines(input.lines) : null;
+    if (lines && !lines.length) throw new BadRequestException("Add at least one line");
+
+    return this.prisma.$transaction(async (tx) => {
+      if (lines) {
+        await tx.purchaseOrderLine.deleteMany({ where: { purchaseOrderId: id } });
+      }
+      return tx.purchaseOrder.update({
+        where: { id },
+        data: {
+          status: input.status ?? "ORDERED",
+          notes: input.notes ?? null,
+          shippingCostGbp: Number(input.shippingCostGbp) || 0,
+          shippingCostEur: Number(input.shippingCostEur) || 0,
+          actualCostGbp: Number(input.actualCostGbp) || 0,
+          actualCostEur: Number(input.actualCostEur) || 0,
+          fxRate: input.fxRate ?? DEFAULT_FX_RATE,
+          ...(lines ? { lines: { create: lines } } : {}),
+        },
+        include: { lines: true },
+      });
     });
   }
 }
