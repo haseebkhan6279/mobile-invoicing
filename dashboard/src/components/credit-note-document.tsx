@@ -162,6 +162,8 @@ export function CreditNoteDocument({
           Company Registration number: {company.companyNo}
           <br />
           Company VAT Number: {company.vatNumber}
+          <br />
+          EORI Number: {company.eoriNumber}
         </p>
       </div>
     </div>

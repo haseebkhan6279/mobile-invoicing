@@ -258,7 +258,7 @@ export function InvoiceForm({
         <div>
           <Label htmlFor="entity">Billing entity</Label>
           <Select id="entity" name="entity" defaultValue="UK">
-            <option value="UK">UK — £ (Animus Corporation Limited)</option>
+            <option value="UK">UK — £ (Atlantic Devices Solutions LTD)</option>
             <option value="NI">NI — € (Atlantic Devices Solutions LTD)</option>
           </Select>
         </div>

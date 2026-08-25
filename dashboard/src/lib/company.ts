@@ -10,12 +10,13 @@ const TBD_BANK = {
 } as const;
 
 export const sellerCompany = {
-  legalName: "Animus Corporation Limited",
-  tradingName: "Animus Corporation Limited",
-  shortName: "Animus",
-  logo: null as string | null,
-  companyNo: "11115138",
-  vatNumber: "GB299538630",
+  legalName: "Atlantic Devices Solutions LTD",
+  tradingName: "Atlantic Devices Solutions LTD",
+  shortName: "Atlantic",
+  logo: "/logo.jpeg" as string | null,
+  companyNo: "NI742244",
+  vatNumber: "GB048681389",
+  eoriNumber: "GB048681389000",
   address: {
     line1: "34 Harmondsworth Lane",
     line2: "Sipson",
@@ -30,9 +31,9 @@ export const sellerCompany = {
   bank: {
     GBP: {
       bankName: "Counting Up",
-      accountName: "Animus Corporation Limited",
-      sortCode: "23-69-72",
-      accountNumber: "33062914",
+      accountName: "Echo logic tech ltd",
+      sortCode: "08-71-99",
+      accountNumber: "14800963",
       iban: "",
       bic: "",
     },
@@ -50,6 +51,7 @@ export const creditNoteCompany = {
   // VAT number was not provided for this trading name — keeping the previous
   // entity's number as a placeholder. Replace once known.
   vatNumber: "XI 375676253",
+  eoriNumber: "GB048681389000",
   address: {
     line1: "12-16 Bridge Street",
     line2: "",

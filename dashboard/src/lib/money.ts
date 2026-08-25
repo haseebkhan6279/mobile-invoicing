@@ -2,14 +2,18 @@ export function formatGbp(amount: number) {
   return new Intl.NumberFormat("en-GB", {
     style: "currency",
     currency: "GBP",
-  }).format(amount);
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(roundMoney(amount));
 }
 
 export function formatEur(amount: number) {
   return new Intl.NumberFormat("en-IE", {
     style: "currency",
     currency: "EUR",
-  }).format(amount);
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(roundMoney(amount));
 }
 
 export function formatMoneyPair(gbp: number, eur: number) {
