@@ -89,6 +89,37 @@ export async function updateInvoiceStatus(formData: FormData) {
   redirect(`/invoices/${id}?ok=Status updated`);
 }
 
+export async function updateInvoiceLine(formData: FormData) {
+  const { apiToken } = await requireUser();
+  const id = String(formData.get("id") ?? "");
+  const lineId = String(formData.get("lineId") ?? "");
+
+  try {
+    await apiClient.patch(
+      `/invoices/${id}/lines/${lineId}`,
+      {
+        productName: String(formData.get("productName") ?? "").trim(),
+        color: toOptionalString(formData.get("color")),
+        network: toOptionalString(formData.get("network")),
+        grade: toOptionalString(formData.get("grade")),
+        qty: toNumber(formData.get("qty")),
+        unitPriceGbp: toNumber(formData.get("unitPriceGbp")),
+        unitPriceEur: toNumber(formData.get("unitPriceEur")),
+      },
+      apiToken,
+    );
+  } catch (err) {
+    if (err instanceof ApiError) {
+      redirect(`/invoices/${id}?error=${encodeURIComponent(err.message)}`);
+    }
+    throw err;
+  }
+
+  revalidatePath(`/invoices/${id}`);
+  revalidatePath("/stock");
+  redirect(`/invoices/${id}?ok=Line updated`);
+}
+
 export async function updateInvoiceLineImeis(formData: FormData) {
   const { apiToken } = await requireUser();
   const id = String(formData.get("id") ?? "");

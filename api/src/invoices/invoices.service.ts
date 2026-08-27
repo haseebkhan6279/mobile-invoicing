@@ -3,7 +3,7 @@ import { PrismaService } from "../prisma/prisma.service";
 import { nextNumberTx } from "../common/numbers";
 import { DEFAULT_FX_RATE } from "../common/money";
 import { applyCreditToInvoiceTx, rmaTotals } from "../common/rma";
-import { CreateInvoiceDto } from "./dto/invoice.dto";
+import { CreateInvoiceDto, UpdateInvoiceLineDto } from "./dto/invoice.dto";
 
 function stockStatusForInvoice(status: string) {
   return status === "PAID" ? "SOLD" : "RESERVED";
@@ -193,6 +193,34 @@ export class InvoicesService {
         await tx.stockUnit.update({ where: { id: unit.id }, data: { status: unitStatus } });
       }
       return updated;
+    });
+  }
+
+  async updateInvoiceLine(invoiceId: string, lineId: string, dto: UpdateInvoiceLineDto) {
+    const line = await this.prisma.invoiceLine.findUnique({ where: { id: lineId } });
+    if (!line || line.invoiceId !== invoiceId) throw new NotFoundException("Invoice line not found");
+
+    const productName = (dto.productName ?? "").trim();
+    const qty = Number(dto.qty) || 0;
+    if (!productName) throw new BadRequestException("Product name is required");
+    if (qty <= 0) throw new BadRequestException("Qty must be greater than 0");
+    if (line.imeis.length > qty) {
+      throw new BadRequestException(
+        `Cannot set qty below the number of IMEIs already listed on this line (${line.imeis.length}). Remove IMEIs first.`,
+      );
+    }
+
+    return this.prisma.invoiceLine.update({
+      where: { id: lineId },
+      data: {
+        productName,
+        color: (dto.color ?? "").toString().trim() || "Black",
+        network: (dto.network ?? "").toString().trim() || "Unlocked",
+        grade: (dto.grade ?? "").toString().trim() || "A",
+        qty,
+        unitPriceGbp: Number(dto.unitPriceGbp) || 0,
+        unitPriceEur: Number(dto.unitPriceEur) || 0,
+      },
     });
   }
 

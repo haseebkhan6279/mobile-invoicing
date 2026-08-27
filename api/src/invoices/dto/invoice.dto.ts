@@ -106,3 +106,31 @@ export class UpdateInvoiceLineImeisDto {
   @IsString({ each: true })
   imeis: string[];
 }
+
+export class UpdateInvoiceLineDto {
+  @IsString()
+  productName: string;
+
+  @IsOptional()
+  @IsString()
+  color?: string | null;
+
+  @IsOptional()
+  @IsString()
+  network?: string | null;
+
+  @IsOptional()
+  @IsString()
+  grade?: string | null;
+
+  @IsNumber()
+  qty: number;
+
+  @IsOptional()
+  @IsNumber()
+  unitPriceGbp?: number;
+
+  @IsOptional()
+  @IsNumber()
+  unitPriceEur?: number;
+}
