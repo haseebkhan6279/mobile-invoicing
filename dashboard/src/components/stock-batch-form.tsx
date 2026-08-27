@@ -39,7 +39,7 @@ function StockBatchLine({
   const eurTouched = useRef(false);
 
   return (
-    <div className="space-y-3 rounded-xl border border-slate-200 p-4">
+    <div className="space-y-3 rounded-xl border border-slate-200 p-4 dark:border-slate-800">
       <div className="flex justify-end">
         <Button type="button" variant="ghost" size="sm" onClick={onRemove}>
           Remove batch
@@ -132,7 +132,7 @@ function StockBatchLine({
           />
         </div>
       </div>
-      <p className="text-xs text-slate-500">
+      <p className="text-xs text-slate-500 dark:text-slate-400">
         IMEIs are optional — leave blank and set a quantity to add units you&rsquo;ll IMEI-tag later.
       </p>
     </div>
@@ -201,7 +201,7 @@ export function StockBatchForm({
         </div>
       </div>
       {showLedgerToggle ? (
-        <label className="flex items-center gap-2 text-sm text-slate-700">
+        <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
           <input type="checkbox" name="postLedger" defaultChecked className="rounded" />
           Post goods value as CREDIT on supplier hisab
         </label>

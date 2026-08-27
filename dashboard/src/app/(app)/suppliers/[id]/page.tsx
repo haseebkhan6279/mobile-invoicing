@@ -59,39 +59,43 @@ export default async function SupplierDetailPage({
 
       <div className="grid gap-4 sm:grid-cols-3">
         <Card className="flex items-start gap-3">
-          <div className="rounded-lg bg-sky-50 p-2 text-sky-600">
+          <div className="rounded-lg bg-sky-50 p-2 text-sky-600 dark:bg-sky-950/40 dark:text-sky-400">
             <ArrowDownCircle className="h-5 w-5" />
           </div>
           <div>
-            <div className="text-xs text-slate-500">Credit (goods received)</div>
+            <div className="text-xs text-slate-500 dark:text-slate-400">Credit (goods received)</div>
             <MoneyPair gbp={totals.creditGbp} eur={totals.creditEur} stacked />
           </div>
         </Card>
         <Card className="flex items-start gap-3">
-          <div className="rounded-lg bg-slate-100 p-2 text-slate-600">
+          <div className="rounded-lg bg-slate-100 p-2 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
             <ArrowUpCircle className="h-5 w-5" />
           </div>
           <div>
-            <div className="text-xs text-slate-500">Debit (paid out)</div>
+            <div className="text-xs text-slate-500 dark:text-slate-400">Debit (paid out)</div>
             <MoneyPair gbp={totals.debitGbp} eur={totals.debitEur} stacked />
           </div>
         </Card>
         <Card
           className={cn(
             "flex items-start gap-3",
-            owed ? "bg-amber-50/60 ring-1 ring-amber-200" : "bg-emerald-50/60 ring-1 ring-emerald-200",
+            owed
+              ? "bg-amber-50/60 ring-1 ring-amber-200 dark:bg-amber-950/20 dark:ring-amber-900/40"
+              : "bg-emerald-50/60 ring-1 ring-emerald-200 dark:bg-emerald-950/20 dark:ring-emerald-900/40",
           )}
         >
           <div
             className={cn(
               "rounded-lg p-2",
-              owed ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700",
+              owed
+                ? "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400"
+                : "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400",
             )}
           >
             <Scale className="h-5 w-5" />
           </div>
           <div>
-            <div className="text-xs text-slate-500">
+            <div className="text-xs text-slate-500 dark:text-slate-400">
               {owed ? "Balance payable" : "Balance settled"}
             </div>
             <MoneyPair gbp={totals.balanceGbp} eur={totals.balanceEur} stacked />
@@ -167,14 +171,14 @@ export default async function SupplierDetailPage({
                       <Td>
                         {row.reference || "—"}
                         {row.notes ? (
-                          <div className="text-xs text-slate-500">{row.notes}</div>
+                          <div className="text-xs text-slate-500 dark:text-slate-400">{row.notes}</div>
                         ) : null}
                       </Td>
                     </tr>
                   ))}
                   {!rows.length ? (
                     <tr>
-                      <Td className="text-slate-500" colSpan={5}>
+                      <Td className="text-slate-500 dark:text-slate-400" colSpan={5}>
                         No ledger entries yet.
                       </Td>
                     </tr>
@@ -193,21 +197,21 @@ export default async function SupplierDetailPage({
             <ul className="space-y-2 text-sm">
               {supplier.purchaseOrders.map((po) => (
                 <li key={po.id} className="flex items-center justify-between">
-                  <Link className="text-[#0b3a6e] hover:underline" href={`/purchase-orders/${po.id}`}>
+                  <Link className="text-[#0b3a6e] hover:underline dark:text-sky-400" href={`/purchase-orders/${po.id}`}>
                     {po.poNumber}
                   </Link>
                   <StatusBadge status={po.status} />
                 </li>
               ))}
               {!supplier.purchaseOrders.length ? (
-                <li className="text-slate-500">No purchase orders.</li>
+                <li className="text-slate-500 dark:text-slate-400">No purchase orders.</li>
               ) : null}
             </ul>
           </Card>
 
-          <Card className="border-red-100">
-            <h2 className="mb-1 font-medium text-red-700">Delete supplier</h2>
-            <p className="mb-4 text-sm text-slate-500">
+          <Card className="border-red-100 dark:border-red-900/40">
+            <h2 className="mb-1 font-medium text-red-700 dark:text-red-400">Delete supplier</h2>
+            <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">
               Only possible while this supplier has no purchase orders or stock on record.
             </p>
             <form action={deleteSupplier}>

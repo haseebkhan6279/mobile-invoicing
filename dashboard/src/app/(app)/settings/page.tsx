@@ -27,18 +27,18 @@ export default async function SettingsPage({
 
       <Card>
         <h2 className="mb-4 font-medium">Grades</h2>
-        <div className="divide-y divide-slate-100 rounded-lg border border-slate-200">
+        <div className="divide-y divide-slate-100 rounded-lg border border-slate-200 dark:divide-slate-800 dark:border-slate-800">
           {grades.map((grade: Grade) => (
             <div key={grade.id} className="flex items-center justify-between gap-3 px-4 py-2.5">
               <div>
                 <span className="font-mono text-sm font-medium">{grade.code}</span>
-                <span className="ml-2 text-sm text-slate-600">{grade.label}</span>
+                <span className="ml-2 text-sm text-slate-600 dark:text-slate-300">{grade.label}</span>
               </div>
               <form action={deleteGrade}>
                 <input type="hidden" name="id" value={grade.id} />
                 <button
                   type="submit"
-                  className="text-xs font-medium text-slate-400 hover:text-red-600"
+                  className="text-xs font-medium text-slate-400 hover:text-red-600 dark:text-slate-500 dark:hover:text-red-400"
                 >
                   Remove
                 </button>
@@ -46,7 +46,7 @@ export default async function SettingsPage({
             </div>
           ))}
           {!grades.length ? (
-            <p className="px-4 py-6 text-center text-sm text-slate-500">No grades yet.</p>
+            <p className="px-4 py-6 text-center text-sm text-slate-500 dark:text-slate-400">No grades yet.</p>
           ) : null}
         </div>
         <form
@@ -76,20 +76,20 @@ export default async function SettingsPage({
             <form
               key={color.id}
               action={deleteColor}
-              className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 py-1 pl-3 pr-1 text-sm"
+              className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 py-1 pl-3 pr-1 text-sm dark:border-slate-700 dark:bg-slate-800"
             >
               {color.name}
               <input type="hidden" name="id" value={color.id} />
               <button
                 type="submit"
                 aria-label={`Remove ${color.name}`}
-                className="rounded-full px-1.5 text-slate-400 hover:text-red-600"
+                className="rounded-full px-1.5 text-slate-400 hover:text-red-600 dark:text-slate-500 dark:hover:text-red-400"
               >
                 ×
               </button>
             </form>
           ))}
-          {!colors.length ? <p className="text-sm text-slate-500">No colors yet.</p> : null}
+          {!colors.length ? <p className="text-sm text-slate-500 dark:text-slate-400">No colors yet.</p> : null}
         </div>
         <form action={createColor} className="mt-4 flex flex-wrap items-end gap-3">
           <div className="min-w-48 flex-1">

@@ -53,7 +53,7 @@ export default async function StockPage({
           name="q"
           defaultValue={q}
           placeholder="IMEI or product"
-          className="h-10 rounded-lg border border-slate-200 px-3 text-sm"
+          className="h-10 rounded-lg border border-slate-200 px-3 text-sm dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-500"
         />
         <Select name="status" defaultValue={status ?? ""} className="w-44">
           <option value="">All statuses</option>
@@ -70,11 +70,11 @@ export default async function StockPage({
           <option value="B">B</option>
           <option value="C">C</option>
         </Select>
-        <button className="h-10 rounded-lg bg-white px-4 text-sm ring-1 ring-slate-200">
+        <button className="h-10 rounded-lg bg-white px-4 text-sm ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-100 dark:ring-slate-700">
           Filter
         </button>
       </form>
-      <div className="hidden overflow-hidden rounded-xl border border-slate-200 bg-white lg:block">
+      <div className="hidden overflow-hidden rounded-xl border border-slate-200 bg-white lg:block dark:border-slate-800 dark:bg-slate-900">
         <Table>
           <THead>
             <tr>
@@ -117,7 +117,7 @@ export default async function StockPage({
                   <StatusBadge status={unit.status} />
                   {unit.invoice ? (
                     <div className="text-xs">
-                      <Link className="text-[#0b3a6e]" href={`/invoices/${unit.invoice.id}`}>
+                      <Link className="text-[#0b3a6e] dark:text-sky-400" href={`/invoices/${unit.invoice.id}`}>
                         {unit.invoice.invoiceNumber}
                       </Link>
                     </div>
@@ -129,7 +129,7 @@ export default async function StockPage({
           </tbody>
         </Table>
       </div>
-      <div className="divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200 bg-white lg:hidden">
+      <div className="divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200 bg-white lg:hidden dark:divide-slate-800 dark:border-slate-800 dark:bg-slate-900">
         {units.map((unit) => (
           <MobileListRow
             key={unit.id}
@@ -142,7 +142,7 @@ export default async function StockPage({
                   {unit.grade} · {unit.color}
                 </div>
                 {unit.invoice ? (
-                  <Link className="text-[#0b3a6e]" href={`/invoices/${unit.invoice.id}`}>
+                  <Link className="text-[#0b3a6e] dark:text-sky-400" href={`/invoices/${unit.invoice.id}`}>
                     {unit.invoice.invoiceNumber}
                   </Link>
                 ) : null}
@@ -151,7 +151,7 @@ export default async function StockPage({
           />
         ))}
         {!units.length ? (
-          <p className="px-4 py-8 text-center text-sm text-slate-500">No stock yet.</p>
+          <p className="px-4 py-8 text-center text-sm text-slate-500 dark:text-slate-400">No stock yet.</p>
         ) : null}
       </div>
     </div>

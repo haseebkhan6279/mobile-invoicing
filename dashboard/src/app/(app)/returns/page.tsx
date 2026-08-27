@@ -28,7 +28,7 @@ export default async function ReturnsPage() {
         description="Create an RMA against an invoice and IMEI."
         action={{ href: "/returns/new", label: "Create RMA" }}
       />
-      <div className="hidden overflow-hidden rounded-xl border border-slate-200 bg-white lg:block">
+      <div className="hidden overflow-hidden rounded-xl border border-slate-200 bg-white lg:block dark:border-slate-800 dark:bg-slate-900">
         <Table>
           <THead>
             <tr>
@@ -44,7 +44,7 @@ export default async function ReturnsPage() {
             {rmas.map((rma) => (
               <tr key={rma.id}>
                 <Td>
-                  <Link className="font-medium text-[#0b3a6e] hover:underline" href={`/returns/${rma.id}`}>
+                  <Link className="font-medium text-[#0b3a6e] hover:underline dark:text-sky-400" href={`/returns/${rma.id}`}>
                     {rma.rmaNumber}
                   </Link>
                 </Td>
@@ -60,7 +60,7 @@ export default async function ReturnsPage() {
           </tbody>
         </Table>
       </div>
-      <div className="divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200 bg-white lg:hidden">
+      <div className="divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200 bg-white lg:hidden dark:divide-slate-800 dark:border-slate-800 dark:bg-slate-900">
         {rmas.map((rma) => (
           <MobileListRow
             key={rma.id}
@@ -72,7 +72,7 @@ export default async function ReturnsPage() {
           />
         ))}
         {!rmas.length ? (
-          <p className="px-4 py-8 text-center text-sm text-slate-500">No returns yet.</p>
+          <p className="px-4 py-8 text-center text-sm text-slate-500 dark:text-slate-400">No returns yet.</p>
         ) : null}
       </div>
     </div>

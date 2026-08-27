@@ -84,7 +84,7 @@ function InvoiceLine({
   };
 
   return (
-    <div className="space-y-3 rounded-xl border border-slate-200 p-4">
+    <div className="space-y-3 rounded-xl border border-slate-200 p-4 dark:border-slate-800">
       <div className="flex justify-end">
         <Button type="button" variant="ghost" size="sm" onClick={onRemove}>
           Remove line
@@ -98,7 +98,7 @@ function InvoiceLine({
             onChange={setProductName}
             onSelect={handleSelect}
           />
-          <p className="mt-1 text-xs text-slate-500">
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
             Start typing to pick from stock on hand and auto-fill details, or enter a new product.
           </p>
         </div>
@@ -190,7 +190,7 @@ function InvoiceLine({
           defaultValue={seed.imeis}
         />
         {availableImeis.length ? (
-          <p className="mt-1 text-xs text-slate-500">
+          <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
             {availableImeis.length} available for this spec. Pre-filled; edit to swap, add, or clear.
           </p>
         ) : null}
@@ -227,7 +227,7 @@ export function InvoiceForm({
         }}
       />
       {credits.length ? (
-        <div className="space-y-2 rounded-xl border border-slate-200 p-4">
+        <div className="space-y-2 rounded-xl border border-slate-200 p-4 dark:border-slate-800">
           <h2 className="font-medium">Available RMA credit</h2>
           {credits.map((credit) => {
             const { totalGbp, totalEur } = creditValue(credit);

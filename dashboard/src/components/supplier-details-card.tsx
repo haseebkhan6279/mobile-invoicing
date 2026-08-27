@@ -14,9 +14,9 @@ import { Textarea } from "@/components/ui/textarea";
 function Field({ label, value }: { label: string; value?: string | null }) {
   return (
     <div>
-      <dt className="text-xs text-slate-500">{label}</dt>
-      <dd className="mt-0.5 whitespace-pre-wrap text-sm text-slate-900">
-        {value ? value : <span className="text-slate-400">—</span>}
+      <dt className="text-xs text-slate-500 dark:text-slate-400">{label}</dt>
+      <dd className="mt-0.5 whitespace-pre-wrap text-sm text-slate-900 dark:text-slate-100">
+        {value ? value : <span className="text-slate-400 dark:text-slate-500">—</span>}
       </dd>
     </div>
   );

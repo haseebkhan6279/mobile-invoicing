@@ -44,7 +44,7 @@ export default async function ReceivePoPage({
       />
       <Notice error={error} />
       <Card className="mb-4">
-        <h2 className="mb-2 text-sm font-medium text-slate-500">Expected</h2>
+        <h2 className="mb-2 text-sm font-medium text-slate-500 dark:text-slate-400">Expected</h2>
         <ul className="text-sm">
           {po.lines.map((line) => (
             <li key={line.id}>

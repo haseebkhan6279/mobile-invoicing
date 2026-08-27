@@ -29,7 +29,7 @@ export default async function SuppliersPage({
         action={{ href: "/suppliers/new", label: "Add supplier" }}
       />
       <Notice ok={ok} error={error} />
-      <div className="hidden overflow-hidden rounded-xl border border-slate-200 bg-white lg:block">
+      <div className="hidden overflow-hidden rounded-xl border border-slate-200 bg-white lg:block dark:border-slate-800 dark:bg-slate-900">
         <Table>
           <THead>
             <tr>
@@ -45,15 +45,15 @@ export default async function SuppliersPage({
             {suppliers.map((supplier) => {
               const t = totalsFromLedger(supplier.ledger);
               return (
-                <tr key={supplier.id} className="relative hover:bg-slate-50">
+                <tr key={supplier.id} className="relative hover:bg-slate-50 dark:hover:bg-slate-800">
                   <Td>
                     <Link
                       href={`/suppliers/${supplier.id}`}
                       className="absolute inset-0"
                       aria-label={`View ${supplier.name}`}
                     />
-                    <span className="font-medium text-[#0b3a6e]">{supplier.name}</span>
-                    <div className="text-xs text-slate-500">
+                    <span className="font-medium text-[#0b3a6e] dark:text-sky-400">{supplier.name}</span>
+                    <div className="text-xs text-slate-500 dark:text-slate-400">
                       {supplier.phone || supplier.email || "—"}
                     </div>
                   </Td>
@@ -79,7 +79,7 @@ export default async function SuppliersPage({
             })}
             {!suppliers.length ? (
               <tr>
-                <Td className="py-8 text-center text-slate-500" >
+                <Td className="py-8 text-center text-slate-500 dark:text-slate-400" >
                   No suppliers yet.
                 </Td>
               </tr>
@@ -87,7 +87,7 @@ export default async function SuppliersPage({
           </tbody>
         </Table>
       </div>
-      <div className="divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200 bg-white lg:hidden">
+      <div className="divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200 bg-white lg:hidden dark:divide-slate-800 dark:border-slate-800 dark:bg-slate-900">
         {suppliers.map((supplier) => {
           const t = totalsFromLedger(supplier.ledger);
           return (
@@ -102,7 +102,7 @@ export default async function SuppliersPage({
           );
         })}
         {!suppliers.length ? (
-          <p className="px-4 py-8 text-center text-sm text-slate-500">No suppliers yet.</p>
+          <p className="px-4 py-8 text-center text-sm text-slate-500 dark:text-slate-400">No suppliers yet.</p>
         ) : null}
       </div>
     </div>

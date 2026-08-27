@@ -91,7 +91,7 @@ export default async function SearchPage({
         <Input name="q" defaultValue={q} placeholder="Search…" />
       </form>
       {!q ? (
-        <p className="text-sm text-slate-500">Enter a search term to begin.</p>
+        <p className="text-sm text-slate-500 dark:text-slate-400">Enter a search term to begin.</p>
       ) : (
         <div className="space-y-4">
           {sections.map((section) => (
@@ -102,11 +102,11 @@ export default async function SearchPage({
                   {section.items.map((item) => (
                     <li key={item.href + item.label} className="flex justify-between gap-3">
                       <div>
-                        <Link className="text-[#0b3a6e] hover:underline" href={item.href}>
+                        <Link className="text-[#0b3a6e] hover:underline dark:text-sky-400" href={item.href}>
                           {item.label}
                         </Link>
                         {item.meta ? (
-                          <div className="text-xs text-slate-500">{item.meta}</div>
+                          <div className="text-xs text-slate-500 dark:text-slate-400">{item.meta}</div>
                         ) : null}
                       </div>
                       {item.status ? <StatusBadge status={item.status} /> : null}
@@ -114,7 +114,7 @@ export default async function SearchPage({
                   ))}
                 </ul>
               ) : (
-                <p className="text-sm text-slate-500">No matches.</p>
+                <p className="text-sm text-slate-500 dark:text-slate-400">No matches.</p>
               )}
             </Card>
           ))}

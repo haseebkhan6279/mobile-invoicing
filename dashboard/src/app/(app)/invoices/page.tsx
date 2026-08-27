@@ -49,11 +49,11 @@ export default async function InvoicesPage({
           <option value="AWAITING_PAYMENT">Awaiting payment</option>
           <option value="PAID">Paid</option>
         </Select>
-        <button className="ml-2 h-10 rounded-lg bg-white px-4 text-sm ring-1 ring-slate-200">
+        <button className="ml-2 h-10 rounded-lg bg-white px-4 text-sm ring-1 ring-slate-200 dark:bg-slate-900 dark:text-slate-100 dark:ring-slate-800">
           Filter
         </button>
       </form>
-      <div className="hidden overflow-hidden rounded-xl border border-slate-200 bg-white lg:block">
+      <div className="hidden overflow-hidden rounded-xl border border-slate-200 bg-white lg:block dark:border-slate-800 dark:bg-slate-900">
         <Table>
           <THead>
             <tr>
@@ -71,7 +71,7 @@ export default async function InvoicesPage({
               const totals = invoiceTotals(invoice);
               return (
                 <ClickableRow key={invoice.id} href={`/invoices/${invoice.id}`}>
-                  <Td className="font-medium text-[#0b3a6e]">{invoice.invoiceNumber}</Td>
+                  <Td className="font-medium text-[#0b3a6e] dark:text-sky-400">{invoice.invoiceNumber}</Td>
                   <Td className="font-mono">{invoice.customer.clientId}</Td>
                   <Td>{invoice.customer.name}</Td>
                   <Td>
@@ -93,7 +93,7 @@ export default async function InvoicesPage({
           </tbody>
         </Table>
       </div>
-      <div className="divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200 bg-white lg:hidden">
+      <div className="divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200 bg-white lg:hidden dark:divide-slate-800 dark:border-slate-800 dark:bg-slate-900">
         {invoices.map((invoice) => {
           const totals = invoiceTotals(invoice);
           return (
@@ -108,7 +108,7 @@ export default async function InvoicesPage({
           );
         })}
         {!invoices.length ? (
-          <p className="px-4 py-8 text-center text-sm text-slate-500">No invoices yet.</p>
+          <p className="px-4 py-8 text-center text-sm text-slate-500 dark:text-slate-400">No invoices yet.</p>
         ) : null}
       </div>
     </div>

@@ -19,7 +19,7 @@ export function LoginForm() {
       <div>
         <Label htmlFor="email">Email</Label>
         <div className="relative">
-          <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
           <Input
             id="email"
             name="email"
@@ -34,7 +34,7 @@ export function LoginForm() {
       <div>
         <Label htmlFor="password">Password</Label>
         <div className="relative">
-          <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
           <Input
             id="password"
             name="password"
@@ -46,14 +46,14 @@ export function LoginForm() {
         </div>
       </div>
       {state.error ? (
-        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 ring-1 ring-red-100">
+        <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700 ring-1 ring-red-100 dark:bg-red-950/40 dark:text-red-400 dark:ring-red-900">
           {state.error}
         </p>
       ) : null}
       <Button type="submit" size="lg" className="w-full" disabled={pending}>
         {pending ? "Signing in…" : "Sign in"}
       </Button>
-      <p className="text-center text-xs text-slate-500">
+      <p className="text-center text-xs text-slate-500 dark:text-slate-400">
         {company.tradingName} staff access only
       </p>
     </form>

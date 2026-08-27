@@ -80,12 +80,12 @@ export function CustomerPicker({
           onFocus={() => hits.length && setOpen(true)}
         />
         {open && (hits.length > 0 || query.trim()) ? (
-          <ul className="absolute z-20 mt-1 w-full overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg">
+          <ul className="absolute z-20 mt-1 w-full overflow-hidden rounded-lg border border-slate-200 bg-white shadow-lg dark:border-slate-700 dark:bg-slate-800">
             {hits.map((hit) => (
               <li key={hit.id}>
                 <button
                   type="button"
-                  className="w-full px-3 py-2 text-left text-sm hover:bg-slate-50"
+                  className="w-full px-3 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-700"
                   onClick={() => {
                     setSelected(hit);
                     setQuery(hit.name);
@@ -94,8 +94,8 @@ export function CustomerPicker({
                     onSelect?.(hit);
                   }}
                 >
-                  <div className="font-medium">{hit.name}</div>
-                  <div className="text-xs text-slate-500">
+                  <div className="font-medium dark:text-slate-100">{hit.name}</div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400">
                     {hit.clientId}
                     {hit.businessName ? ` · ${hit.businessName}` : ""}
                     {hit.phone ? ` · ${hit.phone}` : ""}
@@ -104,12 +104,12 @@ export function CustomerPicker({
               </li>
             ))}
             {hits.length === 0 && query.trim() ? (
-              <li className="border-t border-slate-100">
+              <li className="border-t border-slate-100 dark:border-slate-700">
                 <Link
                   href={`/customers/new?name=${encodeURIComponent(query.trim())}${
                     returnTo ? `&returnTo=${encodeURIComponent(returnTo)}` : ""
                   }`}
-                  className="block px-3 py-2 text-sm font-medium text-[#0b3a6e] hover:bg-slate-50"
+                  className="block px-3 py-2 text-sm font-medium text-[#0b3a6e] hover:bg-slate-50 dark:text-sky-400 dark:hover:bg-slate-700"
                 >
                   No match — add &ldquo;{query.trim()}&rdquo; as a new customer
                 </Link>
@@ -119,30 +119,30 @@ export function CustomerPicker({
         ) : null}
       </div>
       {selected ? (
-        <div className="grid gap-2 rounded-lg bg-slate-50 p-3 text-sm text-slate-700 sm:grid-cols-2">
+        <div className="grid gap-2 rounded-lg bg-slate-50 p-3 text-sm text-slate-700 sm:grid-cols-2 dark:bg-slate-800/50 dark:text-slate-300">
           <div>
-            <span className="text-xs text-slate-500">Client ID</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400">Client ID</span>
             <div className="font-medium">{selected.clientId}</div>
           </div>
           <div>
-            <span className="text-xs text-slate-500">Phone</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400">Phone</span>
             <div>{selected.phone || "—"}</div>
           </div>
           <div>
-            <span className="text-xs text-slate-500">Email</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400">Email</span>
             <div>{selected.email || "—"}</div>
           </div>
           <div>
-            <span className="text-xs text-slate-500">VAT</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400">VAT</span>
             <div>{selected.vatNumber || "—"}</div>
           </div>
           <div className="sm:col-span-2">
-            <span className="text-xs text-slate-500">Address</span>
+            <span className="text-xs text-slate-500 dark:text-slate-400">Address</span>
             <div>{selected.address || "—"}</div>
           </div>
         </div>
       ) : (
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-slate-500 dark:text-slate-400">
           Start typing to fetch an existing customer. New clients can be added
           under Customers.
         </p>

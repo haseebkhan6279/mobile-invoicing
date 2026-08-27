@@ -73,19 +73,19 @@ export default async function RmaDetailPage({
       <div className="no-print">
         <Link
           href={`/returns/${rma.id}/print`}
-          className="inline-flex h-10 items-center rounded-lg bg-white px-4 text-sm font-medium ring-1 ring-slate-200"
+          className="inline-flex h-10 items-center rounded-lg bg-white px-4 text-sm font-medium ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-100 dark:ring-slate-700"
         >
           Format / print
         </Link>
       </div>
       <Card>
-        <p className="text-sm text-slate-600">
+        <p className="text-sm text-slate-600 dark:text-slate-300">
           Reason: {rma.reason || "—"}
           {rma.notes ? <span> · {rma.notes}</span> : null}
         </p>
         <p className="mt-2">
           Invoice:{" "}
-          <Link className="text-[#0b3a6e] hover:underline" href={`/invoices/${rma.invoiceId}`}>
+          <Link className="text-[#0b3a6e] hover:underline dark:text-sky-400" href={`/invoices/${rma.invoiceId}`}>
             {rma.invoice.invoiceNumber}
           </Link>
         </p>
@@ -139,7 +139,7 @@ export default async function RmaDetailPage({
           </div>
           <SubmitButton pendingText="Updating…">Update RMA</SubmitButton>
         </form>
-        <p className="mt-2 text-xs text-slate-500">
+        <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
           Set to Received, Refunded, or Closed to restock, credit, or write off units.
         </p>
       </Card>
@@ -206,9 +206,9 @@ export default async function RmaDetailPage({
           <SubmitButton pendingText="Saving…">Save credit</SubmitButton>
         </form>
         {rma.appliedInvoice ? (
-          <p className="mt-2 text-xs text-slate-500">
+          <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
             Currently applied to{" "}
-            <Link className="text-[#0b3a6e] hover:underline" href={`/invoices/${rma.appliedInvoice.id}`}>
+            <Link className="text-[#0b3a6e] hover:underline dark:text-sky-400" href={`/invoices/${rma.appliedInvoice.id}`}>
               {rma.appliedInvoice.invoiceNumber}
             </Link>
           </p>

@@ -75,7 +75,7 @@ export default async function PurchaseOrderDetailPage({
         </Link>
         <Link
           href={`/suppliers/${po.supplierId}`}
-          className="inline-flex h-10 items-center rounded-lg bg-white px-4 text-sm font-medium ring-1 ring-slate-200"
+          className="inline-flex h-10 items-center rounded-lg bg-white px-4 text-sm font-medium ring-1 ring-slate-200 dark:bg-slate-900 dark:text-slate-100 dark:ring-slate-800"
         >
           Supplier hisab
         </Link>
@@ -83,15 +83,15 @@ export default async function PurchaseOrderDetailPage({
 
       <div className="grid gap-4 sm:grid-cols-3">
         <Card>
-          <div className="text-xs text-slate-500">Status</div>
+          <div className="text-xs text-slate-500 dark:text-slate-400">Status</div>
           <StatusBadge status={po.status} />
         </Card>
         <Card>
-          <div className="text-xs text-slate-500">Shipping cost</div>
+          <div className="text-xs text-slate-500 dark:text-slate-400">Shipping cost</div>
           <MoneyPair gbp={po.shippingCostGbp} eur={po.shippingCostEur} stacked />
         </Card>
         <Card>
-          <div className="text-xs text-slate-500">Actual / landed cost</div>
+          <div className="text-xs text-slate-500 dark:text-slate-400">Actual / landed cost</div>
           <MoneyPair gbp={po.actualCostGbp} eur={po.actualCostEur} stacked />
         </Card>
       </div>

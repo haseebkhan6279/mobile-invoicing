@@ -38,21 +38,21 @@ function ConfirmDialog({
       role="presentation"
     >
       <div
-        className="w-full max-w-sm rounded-xl bg-white p-5 shadow-xl ring-1 ring-slate-200"
+        className="w-full max-w-sm rounded-xl bg-white p-5 shadow-xl ring-1 ring-slate-200 dark:bg-slate-900 dark:ring-slate-800"
         role="alertdialog"
         aria-modal="true"
         aria-labelledby="confirm-dialog-title"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="flex gap-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-red-50 text-red-600">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-red-50 text-red-600 dark:bg-red-950/40 dark:text-red-400">
             <AlertTriangle className="h-5 w-5" />
           </div>
           <div className="pt-1">
-            <h2 id="confirm-dialog-title" className="font-semibold text-slate-900">
+            <h2 id="confirm-dialog-title" className="font-semibold text-slate-900 dark:text-slate-100">
               {title}
             </h2>
-            <p className="mt-1 text-sm text-slate-500">{message}</p>
+            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{message}</p>
           </div>
         </div>
         <div className="mt-5 flex justify-end gap-2">

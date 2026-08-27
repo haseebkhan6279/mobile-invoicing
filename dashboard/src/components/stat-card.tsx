@@ -2,10 +2,10 @@ import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 
 const tones = {
-  sky: "bg-sky-50 text-sky-600",
-  amber: "bg-amber-50 text-amber-600",
-  violet: "bg-violet-50 text-violet-600",
-  emerald: "bg-emerald-50 text-emerald-600",
+  sky: "bg-sky-50 text-sky-600 dark:bg-sky-950/40 dark:text-sky-400",
+  amber: "bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400",
+  violet: "bg-violet-50 text-violet-600 dark:bg-violet-950/40 dark:text-violet-400",
+  emerald: "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400",
 };
 
 export function StatCard({
@@ -23,8 +23,8 @@ export function StatCard({
     <Card className="relative overflow-hidden">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <div className="text-xs font-medium text-slate-500">{label}</div>
-          <div className="mt-2 text-2xl font-semibold tracking-tight text-slate-900">
+          <div className="text-xs font-medium text-slate-500 dark:text-slate-400">{label}</div>
+          <div className="mt-2 text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
             {value}
           </div>
         </div>

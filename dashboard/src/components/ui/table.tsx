@@ -16,7 +16,7 @@ export function Table({
 
 export function THead({ children }: { children: React.ReactNode }) {
   return (
-    <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500">
+    <thead className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:bg-slate-800/50 dark:text-slate-400">
       {children}
     </thead>
   );
@@ -38,7 +38,7 @@ export function Td({
   ...props
 }: React.TdHTMLAttributes<HTMLTableCellElement>) {
   return (
-    <td className={cn("border-b border-slate-100 px-3 py-2.5 text-slate-800", className)} {...props}>
+    <td className={cn("border-b border-slate-100 px-3 py-2.5 text-slate-800 dark:border-slate-800 dark:text-slate-200", className)} {...props}>
       {children}
     </td>
   );

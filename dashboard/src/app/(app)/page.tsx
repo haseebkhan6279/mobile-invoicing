@@ -73,10 +73,10 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+        <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
           {greeting()}, {firstName}
         </h1>
-        <p className="mt-1 text-sm text-slate-500">
+        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
           Here&apos;s what&apos;s happening across stock, invoices, and suppliers today.
         </p>
       </div>
@@ -95,30 +95,30 @@ export default async function DashboardPage() {
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
-          <h2 className="mb-3 font-medium text-slate-900">In stock by grade</h2>
+          <h2 className="mb-3 font-medium text-slate-900 dark:text-slate-100">In stock by grade</h2>
           <div className="flex flex-wrap gap-2">
             {stockCounts.length ? (
               stockCounts.map((row) => (
                 <div
                   key={row.grade}
-                  className="flex items-center gap-2 rounded-full bg-sky-50 px-3 py-1.5 text-sm text-sky-800 ring-1 ring-sky-100"
+                  className="flex items-center gap-2 rounded-full bg-sky-50 px-3 py-1.5 text-sm text-sky-800 ring-1 ring-sky-100 dark:bg-sky-950/40 dark:text-sky-400 dark:ring-sky-900"
                 >
-                  <span className="text-slate-500">Grade {row.grade}</span>
+                  <span className="text-slate-500 dark:text-slate-400">Grade {row.grade}</span>
                   <span className="font-semibold">{row._count._all}</span>
                 </div>
               ))
             ) : (
-              <p className="text-sm text-slate-500">No stock yet.</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400">No stock yet.</p>
             )}
           </div>
         </Card>
         <Card>
-          <h2 className="mb-3 font-medium text-slate-900">Awaiting payment</h2>
+          <h2 className="mb-3 font-medium text-slate-900 dark:text-slate-100">Awaiting payment</h2>
           {unpaid.length ? (
-            <ul className="divide-y divide-slate-100">
+            <ul className="divide-y divide-slate-100 dark:divide-slate-800">
               {unpaid.map((invoice) => (
                 <li key={invoice.id} className="flex items-center justify-between gap-3 py-2 first:pt-0 last:pb-0">
-                  <Link className="text-sm font-medium text-[#0b3a6e] hover:underline" href={`/invoices/${invoice.id}`}>
+                  <Link className="text-sm font-medium text-[#0b3a6e] hover:underline dark:text-sky-400" href={`/invoices/${invoice.id}`}>
                     {invoice.invoiceNumber} · {invoice.customer.name}
                   </Link>
                   <StatusBadge status={invoice.status} />
@@ -126,14 +126,14 @@ export default async function DashboardPage() {
               ))}
             </ul>
           ) : (
-            <p className="text-sm text-slate-500">No unpaid invoices.</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400">No unpaid invoices.</p>
           )}
         </Card>
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card className="p-0">
-          <h2 className="px-5 pt-5 font-medium text-slate-900">Recent purchase orders</h2>
+          <h2 className="px-5 pt-5 font-medium text-slate-900 dark:text-slate-100">Recent purchase orders</h2>
           <div className="mt-3 hidden lg:block">
             <Table>
               <THead>
@@ -146,7 +146,7 @@ export default async function DashboardPage() {
               <tbody>
                 {recentPos.map((po) => (
                   <ClickableRow key={po.id} href={`/purchase-orders/${po.id}`}>
-                    <Td className="font-medium text-[#0b3a6e]">{po.poNumber}</Td>
+                    <Td className="font-medium text-[#0b3a6e] dark:text-sky-400">{po.poNumber}</Td>
                     <Td>{po.supplier.name}</Td>
                     <Td>
                       <StatusBadge status={po.status} />
@@ -155,7 +155,7 @@ export default async function DashboardPage() {
                 ))}
                 {!recentPos.length ? (
                   <tr>
-                    <Td className="text-slate-500" colSpan={3}>
+                    <Td className="text-slate-500 dark:text-slate-400" colSpan={3}>
                       No purchase orders yet.
                     </Td>
                   </tr>
@@ -163,7 +163,7 @@ export default async function DashboardPage() {
               </tbody>
             </Table>
           </div>
-          <div className="mt-3 divide-y divide-slate-100 lg:hidden">
+          <div className="mt-3 divide-y divide-slate-100 lg:hidden dark:divide-slate-800">
             {recentPos.map((po) => (
               <MobileListRow
                 key={po.id}
@@ -174,12 +174,12 @@ export default async function DashboardPage() {
               />
             ))}
             {!recentPos.length ? (
-              <p className="px-5 py-8 text-center text-sm text-slate-500">No purchase orders yet.</p>
+              <p className="px-5 py-8 text-center text-sm text-slate-500 dark:text-slate-400">No purchase orders yet.</p>
             ) : null}
           </div>
         </Card>
         <Card className="p-0">
-          <h2 className="px-5 pt-5 font-medium text-slate-900">Recent invoices</h2>
+          <h2 className="px-5 pt-5 font-medium text-slate-900 dark:text-slate-100">Recent invoices</h2>
           <div className="mt-3 hidden lg:block">
             <Table>
               <THead>
@@ -192,14 +192,14 @@ export default async function DashboardPage() {
               <tbody>
                 {recentInvoices.map((invoice) => (
                   <ClickableRow key={invoice.id} href={`/invoices/${invoice.id}`}>
-                    <Td className="font-medium text-[#0b3a6e]">{invoice.invoiceNumber}</Td>
+                    <Td className="font-medium text-[#0b3a6e] dark:text-sky-400">{invoice.invoiceNumber}</Td>
                     <Td>{invoice.customer.name}</Td>
                     <Td>{formatDate(invoice.issuedAt)}</Td>
                   </ClickableRow>
                 ))}
                 {!recentInvoices.length ? (
                   <tr>
-                    <Td className="text-slate-500" colSpan={3}>
+                    <Td className="text-slate-500 dark:text-slate-400" colSpan={3}>
                       No invoices yet.
                     </Td>
                   </tr>
@@ -207,7 +207,7 @@ export default async function DashboardPage() {
               </tbody>
             </Table>
           </div>
-          <div className="mt-3 divide-y divide-slate-100 lg:hidden">
+          <div className="mt-3 divide-y divide-slate-100 lg:hidden dark:divide-slate-800">
             {recentInvoices.map((invoice) => (
               <MobileListRow
                 key={invoice.id}
@@ -218,7 +218,7 @@ export default async function DashboardPage() {
               />
             ))}
             {!recentInvoices.length ? (
-              <p className="px-5 py-8 text-center text-sm text-slate-500">No invoices yet.</p>
+              <p className="px-5 py-8 text-center text-sm text-slate-500 dark:text-slate-400">No invoices yet.</p>
             ) : null}
           </div>
         </Card>

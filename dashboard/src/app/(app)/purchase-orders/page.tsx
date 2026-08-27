@@ -34,7 +34,7 @@ export default async function PurchaseOrdersPage() {
         description="Order stock from suppliers, then receive IMEIs by grade."
         action={{ href: "/purchase-orders/new", label: "Create PO" }}
       />
-      <div className="hidden overflow-hidden rounded-xl border border-slate-200 bg-white lg:block">
+      <div className="hidden overflow-hidden rounded-xl border border-slate-200 bg-white lg:block dark:border-slate-800 dark:bg-slate-900">
         <Table>
           <THead>
             <tr>
@@ -54,7 +54,7 @@ export default async function PurchaseOrdersPage() {
               return (
                 <tr key={po.id}>
                   <Td>
-                    <Link className="font-medium text-[#0b3a6e] hover:underline" href={`/purchase-orders/${po.id}`}>
+                    <Link className="font-medium text-[#0b3a6e] hover:underline dark:text-sky-400" href={`/purchase-orders/${po.id}`}>
                       {po.poNumber}
                     </Link>
                   </Td>
@@ -81,7 +81,7 @@ export default async function PurchaseOrdersPage() {
           </tbody>
         </Table>
       </div>
-      <div className="divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200 bg-white lg:hidden">
+      <div className="divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200 bg-white lg:hidden dark:divide-slate-800 dark:border-slate-800 dark:bg-slate-900">
         {orders.map((po) => {
           const ordered = po.lines.reduce((sum, line) => sum + line.qty, 0);
           return (
@@ -96,7 +96,7 @@ export default async function PurchaseOrdersPage() {
           );
         })}
         {!orders.length ? (
-          <p className="px-4 py-8 text-center text-sm text-slate-500">No purchase orders yet.</p>
+          <p className="px-4 py-8 text-center text-sm text-slate-500 dark:text-slate-400">No purchase orders yet.</p>
         ) : null}
       </div>
     </div>

@@ -33,7 +33,7 @@ export default async function ShipmentsPage() {
         description="Tracking, quoted shipping cost, and actual courier cost."
         action={{ href: "/shipments/new", label: "Add shipment" }}
       />
-      <div className="hidden overflow-hidden rounded-xl border border-slate-200 bg-white lg:block">
+      <div className="hidden overflow-hidden rounded-xl border border-slate-200 bg-white lg:block dark:border-slate-800 dark:bg-slate-900">
         <Table>
           <THead>
             <tr>
@@ -51,7 +51,7 @@ export default async function ShipmentsPage() {
             {shipments.map((shipment) => (
               <tr key={shipment.id}>
                 <Td>
-                  <Link className="font-medium text-[#0b3a6e] hover:underline" href={`/shipments/${shipment.id}`}>
+                  <Link className="font-medium text-[#0b3a6e] hover:underline dark:text-sky-400" href={`/shipments/${shipment.id}`}>
                     {shipment.shipmentNumber}
                   </Link>
                 </Td>
@@ -73,7 +73,7 @@ export default async function ShipmentsPage() {
           </tbody>
         </Table>
       </div>
-      <div className="divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200 bg-white lg:hidden">
+      <div className="divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200 bg-white lg:hidden dark:divide-slate-800 dark:border-slate-800 dark:bg-slate-900">
         {shipments.map((shipment) => (
           <MobileListRow
             key={shipment.id}
@@ -85,7 +85,7 @@ export default async function ShipmentsPage() {
           />
         ))}
         {!shipments.length ? (
-          <p className="px-4 py-8 text-center text-sm text-slate-500">No shipments yet.</p>
+          <p className="px-4 py-8 text-center text-sm text-slate-500 dark:text-slate-400">No shipments yet.</p>
         ) : null}
       </div>
     </div>

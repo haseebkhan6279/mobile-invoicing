@@ -28,7 +28,7 @@ export function BackButton() {
       type="button"
       onClick={() => router.back()}
       aria-label="Go back"
-      className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-900"
+      className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100"
     >
       <ArrowLeft className="h-5 w-5" />
     </button>

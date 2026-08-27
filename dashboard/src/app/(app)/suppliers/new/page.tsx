@@ -11,13 +11,13 @@ import { requireUser } from "@/lib/auth-guard";
 
 function FieldIcon({ icon: Icon }: { icon: typeof User }) {
   return (
-    <Icon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+    <Icon className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
   );
 }
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500">{children}</h2>
+    <h2 className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{children}</h2>
   );
 }
 
@@ -68,20 +68,20 @@ export default async function NewSupplierPage({
             </div>
           </div>
 
-          <div className="space-y-3 border-t border-slate-100 pt-6">
+          <div className="space-y-3 border-t border-slate-100 pt-6 dark:border-slate-800">
             <Label htmlFor="address">
               <span className="inline-flex items-center gap-1.5">
-                <MapPin className="h-3.5 w-3.5 text-slate-400" />
+                <MapPin className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
                 Address
               </span>
             </Label>
             <Textarea id="address" name="address" />
           </div>
 
-          <div className="space-y-3 border-t border-slate-100 pt-6">
+          <div className="space-y-3 border-t border-slate-100 pt-6 dark:border-slate-800">
             <Label htmlFor="notes">
               <span className="inline-flex items-center gap-1.5">
-                <StickyNote className="h-3.5 w-3.5 text-slate-400" />
+                <StickyNote className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500" />
                 Notes
               </span>
             </Label>

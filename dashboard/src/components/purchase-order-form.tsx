@@ -52,7 +52,7 @@ function PoLine({
   const eurTouched = useRef(seed.unitCostEur > 0);
 
   return (
-    <div className="grid gap-3 rounded-lg border border-slate-200 p-3 md:grid-cols-7">
+    <div className="grid gap-3 rounded-lg border border-slate-200 p-3 md:grid-cols-7 dark:border-slate-800">
       <div className="flex items-start justify-end md:col-span-7 md:order-last">
         <Button type="button" variant="ghost" size="sm" onClick={onRemove}>
           Remove line

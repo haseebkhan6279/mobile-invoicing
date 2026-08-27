@@ -63,12 +63,12 @@ export function InvoiceLineProductField({
         onBlur={() => setTimeout(() => setOpen(false), 150)}
       />
       {open && hits.length > 0 ? (
-        <ul className="absolute z-20 mt-1 max-h-64 w-full overflow-auto rounded-lg border border-slate-200 bg-white shadow-lg">
+        <ul className="absolute z-20 mt-1 max-h-64 w-full overflow-auto rounded-lg border border-slate-200 bg-white shadow-lg dark:border-slate-800 dark:bg-slate-900">
           {hits.map((hit, i) => (
             <li key={i}>
               <button
                 type="button"
-                className="w-full px-3 py-2 text-left text-sm hover:bg-slate-50"
+                className="w-full px-3 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-800"
                 onClick={() => {
                   onChange(hit.productName);
                   setOpen(false);
@@ -76,7 +76,7 @@ export function InvoiceLineProductField({
                 }}
               >
                 <div className="font-medium">{hit.productName}</div>
-                <div className="text-xs text-slate-500">
+                <div className="text-xs text-slate-500 dark:text-slate-400">
                   {hit.color} · {hit.network} · {hit.grade} · {hit.count} in stock
                 </div>
               </button>

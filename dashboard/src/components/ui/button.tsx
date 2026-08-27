@@ -3,11 +3,11 @@ import { cn } from "@/lib/utils";
 
 const variants = {
   primary:
-    "bg-[#0b3a6e] text-white hover:bg-[#082c54] disabled:bg-slate-400",
+    "bg-[#0b3a6e] text-white hover:bg-[#082c54] disabled:bg-slate-400 dark:disabled:bg-slate-700",
   secondary:
-    "bg-white text-slate-800 ring-1 ring-slate-200 hover:bg-slate-50",
+    "bg-white text-slate-800 ring-1 ring-slate-200 hover:bg-slate-50 dark:bg-slate-900 dark:text-slate-200 dark:ring-slate-700 dark:hover:bg-slate-800",
   danger: "bg-red-600 text-white hover:bg-red-700",
-  ghost: "text-slate-600 hover:bg-slate-100",
+  ghost: "text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800",
 };
 
 const sizes = {

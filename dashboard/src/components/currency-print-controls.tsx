@@ -26,7 +26,7 @@ export function CurrencyPrintControls({
   };
 
   return (
-    <div className="no-print flex flex-wrap items-end gap-3 rounded-lg bg-slate-50 p-3">
+    <div className="no-print flex flex-wrap items-end gap-3 rounded-lg bg-slate-50 p-3 dark:bg-slate-800/50">
       <div>
         <Label htmlFor="print-currency">Print currency</Label>
         <Select

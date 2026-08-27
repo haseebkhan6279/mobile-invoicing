@@ -27,7 +27,7 @@ export default async function CustomersPage({
         action={{ href: "/customers/new", label: "Add customer" }}
       />
       <Notice ok={ok} error={error} />
-      <div className="hidden overflow-hidden rounded-xl border border-slate-200 bg-white lg:block">
+      <div className="hidden overflow-hidden rounded-xl border border-slate-200 bg-white lg:block dark:border-slate-800 dark:bg-slate-900">
         <Table>
           <THead>
             <tr>
@@ -45,7 +45,7 @@ export default async function CustomersPage({
               <tr key={customer.id}>
                 <Td className="font-mono">{customer.clientId}</Td>
                 <Td>
-                  <Link className="font-medium text-[#0b3a6e] hover:underline" href={`/customers/${customer.id}`}>
+                  <Link className="font-medium text-[#0b3a6e] hover:underline dark:text-sky-400" href={`/customers/${customer.id}`}>
                     {customer.name}
                   </Link>
                 </Td>
@@ -61,7 +61,7 @@ export default async function CustomersPage({
           </tbody>
         </Table>
       </div>
-      <div className="divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200 bg-white lg:hidden">
+      <div className="divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200 bg-white lg:hidden dark:divide-slate-800 dark:border-slate-800 dark:bg-slate-900">
         {customers.map((customer) => (
           <MobileListRow
             key={customer.id}
@@ -72,7 +72,7 @@ export default async function CustomersPage({
           />
         ))}
         {!customers.length ? (
-          <p className="px-4 py-8 text-center text-sm text-slate-500">No customers yet.</p>
+          <p className="px-4 py-8 text-center text-sm text-slate-500 dark:text-slate-400">No customers yet.</p>
         ) : null}
       </div>
     </div>

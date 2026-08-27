@@ -89,20 +89,20 @@ export default async function CustomerDetailPage({
         <ul className="space-y-2 text-sm">
           {customer.invoices.map((invoice) => (
             <li key={invoice.id} className="flex justify-between">
-              <Link className="text-[#0b3a6e] hover:underline" href={`/invoices/${invoice.id}`}>
+              <Link className="text-[#0b3a6e] hover:underline dark:text-sky-400" href={`/invoices/${invoice.id}`}>
                 {invoice.invoiceNumber}
               </Link>
               <StatusBadge status={invoice.status} />
             </li>
           ))}
           {!customer.invoices.length ? (
-            <li className="text-slate-500">No invoices yet.</li>
+            <li className="text-slate-500 dark:text-slate-400">No invoices yet.</li>
           ) : null}
         </ul>
       </Card>
-      <Card className="border-red-100">
-        <h2 className="mb-1 font-medium text-red-700">Delete customer</h2>
-        <p className="mb-4 text-sm text-slate-500">
+      <Card className="border-red-100 dark:border-red-900/40">
+        <h2 className="mb-1 font-medium text-red-700 dark:text-red-400">Delete customer</h2>
+        <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">
           Only possible while this customer has no invoices or RMAs on record.
         </p>
         <form action={deleteCustomer}>
