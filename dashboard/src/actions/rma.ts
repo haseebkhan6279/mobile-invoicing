@@ -26,6 +26,29 @@ export async function createRma(formData: FormData) {
   const { apiToken } = await requireUser();
   const unitIds = formData.getAll("stockUnitId").map(String).filter(Boolean);
 
+  const manualInvoiceNumbers = formData.getAll("manualInvoiceNumber");
+  const manualProductNames = formData.getAll("manualProductName");
+  const manualImeis = formData.getAll("manualImei");
+  const manualColors = formData.getAll("manualColor");
+  const manualGrades = formData.getAll("manualGrade");
+  const manualPriceGbp = formData.getAll("manualPriceGbp");
+  const manualPriceEur = formData.getAll("manualPriceEur");
+  const manualActions = formData.getAll("manualAction");
+  const manualReasons = formData.getAll("manualReason");
+  const manualItems = manualProductNames
+    .map((_, i) => ({
+      invoiceNumber: toOptionalString(manualInvoiceNumbers[i]),
+      productName: String(manualProductNames[i] ?? "").trim(),
+      imei: toOptionalString(manualImeis[i]),
+      color: toOptionalString(manualColors[i]),
+      grade: toOptionalString(manualGrades[i]),
+      unitPriceGbp: toNumber(manualPriceGbp[i]),
+      unitPriceEur: toNumber(manualPriceEur[i]),
+      action: String(manualActions[i] || "RESTOCK"),
+      reason: toOptionalString(manualReasons[i]),
+    }))
+    .filter((item) => item.productName);
+
   let rma: { id: string };
   try {
     rma = await apiClient.post<{ id: string }>(
@@ -39,6 +62,7 @@ export async function createRma(formData: FormData) {
           action: String(formData.get(`action-${stockUnitId}`) || "RESTOCK"),
           reason: toOptionalString(formData.get(`reason-${stockUnitId}`)),
         })),
+        manualItems,
       },
       apiToken,
     );

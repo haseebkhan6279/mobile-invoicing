@@ -1,6 +1,13 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { updateInvoiceLine, updateInvoiceLineImeis, updateInvoiceStatus } from "@/actions/invoices";
+import {
+  addInvoiceLine,
+  updateInvoiceLine,
+  updateInvoiceLineImeis,
+  updateInvoiceMarginVat,
+  updateInvoiceShipping,
+  updateInvoiceStatus,
+} from "@/actions/invoices";
 import { InvoiceDocument } from "@/components/invoice-document";
 import { Notice } from "@/components/notice";
 import { PageHeader } from "@/components/page-header";
@@ -28,6 +35,7 @@ type InvoiceDetail = {
   shippingLabel: string | null;
   paymentTerms: string | null;
   warrantyTerms: string | null;
+  marginVatScheme: boolean;
   paidAmountGbp: number;
   paidAmountEur: number;
   notes: string | null;
@@ -50,6 +58,8 @@ type InvoiceDetail = {
     grade: string;
     unitPriceGbp: number;
     unitPriceEur: number;
+    buyPriceGbp: number;
+    buyPriceEur: number;
     imeis: string[];
   }[];
   stockUnits: { imei: string; invoiceLineId: string | null }[];
@@ -116,6 +126,71 @@ export default async function InvoiceDetailPage({
       </Card>
 
       <Card className="no-print">
+        <h2 className="mb-3 font-medium">Margin VAT scheme</h2>
+        <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">
+          When on, a Margin VAT Scheme notice is shown prominently at the top of the printed
+          invoice.
+        </p>
+        <form action={updateInvoiceMarginVat} className="flex items-center gap-3">
+          <input type="hidden" name="id" value={invoice.id} />
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              name="marginVatScheme"
+              defaultChecked={invoice.marginVatScheme}
+              className="rounded"
+            />
+            Sold under the Margin VAT Scheme
+          </label>
+          <SubmitButton pendingText="Saving…" size="sm">
+            Save
+          </SubmitButton>
+        </form>
+      </Card>
+
+      <Card className="no-print">
+        <h2 className="mb-3 font-medium">Shipping</h2>
+        <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">
+          This is the shipping cost that appears on the printed invoice total — separate from the
+          courier tracking added via "Add shipment".
+        </p>
+        <form action={updateInvoiceShipping} className="grid gap-3 sm:grid-cols-3">
+          <input type="hidden" name="id" value={invoice.id} />
+          <div>
+            <Label>Shipping cost GBP</Label>
+            <Input
+              name="shippingCostGbp"
+              type="number"
+              step="0.01"
+              defaultValue={invoice.shippingCostGbp}
+            />
+          </div>
+          <div>
+            <Label>Shipping cost EUR</Label>
+            <Input
+              name="shippingCostEur"
+              type="number"
+              step="0.01"
+              defaultValue={invoice.shippingCostEur}
+            />
+          </div>
+          <div>
+            <Label>Shipping line description</Label>
+            <Input
+              name="shippingLabel"
+              placeholder="UPS Express Saver / Postage &amp; Packaging"
+              defaultValue={invoice.shippingLabel ?? ""}
+            />
+          </div>
+          <div className="flex items-end sm:col-span-3 sm:justify-end">
+            <SubmitButton pendingText="Saving…" size="sm">
+              Save shipping
+            </SubmitButton>
+          </div>
+        </form>
+      </Card>
+
+      <Card className="no-print">
         <h2 className="mb-3 font-medium">Edit invoice lines</h2>
         <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">
           Change product details, quantity, or price on an existing line.
@@ -165,7 +240,25 @@ export default async function InvoiceDetailPage({
                 <Input name="qty" type="number" min={1} defaultValue={line.qty} required />
               </div>
               <div>
-                <Label>Unit price GBP</Label>
+                <Label>Buying price GBP</Label>
+                <Input
+                  name="buyPriceGbp"
+                  type="number"
+                  step="0.01"
+                  defaultValue={line.buyPriceGbp}
+                />
+              </div>
+              <div>
+                <Label>Buying price EUR</Label>
+                <Input
+                  name="buyPriceEur"
+                  type="number"
+                  step="0.01"
+                  defaultValue={line.buyPriceEur}
+                />
+              </div>
+              <div>
+                <Label>Selling price GBP</Label>
                 <Input
                   name="unitPriceGbp"
                   type="number"
@@ -174,7 +267,7 @@ export default async function InvoiceDetailPage({
                 />
               </div>
               <div>
-                <Label>Unit price EUR</Label>
+                <Label>Selling price EUR</Label>
                 <Input
                   name="unitPriceEur"
                   type="number"
@@ -182,6 +275,9 @@ export default async function InvoiceDetailPage({
                   defaultValue={line.unitPriceEur}
                 />
               </div>
+              <p className="text-xs text-slate-500 dark:text-slate-400 sm:col-span-6">
+                Buying price is for internal reference only and never appears on the printed invoice.
+              </p>
               <div className="flex items-end sm:col-span-6 sm:justify-end">
                 <SubmitButton pendingText="Saving…" size="sm">
                   Save line details
@@ -189,6 +285,72 @@ export default async function InvoiceDetailPage({
               </div>
             </form>
           ))}
+
+          <form
+            action={addInvoiceLine}
+            className="grid gap-3 rounded-xl border border-dashed border-slate-300 p-4 dark:border-slate-700 sm:grid-cols-6"
+          >
+            <input type="hidden" name="id" value={invoice.id} />
+            <div className="sm:col-span-2">
+              <Label>Product name</Label>
+              <Input name="productName" required />
+            </div>
+            <div>
+              <Label>Color</Label>
+              <Input name="color" list="colors-new" />
+              <datalist id="colors-new">
+                {lookups.colors.map((c) => (
+                  <option key={c.id} value={c.name} />
+                ))}
+              </datalist>
+            </div>
+            <div>
+              <Label>Network</Label>
+              <Input name="network" list="networks-new" />
+              <datalist id="networks-new">
+                {lookups.networks.map((n) => (
+                  <option key={n.id} value={n.name} />
+                ))}
+              </datalist>
+            </div>
+            <div>
+              <Label>Grade</Label>
+              <Input name="grade" list="grades-new" />
+              <datalist id="grades-new">
+                {lookups.grades.map((g) => (
+                  <option key={g.id} value={g.code} />
+                ))}
+              </datalist>
+            </div>
+            <div>
+              <Label>Qty</Label>
+              <Input name="qty" type="number" min={1} defaultValue={1} required />
+            </div>
+            <div>
+              <Label>Buying price GBP</Label>
+              <Input name="buyPriceGbp" type="number" step="0.01" defaultValue={0} />
+            </div>
+            <div>
+              <Label>Buying price EUR</Label>
+              <Input name="buyPriceEur" type="number" step="0.01" defaultValue={0} />
+            </div>
+            <div>
+              <Label>Selling price GBP</Label>
+              <Input name="unitPriceGbp" type="number" step="0.01" defaultValue={0} />
+            </div>
+            <div>
+              <Label>Selling price EUR</Label>
+              <Input name="unitPriceEur" type="number" step="0.01" defaultValue={0} />
+            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400 sm:col-span-6">
+              Buying price is for internal reference only and never appears on the printed invoice.
+            </p>
+            <div className="flex items-end sm:col-span-6 sm:justify-end">
+              <SubmitButton pendingText="Adding…" size="sm">
+                Add line
+              </SubmitButton>
+            </div>
+          </form>
         </div>
       </Card>
 

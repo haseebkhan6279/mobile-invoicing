@@ -15,6 +15,43 @@ class RmaItemDto {
   reason?: string | null;
 }
 
+class RmaManualItemDto {
+  @IsOptional()
+  @IsString()
+  invoiceNumber?: string | null;
+
+  @IsString()
+  productName: string;
+
+  @IsOptional()
+  @IsString()
+  imei?: string | null;
+
+  @IsOptional()
+  @IsString()
+  color?: string | null;
+
+  @IsOptional()
+  @IsString()
+  grade?: string | null;
+
+  @IsOptional()
+  @IsIn(RMA_ACTIONS)
+  action?: string;
+
+  @IsOptional()
+  @IsNumber()
+  unitPriceGbp?: number;
+
+  @IsOptional()
+  @IsNumber()
+  unitPriceEur?: number;
+
+  @IsOptional()
+  @IsString()
+  reason?: string | null;
+}
+
 export class CreateRmaDto {
   @IsString()
   invoiceId: string;
@@ -31,6 +68,12 @@ export class CreateRmaDto {
   @ValidateNested({ each: true })
   @Type(() => RmaItemDto)
   items: RmaItemDto[];
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => RmaManualItemDto)
+  manualItems?: RmaManualItemDto[];
 }
 
 export class ProcessRmaDto {

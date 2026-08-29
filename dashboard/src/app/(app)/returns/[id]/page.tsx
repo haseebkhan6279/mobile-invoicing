@@ -37,7 +37,11 @@ type RmaDetail = {
     unitPriceGbp: number;
     unitPriceEur: number;
     action: string;
-    stockUnit: { imei: string; productName: string; grade: string; status: string };
+    invoiceNumber: string | null;
+    productName: string | null;
+    imei: string | null;
+    grade: string | null;
+    stockUnit: { imei: string; productName: string; grade: string; status: string } | null;
   }[];
 };
 type InvoiceOption = { id: string; invoiceNumber: string; customer: { name: string } };
@@ -97,6 +101,7 @@ export default async function RmaDetailPage({
         <Table>
           <THead>
             <tr>
+              <Th>Invoice</Th>
               <Th>IMEI</Th>
               <Th>Product</Th>
               <Th>Reason</Th>
@@ -108,9 +113,11 @@ export default async function RmaDetailPage({
           <tbody>
             {rma.items.map((item) => (
               <tr key={item.id}>
-                <Td className="font-mono">{item.stockUnit.imei}</Td>
+                <Td>{item.invoiceNumber ?? rma.invoice.invoiceNumber}</Td>
+                <Td className="font-mono">{item.stockUnit?.imei ?? item.imei ?? "—"}</Td>
                 <Td>
-                  {item.stockUnit.productName} · {item.stockUnit.grade}
+                  {item.stockUnit?.productName ?? item.productName} ·{" "}
+                  {item.stockUnit?.grade ?? item.grade}
                 </Td>
                 <Td>{item.reason || "—"}</Td>
                 <Td>
@@ -118,7 +125,7 @@ export default async function RmaDetailPage({
                 </Td>
                 <Td>{item.action}</Td>
                 <Td>
-                  <StatusBadge status={item.stockUnit.status} />
+                  {item.stockUnit ? <StatusBadge status={item.stockUnit.status} /> : "—"}
                 </Td>
               </tr>
             ))}

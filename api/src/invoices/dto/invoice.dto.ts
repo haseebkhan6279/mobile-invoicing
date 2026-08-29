@@ -1,6 +1,7 @@
 import { Type } from "class-transformer";
 import {
   IsArray,
+  IsBoolean,
   IsIn,
   IsNumber,
   IsOptional,
@@ -36,6 +37,14 @@ class InvoiceLineDto {
   @IsOptional()
   @IsNumber()
   unitPriceEur?: number;
+
+  @IsOptional()
+  @IsNumber()
+  buyPriceGbp?: number;
+
+  @IsOptional()
+  @IsNumber()
+  buyPriceEur?: number;
 
   @IsOptional()
   @IsArray()
@@ -86,6 +95,10 @@ export class CreateInvoiceDto {
   notes?: string | null;
 
   @IsOptional()
+  @IsBoolean()
+  marginVatScheme?: boolean;
+
+  @IsOptional()
   @IsArray()
   @IsString({ each: true })
   appliedRmaIds?: string[];
@@ -99,6 +112,27 @@ export class CreateInvoiceDto {
 export class UpdateInvoiceStatusDto {
   @IsIn(INVOICE_STATUSES)
   status: string;
+}
+
+export class UpdateInvoiceShippingDto {
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  shippingCostGbp?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  shippingCostEur?: number;
+
+  @IsOptional()
+  @IsString()
+  shippingLabel?: string | null;
+}
+
+export class UpdateInvoiceMarginVatDto {
+  @IsBoolean()
+  marginVatScheme: boolean;
 }
 
 export class UpdateInvoiceLineImeisDto {
@@ -133,4 +167,12 @@ export class UpdateInvoiceLineDto {
   @IsOptional()
   @IsNumber()
   unitPriceEur?: number;
+
+  @IsOptional()
+  @IsNumber()
+  buyPriceGbp?: number;
+
+  @IsOptional()
+  @IsNumber()
+  buyPriceEur?: number;
 }

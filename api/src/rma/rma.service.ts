@@ -35,9 +35,12 @@ export class RmaService {
     const reason = input.reason ?? null;
     const items = input.items ?? [];
     const unitIds = items.map((item) => item.stockUnitId).filter(Boolean);
+    const manualItems = (input.manualItems ?? []).filter((item) =>
+      (item.productName ?? "").trim(),
+    );
 
-    if (!invoiceId || !unitIds.length) {
-      throw new BadRequestException("Select an invoice and at least one IMEI");
+    if (!invoiceId || (!unitIds.length && !manualItems.length)) {
+      throw new BadRequestException("Select an invoice and at least one IMEI or manual item");
     }
 
     const invoice = await this.prisma.invoice.findUnique({
@@ -68,21 +71,37 @@ export class RmaService {
           notes: input.notes ?? null,
           status: "OPEN",
           items: {
-            create: unitIds.map((stockUnitId) => {
-              const unit = unitById.get(stockUnitId);
-              const item = itemByUnitId.get(stockUnitId);
-              return {
-                stockUnitId,
-                action: item?.action || "RESTOCK",
-                reason: item?.reason ?? null,
-                unitPriceGbp: unit?.invoiceLine?.unitPriceGbp ?? 0,
-                unitPriceEur: unit?.invoiceLine?.unitPriceEur ?? 0,
-              };
-            }),
+            create: [
+              ...unitIds.map((stockUnitId) => {
+                const unit = unitById.get(stockUnitId);
+                const item = itemByUnitId.get(stockUnitId);
+                return {
+                  stockUnitId,
+                  invoiceNumber: invoice.invoiceNumber,
+                  action: item?.action || "RESTOCK",
+                  reason: item?.reason ?? null,
+                  unitPriceGbp: unit?.invoiceLine?.unitPriceGbp ?? 0,
+                  unitPriceEur: unit?.invoiceLine?.unitPriceEur ?? 0,
+                };
+              }),
+              ...manualItems.map((item) => ({
+                invoiceNumber: (item.invoiceNumber ?? "").trim() || invoice.invoiceNumber,
+                productName: (item.productName ?? "").trim(),
+                imei: (item.imei ?? "").trim() || null,
+                color: (item.color ?? "").trim() || null,
+                grade: (item.grade ?? "").trim() || null,
+                action: item.action || "RESTOCK",
+                reason: item.reason ?? null,
+                unitPriceGbp: Number(item.unitPriceGbp) || 0,
+                unitPriceEur: Number(item.unitPriceEur) || 0,
+              })),
+            ],
           },
         },
       });
-      await tx.stockUnit.updateMany({ where: { id: { in: unitIds } }, data: { status: "RMA" } });
+      if (unitIds.length) {
+        await tx.stockUnit.updateMany({ where: { id: { in: unitIds } }, data: { status: "RMA" } });
+      }
       return created;
     });
   }
@@ -136,6 +155,7 @@ export class RmaService {
       const updated = await tx.rma.update({ where: { id }, data: { status } });
       if (status === "RECEIVED" || status === "CLOSED" || status === "REFUNDED") {
         for (const item of rma.items) {
+          if (!item.stockUnitId) continue;
           const data: { status: string; invoiceId?: null; invoiceLineId?: null } = { status: "RMA" };
           if (item.action === "RESTOCK") {
             data.status = "IN_STOCK";

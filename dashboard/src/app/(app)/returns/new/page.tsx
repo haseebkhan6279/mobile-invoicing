@@ -11,6 +11,7 @@ import { requireUser } from "@/lib/auth-guard";
 import { RMA_ACTIONS } from "@/lib/status";
 import { apiClient, ApiError } from "@/lib/api-client";
 import { RmaCustomerInvoicePicker } from "@/components/rma-customer-invoice-picker";
+import { RmaManualItems } from "@/components/rma-manual-items";
 
 type InvoiceOption = {
   id: string;
@@ -42,7 +43,7 @@ export default async function NewRmaPage({
     <div>
       <PageHeader
         title="Create RMA"
-        description="Type the customer's name, pick their invoice, then select the IMEIs being returned."
+        description="Type the customer's name, pick their invoice, then select the IMEIs being returned — or add manual items for stock from another invoice."
       />
       <Notice error={error} />
       <Card className="mb-4">
@@ -87,6 +88,7 @@ export default async function NewRmaPage({
                 </label>
               ))}
             </div>
+            <RmaManualItems defaultInvoiceNumber={selected.invoiceNumber} />
             <div>
               <Label htmlFor="notes">Notes</Label>
               <Textarea id="notes" name="notes" />

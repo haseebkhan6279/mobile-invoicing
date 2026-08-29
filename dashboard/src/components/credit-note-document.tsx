@@ -31,12 +31,17 @@ export type CreditNoteDoc = {
     unitPriceGbp: number;
     unitPriceEur: number;
     reason: string | null;
+    invoiceNumber: string | null;
+    productName: string | null;
+    imei: string | null;
+    color: string | null;
+    grade: string | null;
     stockUnit: {
       imei: string;
       productName: string;
       color: string;
       grade: string;
-    };
+    } | null;
   }[];
 };
 
@@ -104,16 +109,16 @@ export function CreditNoteDocument({
           {rma.items.map((item, index) => (
             <tr key={item.id} className="border-b border-slate-100 align-top">
               <td className="py-2 pr-2">{index + 1}</td>
-              <td className="py-2 pr-2">{rma.invoice.invoiceNumber}</td>
+              <td className="py-2 pr-2">{item.invoiceNumber ?? rma.invoice.invoiceNumber}</td>
               <td className="py-2 pr-2">
-                {item.stockUnit.productName}
+                {item.stockUnit?.productName ?? item.productName}
                 {item.reason ? (
                   <div className="text-xs text-slate-500">{item.reason}</div>
                 ) : null}
               </td>
-              <td className="py-2 pr-2 font-mono">{item.stockUnit.imei}</td>
-              <td className="py-2 pr-2">{item.stockUnit.color}</td>
-              <td className="py-2 pr-2">{item.stockUnit.grade}</td>
+              <td className="py-2 pr-2 font-mono">{item.stockUnit?.imei ?? item.imei ?? "—"}</td>
+              <td className="py-2 pr-2">{item.stockUnit?.color ?? item.color ?? "—"}</td>
+              <td className="py-2 pr-2">{item.stockUnit?.grade ?? item.grade ?? "—"}</td>
               <td className="py-2 text-right tabular-nums">
                 {money(item.unitPriceGbp)}
               </td>

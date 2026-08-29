@@ -15,6 +15,8 @@ function parseInvoiceLines(formData: FormData) {
   const qtys = formData.getAll("lineQty");
   const gbp = formData.getAll("linePriceGbp");
   const eur = formData.getAll("linePriceEur");
+  const buyGbp = formData.getAll("lineBuyPriceGbp");
+  const buyEur = formData.getAll("lineBuyPriceEur");
   const imeis = formData.getAll("lineImeis");
   const lines = [];
   for (let i = 0; i < products.length; i += 1) {
@@ -26,6 +28,8 @@ function parseInvoiceLines(formData: FormData) {
       qty: toNumber(qtys[i], 0),
       unitPriceGbp: toNumber(gbp[i]),
       unitPriceEur: toNumber(eur[i]),
+      buyPriceGbp: toNumber(buyGbp[i]),
+      buyPriceEur: toNumber(buyEur[i]),
       imeis: parseImeis(String(imeis[i] ?? "")),
     });
   }
@@ -52,6 +56,7 @@ export async function createInvoice(formData: FormData) {
         paymentTerms: toOptionalString(formData.get("paymentTerms")),
         warrantyTerms: toOptionalString(formData.get("warrantyTerms")),
         notes: toOptionalString(formData.get("notes")),
+        marginVatScheme: formData.get("marginVatScheme") === "on",
         appliedRmaIds,
         lines,
       },
@@ -89,6 +94,52 @@ export async function updateInvoiceStatus(formData: FormData) {
   redirect(`/invoices/${id}?ok=Status updated`);
 }
 
+export async function updateInvoiceShipping(formData: FormData) {
+  const { apiToken } = await requireUser();
+  const id = String(formData.get("id") ?? "");
+
+  try {
+    await apiClient.patch(
+      `/invoices/${id}/shipping`,
+      {
+        shippingCostGbp: toNumber(formData.get("shippingCostGbp")),
+        shippingCostEur: toNumber(formData.get("shippingCostEur")),
+        shippingLabel: toOptionalString(formData.get("shippingLabel")),
+      },
+      apiToken,
+    );
+  } catch (err) {
+    if (err instanceof ApiError) {
+      redirect(`/invoices/${id}?error=${encodeURIComponent(err.message)}`);
+    }
+    throw err;
+  }
+
+  revalidatePath(`/invoices/${id}`);
+  redirect(`/invoices/${id}?ok=Shipping updated`);
+}
+
+export async function updateInvoiceMarginVat(formData: FormData) {
+  const { apiToken } = await requireUser();
+  const id = String(formData.get("id") ?? "");
+
+  try {
+    await apiClient.patch(
+      `/invoices/${id}/margin-vat`,
+      { marginVatScheme: formData.get("marginVatScheme") === "on" },
+      apiToken,
+    );
+  } catch (err) {
+    if (err instanceof ApiError) {
+      redirect(`/invoices/${id}?error=${encodeURIComponent(err.message)}`);
+    }
+    throw err;
+  }
+
+  revalidatePath(`/invoices/${id}`);
+  redirect(`/invoices/${id}?ok=Margin VAT setting updated`);
+}
+
 export async function updateInvoiceLine(formData: FormData) {
   const { apiToken } = await requireUser();
   const id = String(formData.get("id") ?? "");
@@ -105,6 +156,8 @@ export async function updateInvoiceLine(formData: FormData) {
         qty: toNumber(formData.get("qty")),
         unitPriceGbp: toNumber(formData.get("unitPriceGbp")),
         unitPriceEur: toNumber(formData.get("unitPriceEur")),
+        buyPriceGbp: toNumber(formData.get("buyPriceGbp")),
+        buyPriceEur: toNumber(formData.get("buyPriceEur")),
       },
       apiToken,
     );
@@ -118,6 +171,38 @@ export async function updateInvoiceLine(formData: FormData) {
   revalidatePath(`/invoices/${id}`);
   revalidatePath("/stock");
   redirect(`/invoices/${id}?ok=Line updated`);
+}
+
+export async function addInvoiceLine(formData: FormData) {
+  const { apiToken } = await requireUser();
+  const id = String(formData.get("id") ?? "");
+
+  try {
+    await apiClient.post(
+      `/invoices/${id}/lines`,
+      {
+        productName: String(formData.get("productName") ?? "").trim(),
+        color: toOptionalString(formData.get("color")),
+        network: toOptionalString(formData.get("network")),
+        grade: toOptionalString(formData.get("grade")),
+        qty: toNumber(formData.get("qty")),
+        unitPriceGbp: toNumber(formData.get("unitPriceGbp")),
+        unitPriceEur: toNumber(formData.get("unitPriceEur")),
+        buyPriceGbp: toNumber(formData.get("buyPriceGbp")),
+        buyPriceEur: toNumber(formData.get("buyPriceEur")),
+      },
+      apiToken,
+    );
+  } catch (err) {
+    if (err instanceof ApiError) {
+      redirect(`/invoices/${id}?error=${encodeURIComponent(err.message)}`);
+    }
+    throw err;
+  }
+
+  revalidatePath(`/invoices/${id}`);
+  revalidatePath("/stock");
+  redirect(`/invoices/${id}?ok=Line added`);
 }
 
 export async function updateInvoiceLineImeis(formData: FormData) {

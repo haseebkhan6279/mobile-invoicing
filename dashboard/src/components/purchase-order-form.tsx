@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useId, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -50,6 +50,7 @@ function PoLine({
   const [eurValue, setEurValue] = useState(seed.unitCostEur);
   const [eurKey, setEurKey] = useState(0);
   const eurTouched = useRef(seed.unitCostEur > 0);
+  const uid = useId();
 
   return (
     <div className="grid gap-3 rounded-lg border border-slate-200 p-3 md:grid-cols-7 dark:border-slate-800">
@@ -64,33 +65,30 @@ function PoLine({
       </div>
       <div>
         <Label>Color</Label>
-        <Select name="lineColor" defaultValue={seed.color}>
+        <Input name="lineColor" list={`${uid}-colors`} defaultValue={seed.color} />
+        <datalist id={`${uid}-colors`}>
           {colors.map((color) => (
-            <option key={color.id} value={color.name}>
-              {color.name}
-            </option>
+            <option key={color.id} value={color.name} />
           ))}
-        </Select>
+        </datalist>
       </div>
       <div>
         <Label>Network</Label>
-        <Select name="lineNetwork" defaultValue={seed.network}>
+        <Input name="lineNetwork" list={`${uid}-networks`} defaultValue={seed.network} />
+        <datalist id={`${uid}-networks`}>
           {networks.map((network) => (
-            <option key={network.id} value={network.name}>
-              {network.name}
-            </option>
+            <option key={network.id} value={network.name} />
           ))}
-        </Select>
+        </datalist>
       </div>
       <div>
         <Label>Grade</Label>
-        <Select name="lineGrade" defaultValue={seed.grade}>
+        <Input name="lineGrade" list={`${uid}-grades`} defaultValue={seed.grade} />
+        <datalist id={`${uid}-grades`}>
           {grades.map((grade) => (
-            <option key={grade.id} value={grade.code}>
-              {grade.code}
-            </option>
+            <option key={grade.id} value={grade.code} />
           ))}
-        </Select>
+        </datalist>
       </div>
       <div>
         <Label>Qty</Label>
@@ -147,6 +145,7 @@ export function PurchaseOrderForm({
   initialActualCostGbp,
   initialActualCostEur,
   initialNotes,
+  existingAttachmentName,
 }: {
   mode?: "create" | "edit";
   suppliers: { id: string; name: string }[];
@@ -163,6 +162,7 @@ export function PurchaseOrderForm({
   initialActualCostGbp?: number;
   initialActualCostEur?: number;
   initialNotes?: string;
+  existingAttachmentName?: string | null;
 }) {
   const nextLineId = useRef((initialLines?.length ?? 1));
   const [lineIds, setLineIds] = useState<number[]>(
@@ -261,6 +261,18 @@ export function PurchaseOrderForm({
             </div>
           </>
         ) : null}
+      </div>
+
+      <div>
+        <Label htmlFor="attachment">
+          {existingAttachmentName ? "Replace attached PO file" : "Attach incoming PO file"}
+        </Label>
+        <Input id="attachment" name="attachment" type="file" accept=".pdf,.png,.jpg,.jpeg,.webp" />
+        <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+          {existingAttachmentName
+            ? `Currently attached: ${existingAttachmentName}. Choose a new file to replace it.`
+            : "PDF or image of the supplier's PO. Max 4MB."}
+        </p>
       </div>
 
       <div className="space-y-3">

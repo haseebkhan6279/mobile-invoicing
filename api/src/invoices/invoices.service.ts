@@ -3,7 +3,12 @@ import { PrismaService } from "../prisma/prisma.service";
 import { nextNumberTx } from "../common/numbers";
 import { DEFAULT_FX_RATE } from "../common/money";
 import { applyCreditToInvoiceTx, rmaTotals } from "../common/rma";
-import { CreateInvoiceDto, UpdateInvoiceLineDto } from "./dto/invoice.dto";
+import {
+  CreateInvoiceDto,
+  UpdateInvoiceLineDto,
+  UpdateInvoiceMarginVatDto,
+  UpdateInvoiceShippingDto,
+} from "./dto/invoice.dto";
 
 function stockStatusForInvoice(status: string) {
   return status === "PAID" ? "SOLD" : "RESERVED";
@@ -17,6 +22,8 @@ type NormalizedInvoiceLine = {
   qty: number;
   unitPriceGbp: number;
   unitPriceEur: number;
+  buyPriceGbp: number;
+  buyPriceEur: number;
   imeis: string[];
   sortOrder: number;
 };
@@ -36,6 +43,8 @@ function normalizeLines(lines: CreateInvoiceDto["lines"]): NormalizedInvoiceLine
       qty,
       unitPriceGbp: Number(line.unitPriceGbp) || 0,
       unitPriceEur: Number(line.unitPriceEur) || 0,
+      buyPriceGbp: Number(line.buyPriceGbp) || 0,
+      buyPriceEur: Number(line.buyPriceEur) || 0,
       imeis,
       sortOrder: i,
     });
@@ -117,6 +126,7 @@ export class InvoicesService {
           shippingLabel: input.shippingLabel ?? null,
           paymentTerms: input.paymentTerms ?? "Immediate",
           warrantyTerms: input.warrantyTerms ?? "3 months",
+          marginVatScheme: input.marginVatScheme ?? true,
           notes: input.notes ?? null,
           paidAt: status === "PAID" ? new Date() : null,
           lines: {
@@ -128,6 +138,8 @@ export class InvoicesService {
               grade: line.grade,
               unitPriceGbp: line.unitPriceGbp,
               unitPriceEur: line.unitPriceEur,
+              buyPriceGbp: line.buyPriceGbp,
+              buyPriceEur: line.buyPriceEur,
               imeis: line.imeis,
               sortOrder: line.sortOrder,
             })),
@@ -187,12 +199,79 @@ export class InvoicesService {
         where: { id },
         data: { status, paidAt: status === "PAID" ? new Date() : null },
       });
-      const unitStatus = stockStatusForInvoice(status);
       for (const unit of invoice.stockUnits) {
         if (unit.status === "RMA" || unit.status === "FAULTY") continue;
-        await tx.stockUnit.update({ where: { id: unit.id }, data: { status: unitStatus } });
+        if (status === "CANCELLED") {
+          // Voiding an invoice releases its reserved/sold stock back to
+          // available inventory, as if the sale never happened.
+          await tx.stockUnit.update({
+            where: { id: unit.id },
+            data: { status: "IN_STOCK", invoiceId: null, invoiceLineId: null },
+          });
+        } else {
+          await tx.stockUnit.update({
+            where: { id: unit.id },
+            data: { status: stockStatusForInvoice(status) },
+          });
+        }
       }
       return updated;
+    });
+  }
+
+  async updateInvoiceShipping(id: string, dto: UpdateInvoiceShippingDto) {
+    const invoice = await this.prisma.invoice.findUnique({ where: { id } });
+    if (!invoice) throw new NotFoundException("Invoice not found");
+
+    return this.prisma.invoice.update({
+      where: { id },
+      data: {
+        shippingCostGbp: Number(dto.shippingCostGbp) || 0,
+        shippingCostEur: Number(dto.shippingCostEur) || 0,
+        shippingLabel: dto.shippingLabel?.toString().trim() || null,
+      },
+    });
+  }
+
+  async updateInvoiceMarginVat(id: string, dto: UpdateInvoiceMarginVatDto) {
+    const invoice = await this.prisma.invoice.findUnique({ where: { id } });
+    if (!invoice) throw new NotFoundException("Invoice not found");
+
+    return this.prisma.invoice.update({
+      where: { id },
+      data: { marginVatScheme: dto.marginVatScheme },
+    });
+  }
+
+  async addInvoiceLine(invoiceId: string, dto: UpdateInvoiceLineDto) {
+    const invoice = await this.prisma.invoice.findUnique({ where: { id: invoiceId } });
+    if (!invoice) throw new NotFoundException("Invoice not found");
+
+    const productName = (dto.productName ?? "").trim();
+    const qty = Number(dto.qty) || 0;
+    if (!productName) throw new BadRequestException("Product name is required");
+    if (qty <= 0) throw new BadRequestException("Qty must be greater than 0");
+
+    const last = await this.prisma.invoiceLine.aggregate({
+      where: { invoiceId },
+      _max: { sortOrder: true },
+    });
+
+    return this.prisma.invoiceLine.create({
+      data: {
+        invoiceId,
+        productName,
+        color: (dto.color ?? "").toString().trim() || "Black",
+        network: (dto.network ?? "").toString().trim() || "Unlocked",
+        grade: (dto.grade ?? "").toString().trim() || "A",
+        qty,
+        unitPriceGbp: Number(dto.unitPriceGbp) || 0,
+        unitPriceEur: Number(dto.unitPriceEur) || 0,
+        buyPriceGbp: Number(dto.buyPriceGbp) || 0,
+        buyPriceEur: Number(dto.buyPriceEur) || 0,
+        imeis: [],
+        sortOrder: (last._max.sortOrder ?? -1) + 1,
+      },
     });
   }
 
@@ -220,6 +299,8 @@ export class InvoicesService {
         qty,
         unitPriceGbp: Number(dto.unitPriceGbp) || 0,
         unitPriceEur: Number(dto.unitPriceEur) || 0,
+        buyPriceGbp: Number(dto.buyPriceGbp) || 0,
+        buyPriceEur: Number(dto.buyPriceEur) || 0,
       },
     });
   }

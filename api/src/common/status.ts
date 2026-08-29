@@ -2,7 +2,7 @@ export const STOCK_STATUSES = ["IN_STOCK", "RESERVED", "SOLD", "RMA", "FAULTY"] 
 
 export const PO_STATUSES = ["DRAFT", "ORDERED", "PARTIAL", "RECEIVED", "CANCELLED"] as const;
 
-export const INVOICE_STATUSES = ["PENDING", "AWAITING_PAYMENT", "PAID"] as const;
+export const INVOICE_STATUSES = ["PENDING", "AWAITING_PAYMENT", "PAID", "CANCELLED"] as const;
 
 export const INVOICE_ENTITIES = ["UK", "NI"] as const;
 

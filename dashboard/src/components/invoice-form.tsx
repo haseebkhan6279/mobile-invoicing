@@ -24,8 +24,9 @@ type LineSeed = {
   color: string;
   network: string;
   grade: string;
-  unitPriceGbp: number;
   unitPriceEur: number;
+  buyPriceGbp: number;
+  buyPriceEur: number;
   imeis: string;
 };
 
@@ -33,8 +34,9 @@ const emptySeed: LineSeed = {
   color: "Black",
   network: "Unlocked",
   grade: "A",
-  unitPriceGbp: 0,
   unitPriceEur: 0,
+  buyPriceGbp: 0,
+  buyPriceEur: 0,
   imeis: "",
 };
 
@@ -75,8 +77,9 @@ function InvoiceLine({
       color: hit.color,
       network: hit.network,
       grade: hit.grade,
-      unitPriceGbp: hit.costGbp,
-      unitPriceEur: hit.costEur,
+      unitPriceEur: 0,
+      buyPriceGbp: hit.costGbp,
+      buyPriceEur: hit.costEur,
       imeis: imeiList.slice(0, qty).join("\n"),
     });
     setAutofillKey((k) => k + 1);
@@ -149,13 +152,33 @@ function InvoiceLine({
           <Input ref={qtyRef} name="lineQty" type="number" min={1} defaultValue={1} />
         </div>
         <div>
-          <Label>Unit price GBP</Label>
+          <Label>Buying price GBP</Label>
+          <Input
+            key={`buy-gbp-${autofillKey}`}
+            name="lineBuyPriceGbp"
+            type="number"
+            step="0.01"
+            defaultValue={seed.buyPriceGbp}
+          />
+        </div>
+        <div>
+          <Label>Buying price EUR</Label>
+          <Input
+            key={`buy-eur-${autofillKey}`}
+            name="lineBuyPriceEur"
+            type="number"
+            step="0.01"
+            defaultValue={seed.buyPriceEur}
+          />
+        </div>
+        <div>
+          <Label>Selling price GBP</Label>
           <Input
             key={`gbp-${autofillKey}`}
             name="linePriceGbp"
             type="number"
             step="0.01"
-            defaultValue={seed.unitPriceGbp}
+            defaultValue=""
             onChange={(event) => {
               if (eurTouched.current) return;
               const raw = event.target.value;
@@ -168,19 +191,22 @@ function InvoiceLine({
           />
         </div>
         <div>
-          <Label>Unit price EUR</Label>
+          <Label>Selling price EUR</Label>
           <Input
             key={`eur-${eurKey}`}
             name="linePriceEur"
             type="number"
             step="0.01"
-            defaultValue={seed.unitPriceEur}
+            defaultValue={seed.unitPriceEur || ""}
             onChange={() => {
               eurTouched.current = true;
             }}
           />
         </div>
       </div>
+      <p className="text-xs text-slate-500 dark:text-slate-400">
+        Buying price is for internal reference only and never appears on the printed invoice.
+      </p>
       <div>
         <Label>IMEIs for this line (optional — you can add these later)</Label>
         <Textarea
@@ -323,6 +349,20 @@ export function InvoiceForm({
           <Input id="warrantyTerms" name="warrantyTerms" defaultValue="3 months" />
         </div>
       </div>
+
+      <label className="flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200">
+        <input
+          type="checkbox"
+          name="marginVatScheme"
+          defaultChecked
+          className="mt-0.5 rounded"
+        />
+        <span>
+          <span className="font-medium">Margin VAT Scheme</span> — stock on this invoice is sold
+          under the VAT margin scheme. This will be shown prominently on the printed invoice.
+          Uncheck if this sale is not under the margin scheme.
+        </span>
+      </label>
 
       <div className="space-y-3">
         <div className="flex items-center justify-between">

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { updatePurchaseOrderMeta } from "@/actions/purchase-orders";
+import { removePoAttachment, updatePurchaseOrderMeta } from "@/actions/purchase-orders";
 import { MoneyPair } from "@/components/money-pair";
 import { Notice } from "@/components/notice";
 import { PageHeader } from "@/components/page-header";
@@ -25,6 +25,7 @@ type PurchaseOrderDetail = {
   shippingCostEur: number;
   actualCostGbp: number;
   actualCostEur: number;
+  attachmentFilename: string | null;
   createdAt: string;
   supplier: { name: string };
   lines: {
@@ -123,6 +124,32 @@ export default async function PurchaseOrderDetailPage({
       </Card>
 
       <Card>
+        <h2 className="mb-3 font-medium">Attachment</h2>
+        {po.attachmentFilename ? (
+          <div className="flex flex-wrap items-center gap-3">
+            <a
+              href={`/purchase-orders/${po.id}/attachment`}
+              target="_blank"
+              rel="noreferrer"
+              className="text-[#0b3a6e] hover:underline dark:text-sky-400"
+            >
+              {po.attachmentFilename}
+            </a>
+            <form action={removePoAttachment}>
+              <input type="hidden" name="id" value={po.id} />
+              <SubmitButton pendingText="Removing…" size="sm" variant="ghost">
+                Remove
+              </SubmitButton>
+            </form>
+          </div>
+        ) : (
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            No file attached yet. Attach the incoming PO below.
+          </p>
+        )}
+      </Card>
+
+      <Card>
         <h2 className="mb-4 font-medium">Edit purchase order</h2>
         <form action={updatePurchaseOrderMeta} className="space-y-6">
           <input type="hidden" name="id" value={po.id} />
@@ -149,6 +176,7 @@ export default async function PurchaseOrderDetailPage({
             initialActualCostGbp={po.actualCostGbp}
             initialActualCostEur={po.actualCostEur}
             initialNotes={po.notes ?? ""}
+            existingAttachmentName={po.attachmentFilename}
           />
           <SubmitButton pendingText="Saving…">Save changes</SubmitButton>
         </form>

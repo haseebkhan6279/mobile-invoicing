@@ -20,12 +20,14 @@ async function request<T>(
 ): Promise<T> {
   const headers: Record<string, string> = { Accept: "application/json" };
   if (token) headers.Authorization = `Bearer ${token}`;
-  if (body !== undefined) headers["Content-Type"] = "application/json";
+  const isFormData = typeof FormData !== "undefined" && body instanceof FormData;
+  if (body !== undefined && !isFormData) headers["Content-Type"] = "application/json";
 
   const res = await fetch(`${baseUrl()}${path}`, {
     method,
     headers,
-    body: body !== undefined ? JSON.stringify(body) : undefined,
+    // Let fetch set the multipart boundary itself for FormData bodies.
+    body: body === undefined ? undefined : isFormData ? (body as FormData) : JSON.stringify(body),
     cache: "no-store",
   });
 

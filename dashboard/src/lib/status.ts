@@ -18,6 +18,7 @@ export const INVOICE_STATUSES = [
   "PENDING",
   "AWAITING_PAYMENT",
   "PAID",
+  "CANCELLED",
 ] as const;
 
 export const RMA_STATUSES = [

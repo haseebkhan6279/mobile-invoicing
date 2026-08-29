@@ -80,12 +80,15 @@ model PurchaseOrder {
   actualCostGbp   Float               @default(0)
   actualCostEur   Float               @default(0)
   fxRate          Float               @default(1.15)
-  orderedAt       DateTime?
-  receivedAt      DateTime?
-  createdAt       DateTime            @default(now())
-  updatedAt       DateTime            @updatedAt
-  lines           PurchaseOrderLine[]
-  stockUnits      StockUnit[]
+  orderedAt          DateTime?
+  receivedAt         DateTime?
+  attachmentFilename String?
+  attachmentMimeType String?
+  attachmentData     Bytes?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+  lines              PurchaseOrderLine[]
+  stockUnits         StockUnit[]
 }
 
 model PurchaseOrderLine {
@@ -156,6 +159,7 @@ model Invoice {
   shippingLabel   String?
   paymentTerms    String?       @default("Immediate")
   warrantyTerms   String?       @default("3 months")
+  marginVatScheme Boolean       @default(true)
   paidAmountGbp   Float         @default(0)
   paidAmountEur   Float         @default(0)
   notes           String?
@@ -181,6 +185,8 @@ model InvoiceLine {
   grade        String
   unitPriceGbp Float
   unitPriceEur Float
+  buyPriceGbp  Float       @default(0)
+  buyPriceEur  Float       @default(0)
   imeis        String[]    @default([])
   sortOrder    Int         @default(0)
   stockUnits   StockUnit[]
@@ -208,15 +214,20 @@ model Rma {
 }
 
 model RmaItem {
-  id           String    @id @default(cuid())
-  rmaId        String
-  rma          Rma       @relation(fields: [rmaId], references: [id], onDelete: Cascade)
-  stockUnitId  String
-  stockUnit    StockUnit @relation(fields: [stockUnitId], references: [id])
-  action       String    @default("RESTOCK")
-  unitPriceGbp Float     @default(0)
-  unitPriceEur Float     @default(0)
-  reason       String?
+  id            String     @id @default(cuid())
+  rmaId         String
+  rma           Rma        @relation(fields: [rmaId], references: [id], onDelete: Cascade)
+  stockUnitId   String?
+  stockUnit     StockUnit? @relation(fields: [stockUnitId], references: [id])
+  invoiceNumber String?
+  productName   String?
+  imei          String?
+  color         String?
+  grade         String?
+  action        String     @default("RESTOCK")
+  unitPriceGbp  Float      @default(0)
+  unitPriceEur  Float      @default(0)
+  reason        String?
 }
 
 model Shipment {

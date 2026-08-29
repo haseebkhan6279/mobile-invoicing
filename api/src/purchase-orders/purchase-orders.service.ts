@@ -40,6 +40,7 @@ export class PurchaseOrdersService {
   listPurchaseOrders() {
     return this.prisma.purchaseOrder.findMany({
       include: { supplier: true, lines: true, stockUnits: true },
+      omit: { attachmentData: true },
       orderBy: { createdAt: "desc" },
     });
   }
@@ -48,9 +49,50 @@ export class PurchaseOrdersService {
     const po = await this.prisma.purchaseOrder.findUnique({
       where: { id },
       include: { supplier: true, lines: true, stockUnits: true },
+      omit: { attachmentData: true },
     });
     if (!po) throw new NotFoundException("Purchase order not found");
     return po;
+  }
+
+  async getAttachment(id: string) {
+    const po = await this.prisma.purchaseOrder.findUnique({
+      where: { id },
+      select: { attachmentFilename: true, attachmentMimeType: true, attachmentData: true },
+    });
+    if (!po) throw new NotFoundException("Purchase order not found");
+    if (!po.attachmentData) throw new NotFoundException("No attachment on this purchase order");
+    return {
+      filename: po.attachmentFilename ?? "attachment",
+      mimeType: po.attachmentMimeType ?? "application/octet-stream",
+      data: po.attachmentData,
+    };
+  }
+
+  async setAttachment(id: string, file: { filename: string; mimeType: string; data: Buffer }) {
+    const existing = await this.prisma.purchaseOrder.findUnique({ where: { id } });
+    if (!existing) throw new NotFoundException("Purchase order not found");
+
+    return this.prisma.purchaseOrder.update({
+      where: { id },
+      data: {
+        attachmentFilename: file.filename,
+        attachmentMimeType: file.mimeType,
+        attachmentData: new Uint8Array(file.data),
+      },
+      omit: { attachmentData: true },
+    });
+  }
+
+  async removeAttachment(id: string) {
+    const existing = await this.prisma.purchaseOrder.findUnique({ where: { id } });
+    if (!existing) throw new NotFoundException("Purchase order not found");
+
+    return this.prisma.purchaseOrder.update({
+      where: { id },
+      data: { attachmentFilename: null, attachmentMimeType: null, attachmentData: null },
+      omit: { attachmentData: true },
+    });
   }
 
   createPurchaseOrder(input: CreatePurchaseOrderDto) {

@@ -5,6 +5,8 @@ import {
   CreateInvoiceDto,
   UpdateInvoiceLineDto,
   UpdateInvoiceLineImeisDto,
+  UpdateInvoiceMarginVatDto,
+  UpdateInvoiceShippingDto,
   UpdateInvoiceStatusDto,
 } from "./dto/invoice.dto";
 
@@ -31,6 +33,21 @@ export class InvoicesController {
   @Patch(":id")
   updateStatus(@Param("id") id: string, @Body() dto: UpdateInvoiceStatusDto) {
     return this.invoices.updateInvoiceStatus(id, dto.status);
+  }
+
+  @Patch(":id/shipping")
+  updateShipping(@Param("id") id: string, @Body() dto: UpdateInvoiceShippingDto) {
+    return this.invoices.updateInvoiceShipping(id, dto);
+  }
+
+  @Patch(":id/margin-vat")
+  updateMarginVat(@Param("id") id: string, @Body() dto: UpdateInvoiceMarginVatDto) {
+    return this.invoices.updateInvoiceMarginVat(id, dto);
+  }
+
+  @Post(":id/lines")
+  addLine(@Param("id") id: string, @Body() dto: UpdateInvoiceLineDto) {
+    return this.invoices.addInvoiceLine(id, dto);
   }
 
   @Patch(":id/lines/:lineId")

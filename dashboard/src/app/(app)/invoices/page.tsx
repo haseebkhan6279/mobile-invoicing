@@ -48,6 +48,7 @@ export default async function InvoicesPage({
           <option value="PENDING">Pending</option>
           <option value="AWAITING_PAYMENT">Awaiting payment</option>
           <option value="PAID">Paid</option>
+          <option value="CANCELLED">Cancelled</option>
         </Select>
         <button className="ml-2 h-10 rounded-lg bg-white px-4 text-sm ring-1 ring-slate-200 dark:bg-slate-900 dark:text-slate-100 dark:ring-slate-800">
           Filter

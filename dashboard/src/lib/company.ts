@@ -7,6 +7,17 @@ const TBD_BANK = {
   accountNumber: "TBD",
   iban: "TBD",
   bic: "TBD",
+  bankAddress: [] as string[],
+} as const;
+
+const WISE_EUR_BANK = {
+  bankName: "Wise",
+  accountName: "Atlantic Devices Solutions LTD",
+  sortCode: "",
+  accountNumber: "",
+  iban: "BE85 9059 6137 6606",
+  bic: "TRWIBEB1XXX",
+  bankAddress: ["Rue du Trone 100, 3rd Floor", "Brussels, 1050, Belgium"],
 } as const;
 
 export const sellerCompany = {
@@ -36,9 +47,9 @@ export const sellerCompany = {
       accountNumber: "14800963",
       iban: "",
       bic: "",
+      bankAddress: [] as string[],
     },
-    // No real EUR-receiving account has been provided for this entity yet.
-    EUR: TBD_BANK,
+    EUR: WISE_EUR_BANK,
   },
 } as const;
 
@@ -63,11 +74,10 @@ export const creditNoteCompany = {
   whatsappDisplay: "+447561400005",
   email: "atlanticdevicessolutions@gmail.com",
   tagline: "Returns & credit notes",
-  // No real bank account details were provided for this trading name yet
-  // in either currency. Replace with real details when known.
+  // No real GBP account has been provided for this trading name yet.
   bank: {
     GBP: TBD_BANK,
-    EUR: TBD_BANK,
+    EUR: WISE_EUR_BANK,
   },
 } as const;
 

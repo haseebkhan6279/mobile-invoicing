@@ -1,9 +1,27 @@
-import { Body, Controller, Get, Param, Patch, Post, UseGuards } from "@nestjs/common";
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Res,
+  UploadedFile,
+  UseGuards,
+  UseInterceptors,
+} from "@nestjs/common";
+import { FileInterceptor } from "@nestjs/platform-express";
+import type { Response } from "express";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import { PurchaseOrdersService } from "./purchase-orders.service";
 import { CreatePurchaseOrderDto, UpdatePurchaseOrderMetaDto } from "./dto/purchase-order.dto";
 import { StockService } from "../stock/stock.service";
 import { ReceiveViaPurchaseOrderDto } from "../stock/dto/stock.dto";
+
+// Kept well under Vercel's serverless function request-body cap.
+const MAX_ATTACHMENT_BYTES = 4 * 1024 * 1024;
 
 @Controller("purchase-orders")
 @UseGuards(JwtAuthGuard)
@@ -38,5 +56,32 @@ export class PurchaseOrdersController {
   @Post(":id/receive")
   receive(@Param("id") id: string, @Body() dto: ReceiveViaPurchaseOrderDto) {
     return this.stock.receiveStockBatches({ ...dto, purchaseOrderId: id, postLedger: true });
+  }
+
+  @Post(":id/attachment")
+  @UseInterceptors(FileInterceptor("file", { limits: { fileSize: MAX_ATTACHMENT_BYTES } }))
+  uploadAttachment(@Param("id") id: string, @UploadedFile() file?: Express.Multer.File) {
+    if (!file) throw new BadRequestException("No file provided");
+    return this.purchaseOrders.setAttachment(id, {
+      filename: file.originalname,
+      mimeType: file.mimetype,
+      data: file.buffer,
+    });
+  }
+
+  @Delete(":id/attachment")
+  deleteAttachment(@Param("id") id: string) {
+    return this.purchaseOrders.removeAttachment(id);
+  }
+
+  @Get(":id/attachment")
+  async downloadAttachment(@Param("id") id: string, @Res() res: Response) {
+    const attachment = await this.purchaseOrders.getAttachment(id);
+    res.setHeader("Content-Type", attachment.mimeType);
+    res.setHeader(
+      "Content-Disposition",
+      `inline; filename="${encodeURIComponent(attachment.filename)}"`,
+    );
+    res.send(Buffer.from(attachment.data));
   }
 }

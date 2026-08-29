@@ -17,6 +17,7 @@ export type InvoiceDoc = {
   shippingLabel: string | null;
   paymentTerms: string | null;
   warrantyTerms: string | null;
+  marginVatScheme: boolean;
   paidAmountGbp: number;
   paidAmountEur: number;
   notes: string | null;
@@ -84,6 +85,12 @@ export function InvoiceDocument({
         </div>
       </div>
 
+      {invoice.marginVatScheme ? (
+        <div className="mt-4 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900">
+          {INVOICE_MARGIN_NOTICE}
+        </div>
+      ) : null}
+
       <div className="mt-6 grid gap-6 sm:grid-cols-3">
         <div>
           <div className="text-xs uppercase tracking-wide text-slate-500">Billing details</div>
@@ -109,7 +116,6 @@ export function InvoiceDocument({
           </div>
         </div>
         <div className="text-sm text-slate-600">
-          <div>FX rate: 1 GBP = {printRate} EUR</div>
           <div>Payment Terms: {invoice.paymentTerms || "Immediate"}</div>
           <div>Warranty Terms: {invoice.warrantyTerms || "3 months"}</div>
         </div>
@@ -190,6 +196,14 @@ export function InvoiceDocument({
             <>
               <div>IBAN: {bank.iban}</div>
               <div>BIC/SWIFT: {bank.bic}</div>
+              {bank.bankAddress.length ? (
+                <div>
+                  Bank Address:
+                  {bank.bankAddress.map((line) => (
+                    <div key={line}>{line}</div>
+                  ))}
+                </div>
+              ) : null}
             </>
           )}
           <div className="mt-2">
@@ -226,8 +240,7 @@ export function InvoiceDocument({
 
       <div className="print-page-break mt-8 border-t border-slate-200 pt-8 text-xs text-slate-600">
         <h2 className="text-sm font-semibold text-slate-900">Invoice Notes</h2>
-        <p className="mt-2">{INVOICE_MARGIN_NOTICE}</p>
-        <p className="mt-4">
+        <p className="mt-2">
           Please read our terms before making the payment. By making payment you agree to below
           terms applied to sold stock on above invoice.
         </p>

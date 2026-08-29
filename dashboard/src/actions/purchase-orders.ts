@@ -29,6 +29,15 @@ function parsePoLines(formData: FormData) {
   return lines;
 }
 
+async function uploadPoAttachment(id: string, formData: FormData, apiToken: string | null) {
+  const file = formData.get("attachment");
+  if (!(file instanceof File) || file.size === 0) return;
+
+  const uploadForm = new FormData();
+  uploadForm.set("file", file, file.name);
+  await apiClient.post(`/purchase-orders/${id}/attachment`, uploadForm, apiToken);
+}
+
 export async function createPurchaseOrder(formData: FormData) {
   const { apiToken } = await requireUser();
   const lines = parsePoLines(formData);
@@ -53,6 +62,16 @@ export async function createPurchaseOrder(formData: FormData) {
       redirect(`/purchase-orders/new?error=${encodeURIComponent(err.message)}`);
     }
     throw err;
+  }
+
+  try {
+    await uploadPoAttachment(po.id, formData, apiToken);
+  } catch (err) {
+    const message = err instanceof ApiError ? err.message : "Attachment upload failed";
+    revalidatePath("/purchase-orders");
+    redirect(
+      `/purchase-orders/${po.id}?error=${encodeURIComponent(`Purchase order created, but the attachment failed: ${message}`)}`,
+    );
   }
 
   revalidatePath("/purchase-orders");
@@ -85,8 +104,34 @@ export async function updatePurchaseOrderMeta(formData: FormData) {
     }
     throw err;
   }
+
+  try {
+    await uploadPoAttachment(id, formData, apiToken);
+  } catch (err) {
+    const message = err instanceof ApiError ? err.message : "Attachment upload failed";
+    revalidatePath(`/purchase-orders/${id}`);
+    redirect(`/purchase-orders/${id}?error=${encodeURIComponent(`Saved, but the attachment failed: ${message}`)}`);
+  }
+
   revalidatePath(`/purchase-orders/${id}`);
   redirect(`/purchase-orders/${id}?ok=Updated`);
+}
+
+export async function removePoAttachment(formData: FormData) {
+  const { apiToken } = await requireUser();
+  const id = String(formData.get("id") ?? "");
+
+  try {
+    await apiClient.delete(`/purchase-orders/${id}/attachment`, apiToken);
+  } catch (err) {
+    if (err instanceof ApiError) {
+      redirect(`/purchase-orders/${id}?error=${encodeURIComponent(err.message)}`);
+    }
+    throw err;
+  }
+
+  revalidatePath(`/purchase-orders/${id}`);
+  redirect(`/purchase-orders/${id}?ok=Attachment removed`);
 }
 
 export async function receivePurchaseOrder(formData: FormData) {

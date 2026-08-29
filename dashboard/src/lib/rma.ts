@@ -14,12 +14,17 @@ export function rmaTotals(rma: {
 
 export function groupRmaSummary(
   items: {
-    stockUnit: { productName: string; color: string; grade: string };
+    stockUnit: { productName: string; color: string; grade: string } | null;
+    productName?: string | null;
+    color?: string | null;
+    grade?: string | null;
   }[],
 ) {
   const groups = new Map<string, { productName: string; color: string; grade: string; qty: number }>();
   for (const item of items) {
-    const { productName, color, grade } = item.stockUnit;
+    const productName = item.stockUnit?.productName ?? item.productName ?? "Unknown item";
+    const color = item.stockUnit?.color ?? item.color ?? "";
+    const grade = item.stockUnit?.grade ?? item.grade ?? "";
     const key = `${productName}__${color}__${grade}`;
     const existing = groups.get(key);
     if (existing) {
