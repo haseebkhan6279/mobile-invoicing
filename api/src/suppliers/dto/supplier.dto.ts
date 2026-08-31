@@ -34,9 +34,6 @@ export class LedgerEntryDto {
   @IsNumber()
   amountGbp: number;
 
-  @IsNumber()
-  amountEur: number;
-
   @IsOptional()
   @IsString()
   date?: string | null;

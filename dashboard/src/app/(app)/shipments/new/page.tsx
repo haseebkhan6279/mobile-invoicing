@@ -67,16 +67,8 @@ export default async function NewShipmentPage({
               <Input name="shippingCostGbp" type="number" step="0.01" defaultValue="0" />
             </div>
             <div>
-              <Label>Shipping cost EUR</Label>
-              <Input name="shippingCostEur" type="number" step="0.01" defaultValue="0" />
-            </div>
-            <div>
               <Label>Actual cost GBP (courier)</Label>
               <Input name="actualCostGbp" type="number" step="0.01" defaultValue="0" />
-            </div>
-            <div>
-              <Label>Actual cost EUR</Label>
-              <Input name="actualCostEur" type="number" step="0.01" defaultValue="0" />
             </div>
           </div>
           <div>

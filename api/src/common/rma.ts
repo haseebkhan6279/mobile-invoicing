@@ -6,7 +6,6 @@ export async function applyCreditToInvoiceTx(
   tx: Prisma.TransactionClient,
   invoiceId: string,
   amountGbp: number,
-  amountEur: number,
 ) {
   const target = await tx.invoice.findUnique({
     where: { id: invoiceId },
@@ -15,10 +14,9 @@ export async function applyCreditToInvoiceTx(
   if (!target) return null;
 
   const newPaidGbp = target.paidAmountGbp + amountGbp;
-  const newPaidEur = target.paidAmountEur + amountEur;
-  const totals = invoiceTotals({ ...target, paidAmountGbp: newPaidGbp, paidAmountEur: newPaidEur });
+  const totals = invoiceTotals({ ...target, paidAmountGbp: newPaidGbp });
   const nextStatus =
-    totals.dueGbp <= 0 && totals.dueEur <= 0
+    totals.dueGbp <= 0
       ? "PAID"
       : target.status === "PENDING"
         ? "AWAITING_PAYMENT"
@@ -28,17 +26,15 @@ export async function applyCreditToInvoiceTx(
     where: { id: invoiceId },
     data: {
       paidAmountGbp: newPaidGbp,
-      paidAmountEur: newPaidEur,
       status: nextStatus,
       paidAt: nextStatus === "PAID" ? new Date() : target.paidAt,
     },
   });
 }
 
-export function rmaTotals(rma: { items: { unitPriceGbp: number; unitPriceEur: number }[] }) {
+export function rmaTotals(rma: { items: { unitPriceGbp: number }[] }) {
   const totalGbp = roundMoney(rma.items.reduce((sum, item) => sum + item.unitPriceGbp, 0));
-  const totalEur = roundMoney(rma.items.reduce((sum, item) => sum + item.unitPriceEur, 0));
-  return { totalGbp, totalEur };
+  return { totalGbp };
 }
 
 export function groupRmaSummary(

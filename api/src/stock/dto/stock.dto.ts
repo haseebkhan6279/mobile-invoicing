@@ -26,10 +26,6 @@ class StockBatchDto {
   costGbp?: number;
 
   @IsOptional()
-  @IsNumber()
-  costEur?: number;
-
-  @IsOptional()
   @IsArray()
   @IsString({ each: true })
   imeis?: string[];

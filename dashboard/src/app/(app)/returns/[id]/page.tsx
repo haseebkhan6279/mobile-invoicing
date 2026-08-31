@@ -11,7 +11,7 @@ import { Select } from "@/components/ui/select";
 import { SubmitButton } from "@/components/ui/submit-button";
 import { Table, THead, Th, Td } from "@/components/ui/table";
 import { requireUser } from "@/lib/auth-guard";
-import { formatEur, formatGbp } from "@/lib/money";
+import { formatGbp } from "@/lib/money";
 import { apiClient, ApiError } from "@/lib/api-client";
 import { rmaTotals } from "@/lib/rma";
 import { RMA_PAYMENT_TYPES, RMA_STATUSES } from "@/lib/status";
@@ -25,17 +25,15 @@ type RmaDetail = {
   invoiceId: string;
   paymentType: string;
   paymentAmountGbp: number;
-  paymentAmountEur: number;
   paymentDate: string | null;
   appliedInvoiceId: string | null;
   customer: { name: string };
-  invoice: { invoiceNumber: string; entity: string };
+  invoice: { invoiceNumber: string };
   appliedInvoice: { id: string; invoiceNumber: string } | null;
   items: {
     id: string;
     reason: string | null;
     unitPriceGbp: number;
-    unitPriceEur: number;
     action: string;
     invoiceNumber: string | null;
     productName: string | null;
@@ -94,7 +92,7 @@ export default async function RmaDetailPage({
           </Link>
         </p>
         <p className="mt-2 text-sm font-medium">
-          Credit value: {formatGbp(totals.totalGbp)} / {formatEur(totals.totalEur)}
+          Credit value: {formatGbp(totals.totalGbp)}
         </p>
       </Card>
       <Card>
@@ -120,9 +118,7 @@ export default async function RmaDetailPage({
                   {item.stockUnit?.grade ?? item.grade}
                 </Td>
                 <Td>{item.reason || "—"}</Td>
-                <Td>
-                  {formatGbp(item.unitPriceGbp)} / {formatEur(item.unitPriceEur)}
-                </Td>
+                <Td>{formatGbp(item.unitPriceGbp)}</Td>
                 <Td>{item.action}</Td>
                 <Td>
                   {item.stockUnit ? <StatusBadge status={item.stockUnit.status} /> : "—"}
@@ -188,16 +184,6 @@ export default async function RmaDetailPage({
                 type="number"
                 step="0.01"
                 defaultValue={rma.paymentAmountGbp || totals.totalGbp}
-              />
-            </div>
-            <div>
-              <Label htmlFor="paymentAmountEur">Amount EUR</Label>
-              <Input
-                id="paymentAmountEur"
-                name="paymentAmountEur"
-                type="number"
-                step="0.01"
-                defaultValue={rma.paymentAmountEur || totals.totalEur}
               />
             </div>
             <div>

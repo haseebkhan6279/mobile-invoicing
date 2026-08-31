@@ -58,10 +58,7 @@ export class RmaService {
     const itemByUnitId = new Map(items.map((item) => [item.stockUnitId, item]));
 
     return this.prisma.$transaction(async (tx) => {
-      const rmaNumber =
-        invoice.entity === "NI"
-          ? await nextNumberTx(tx, "RMA_NI", "N", "")
-          : await nextNumberTx(tx, "RMA_UK", "", "");
+      const rmaNumber = await nextNumberTx(tx, "RMA_UK", "", "");
       const created = await tx.rma.create({
         data: {
           rmaNumber,
@@ -81,7 +78,6 @@ export class RmaService {
                   action: item?.action || "RESTOCK",
                   reason: item?.reason ?? null,
                   unitPriceGbp: unit?.invoiceLine?.unitPriceGbp ?? 0,
-                  unitPriceEur: unit?.invoiceLine?.unitPriceEur ?? 0,
                 };
               }),
               ...manualItems.map((item) => ({
@@ -93,7 +89,6 @@ export class RmaService {
                 action: item.action || "RESTOCK",
                 reason: item.reason ?? null,
                 unitPriceGbp: Number(item.unitPriceGbp) || 0,
-                unitPriceEur: Number(item.unitPriceEur) || 0,
               })),
             ],
           },
@@ -111,7 +106,6 @@ export class RmaService {
     const paymentType = input.paymentType ?? "PENDING";
     const appliedInvoiceId = input.appliedInvoiceId || null;
     const paymentAmountGbp = Number(input.paymentAmountGbp) || 0;
-    const paymentAmountEur = Number(input.paymentAmountEur) || 0;
     const paymentDateRaw = input.paymentDate || null;
 
     if (paymentType === "APPLIED_TO_INVOICE" && !appliedInvoiceId) {
@@ -125,18 +119,12 @@ export class RmaService {
           paymentType,
           paymentDate: paymentDateRaw ? new Date(paymentDateRaw) : new Date(),
           paymentAmountGbp,
-          paymentAmountEur,
           appliedInvoiceId: paymentType === "APPLIED_TO_INVOICE" ? appliedInvoiceId : null,
         },
       });
 
       if (paymentType === "APPLIED_TO_INVOICE" && appliedInvoiceId) {
-        const target = await applyCreditToInvoiceTx(
-          tx,
-          appliedInvoiceId,
-          paymentAmountGbp,
-          paymentAmountEur,
-        );
+        const target = await applyCreditToInvoiceTx(tx, appliedInvoiceId, paymentAmountGbp);
         if (!target) throw new BadRequestException("Invoice not found");
       }
 

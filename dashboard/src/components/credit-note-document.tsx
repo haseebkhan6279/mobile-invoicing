@@ -1,6 +1,6 @@
 import { CompanyBrand } from "@/components/company-brand";
-import { addressLines, companyForEntity, type BankCurrency } from "@/lib/company";
-import { DEFAULT_FX_RATE, formatEur, formatGbp } from "@/lib/money";
+import { addressLines, company } from "@/lib/company";
+import { formatGbp } from "@/lib/money";
 import { groupRmaSummary, rmaTotals } from "@/lib/rma";
 import { labelStatus } from "@/lib/status";
 import { RMA_TERMS } from "@/lib/terms";
@@ -13,9 +13,8 @@ export type CreditNoteDoc = {
   paymentType: string;
   paymentDate: Date | string | null;
   paymentAmountGbp: number;
-  paymentAmountEur: number;
   notes: string | null;
-  invoice: { invoiceNumber: string; entity: string };
+  invoice: { invoiceNumber: string };
   appliedInvoice: { invoiceNumber: string } | null;
   customer: {
     clientId: string;
@@ -29,7 +28,6 @@ export type CreditNoteDoc = {
   items: {
     id: string;
     unitPriceGbp: number;
-    unitPriceEur: number;
     reason: string | null;
     invoiceNumber: string | null;
     productName: string | null;
@@ -45,24 +43,11 @@ export type CreditNoteDoc = {
   }[];
 };
 
-export function CreditNoteDocument({
-  rma,
-  currency,
-  rate,
-}: {
-  rma: CreditNoteDoc;
-  currency?: BankCurrency;
-  rate?: number;
-}) {
+export function CreditNoteDocument({ rma }: { rma: CreditNoteDoc }) {
   const totals = rmaTotals(rma);
   const summary = groupRmaSummary(rma.items);
-  const due = rma.paymentType === "PENDING" ? totals : { totalGbp: 0, totalEur: 0 };
-  const entity = rma.invoice.entity;
-  const company = companyForEntity(entity);
-  const printCurrency = currency ?? (entity === "NI" ? "EUR" : "GBP");
-  const printRate = rate ?? DEFAULT_FX_RATE;
-  const money = (gbp: number) =>
-    printCurrency === "EUR" ? formatEur(gbp * printRate) : formatGbp(gbp);
+  const due = rma.paymentType === "PENDING" ? totals : { totalGbp: 0 };
+  const money = formatGbp;
 
   return (
     <div className="mx-auto max-w-[210mm] bg-white p-8 text-slate-900 print:p-0">

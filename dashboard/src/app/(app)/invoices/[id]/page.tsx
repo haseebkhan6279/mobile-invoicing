@@ -26,18 +26,14 @@ import { INVOICE_STATUSES } from "@/lib/status";
 type InvoiceDetail = {
   id: string;
   invoiceNumber: string;
-  entity: string;
   status: string;
   issuedAt: string;
-  fxRate: number;
   shippingCostGbp: number;
-  shippingCostEur: number;
   shippingLabel: string | null;
   paymentTerms: string | null;
   warrantyTerms: string | null;
   marginVatScheme: boolean;
   paidAmountGbp: number;
-  paidAmountEur: number;
   notes: string | null;
   customer: {
     clientId: string;
@@ -57,9 +53,7 @@ type InvoiceDetail = {
     network: string;
     grade: string;
     unitPriceGbp: number;
-    unitPriceEur: number;
     buyPriceGbp: number;
-    buyPriceEur: number;
     imeis: string[];
   }[];
   stockUnits: { imei: string; invoiceLineId: string | null }[];
@@ -166,15 +160,6 @@ export default async function InvoiceDetailPage({
             />
           </div>
           <div>
-            <Label>Shipping cost EUR</Label>
-            <Input
-              name="shippingCostEur"
-              type="number"
-              step="0.01"
-              defaultValue={invoice.shippingCostEur}
-            />
-          </div>
-          <div>
             <Label>Shipping line description</Label>
             <Input
               name="shippingLabel"
@@ -249,30 +234,12 @@ export default async function InvoiceDetailPage({
                 />
               </div>
               <div>
-                <Label>Buying price EUR</Label>
-                <Input
-                  name="buyPriceEur"
-                  type="number"
-                  step="0.01"
-                  defaultValue={line.buyPriceEur}
-                />
-              </div>
-              <div>
                 <Label>Selling price GBP</Label>
                 <Input
                   name="unitPriceGbp"
                   type="number"
                   step="0.01"
                   defaultValue={line.unitPriceGbp}
-                />
-              </div>
-              <div>
-                <Label>Selling price EUR</Label>
-                <Input
-                  name="unitPriceEur"
-                  type="number"
-                  step="0.01"
-                  defaultValue={line.unitPriceEur}
                 />
               </div>
               <p className="text-xs text-slate-500 dark:text-slate-400 sm:col-span-6">
@@ -331,16 +298,8 @@ export default async function InvoiceDetailPage({
               <Input name="buyPriceGbp" type="number" step="0.01" defaultValue={0} />
             </div>
             <div>
-              <Label>Buying price EUR</Label>
-              <Input name="buyPriceEur" type="number" step="0.01" defaultValue={0} />
-            </div>
-            <div>
               <Label>Selling price GBP</Label>
               <Input name="unitPriceGbp" type="number" step="0.01" defaultValue={0} />
-            </div>
-            <div>
-              <Label>Selling price EUR</Label>
-              <Input name="unitPriceEur" type="number" step="0.01" defaultValue={0} />
             </div>
             <p className="text-xs text-slate-500 dark:text-slate-400 sm:col-span-6">
               Buying price is for internal reference only and never appears on the printed invoice.

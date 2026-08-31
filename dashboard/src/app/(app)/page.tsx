@@ -2,7 +2,6 @@ import Link from "next/link";
 import { Boxes, FileText, Truck, Warehouse } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { MobileListRow } from "@/components/mobile-list-row";
-import { MoneyPair } from "@/components/money-pair";
 import { StatCard } from "@/components/stat-card";
 import { StatusBadge } from "@/components/status-badge";
 import { Table, THead, Th, Td } from "@/components/ui/table";
@@ -10,6 +9,7 @@ import { ClickableRow } from "@/components/ui/clickable-row";
 import { requireUser } from "@/lib/auth-guard";
 import { totalsFromLedger, type LedgerEntry } from "@/lib/ledger";
 import { apiClient } from "@/lib/api-client";
+import { formatGbp } from "@/lib/money";
 import { formatDate } from "@/lib/utils";
 
 type Invoice = {
@@ -59,15 +59,9 @@ export default async function DashboardPage() {
   ).length;
 
   const inStock = stock.length;
-  const payable = suppliers.reduce(
-    (acc, supplier) => {
-      const t = totalsFromLedger(supplier.ledger);
-      return {
-        gbp: acc.gbp + t.balanceGbp,
-        eur: acc.eur + t.balanceEur,
-      };
-    },
-    { gbp: 0, eur: 0 },
+  const payableGbp = suppliers.reduce(
+    (sum, supplier) => sum + totalsFromLedger(supplier.ledger).balanceGbp,
+    0,
   );
 
   return (
@@ -87,7 +81,7 @@ export default async function DashboardPage() {
         <StatCard
           icon={Warehouse}
           label="Supplier payable"
-          value={<MoneyPair gbp={payable.gbp} eur={payable.eur} stacked />}
+          value={formatGbp(payableGbp)}
           tone="violet"
         />
         <StatCard icon={Truck} label="Open shipments" value={shipments} tone="emerald" />

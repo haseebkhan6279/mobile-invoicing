@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { MobileListRow } from "@/components/mobile-list-row";
 import { PageHeader } from "@/components/page-header";
-import { MoneyPair } from "@/components/money-pair";
 import { Notice } from "@/components/notice";
 import { EditLink } from "@/components/ui/edit-link";
 import { Table, THead, Th, Td } from "@/components/ui/table";
 import { requireUser } from "@/lib/auth-guard";
 import { totalsFromLedger, type LedgerEntry } from "@/lib/ledger";
 import { apiClient } from "@/lib/api-client";
+import { formatGbp } from "@/lib/money";
 import type { SupplierLookup } from "@/lib/lookups";
 
 type SupplierRow = SupplierLookup & { ledger: LedgerEntry[]; _count: { purchaseOrders: number } };
@@ -57,15 +57,9 @@ export default async function SuppliersPage({
                       {supplier.phone || supplier.email || "—"}
                     </div>
                   </Td>
-                  <Td>
-                    <MoneyPair gbp={t.creditGbp} eur={t.creditEur} stacked />
-                  </Td>
-                  <Td>
-                    <MoneyPair gbp={t.debitGbp} eur={t.debitEur} stacked />
-                  </Td>
-                  <Td>
-                    <MoneyPair gbp={t.balanceGbp} eur={t.balanceEur} stacked />
-                  </Td>
+                  <Td>{formatGbp(t.creditGbp)}</Td>
+                  <Td>{formatGbp(t.debitGbp)}</Td>
+                  <Td>{formatGbp(t.balanceGbp)}</Td>
                   <Td>{supplier._count.purchaseOrders}</Td>
                   <Td>
                     <EditLink
@@ -96,7 +90,7 @@ export default async function SuppliersPage({
               href={`/suppliers/${supplier.id}`}
               title={supplier.name}
               subtitle={supplier.phone || supplier.email || "—"}
-              trailing={<MoneyPair gbp={t.balanceGbp} eur={t.balanceEur} stacked />}
+              trailing={formatGbp(t.balanceGbp)}
               meta={`${supplier._count.purchaseOrders} PO${supplier._count.purchaseOrders === 1 ? "" : "s"}`}
             />
           );

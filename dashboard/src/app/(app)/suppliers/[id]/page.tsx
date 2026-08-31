@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 import { ArrowDownCircle, ArrowUpCircle, Scale } from "lucide-react";
 import { addLedgerEntry, deleteSupplier } from "@/actions/suppliers";
-import { MoneyPair } from "@/components/money-pair";
 import { Notice } from "@/components/notice";
 import { PageHeader } from "@/components/page-header";
 import { StatusBadge } from "@/components/status-badge";
@@ -16,6 +15,7 @@ import { Table, THead, Th, Td } from "@/components/ui/table";
 import { requireUser } from "@/lib/auth-guard";
 import { totalsFromLedger, withRunningBalance, type LedgerEntry } from "@/lib/ledger";
 import { apiClient, ApiError } from "@/lib/api-client";
+import { formatGbp } from "@/lib/money";
 import type { SupplierLookup } from "@/lib/lookups";
 import { cn, formatDate } from "@/lib/utils";
 import Link from "next/link";
@@ -64,7 +64,7 @@ export default async function SupplierDetailPage({
           </div>
           <div>
             <div className="text-xs text-slate-500 dark:text-slate-400">Credit (goods received)</div>
-            <MoneyPair gbp={totals.creditGbp} eur={totals.creditEur} stacked />
+            {formatGbp(totals.creditGbp)}
           </div>
         </Card>
         <Card className="flex items-start gap-3">
@@ -73,7 +73,7 @@ export default async function SupplierDetailPage({
           </div>
           <div>
             <div className="text-xs text-slate-500 dark:text-slate-400">Debit (paid out)</div>
-            <MoneyPair gbp={totals.debitGbp} eur={totals.debitEur} stacked />
+            {formatGbp(totals.debitGbp)}
           </div>
         </Card>
         <Card
@@ -98,7 +98,7 @@ export default async function SupplierDetailPage({
             <div className="text-xs text-slate-500 dark:text-slate-400">
               {owed ? "Balance payable" : "Balance settled"}
             </div>
-            <MoneyPair gbp={totals.balanceGbp} eur={totals.balanceEur} stacked />
+            {formatGbp(totals.balanceGbp)}
           </div>
         </Card>
       </div>
@@ -127,10 +127,6 @@ export default async function SupplierDetailPage({
               <div>
                 <Label>Amount GBP</Label>
                 <Input name="amountGbp" type="number" step="0.01" required />
-              </div>
-              <div>
-                <Label>Amount EUR</Label>
-                <Input name="amountEur" type="number" step="0.01" required />
               </div>
               <div>
                 <Label>Notes</Label>
@@ -162,12 +158,8 @@ export default async function SupplierDetailPage({
                       <Td>
                         <StatusBadge status={row.type} />
                       </Td>
-                      <Td>
-                        <MoneyPair gbp={row.amountGbp} eur={row.amountEur} stacked />
-                      </Td>
-                      <Td>
-                        <MoneyPair gbp={row.balanceGbp} eur={row.balanceEur} stacked />
-                      </Td>
+                      <Td>{formatGbp(row.amountGbp)}</Td>
+                      <Td>{formatGbp(row.balanceGbp)}</Td>
                       <Td>
                         {row.reference || "—"}
                         {row.notes ? (

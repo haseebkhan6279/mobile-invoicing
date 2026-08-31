@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth-guard";
 import { parseImeis } from "@/lib/imei";
-import { toNumber, toOptionalNumber, toOptionalString } from "@/lib/lookups";
+import { toNumber, toOptionalString } from "@/lib/lookups";
 import { apiClient, ApiError } from "@/lib/api-client";
 
 function parseInvoiceLines(formData: FormData) {
@@ -14,9 +14,7 @@ function parseInvoiceLines(formData: FormData) {
   const grades = formData.getAll("lineGrade");
   const qtys = formData.getAll("lineQty");
   const gbp = formData.getAll("linePriceGbp");
-  const eur = formData.getAll("linePriceEur");
   const buyGbp = formData.getAll("lineBuyPriceGbp");
-  const buyEur = formData.getAll("lineBuyPriceEur");
   const imeis = formData.getAll("lineImeis");
   const lines = [];
   for (let i = 0; i < products.length; i += 1) {
@@ -27,9 +25,7 @@ function parseInvoiceLines(formData: FormData) {
       grade: String(grades[i] ?? "").trim(),
       qty: toNumber(qtys[i], 0),
       unitPriceGbp: toNumber(gbp[i]),
-      unitPriceEur: toNumber(eur[i]),
       buyPriceGbp: toNumber(buyGbp[i]),
-      buyPriceEur: toNumber(buyEur[i]),
       imeis: parseImeis(String(imeis[i] ?? "")),
     });
   }
@@ -48,10 +44,7 @@ export async function createInvoice(formData: FormData) {
       {
         customerId: String(formData.get("customerId") ?? ""),
         status: String(formData.get("status") ?? "PENDING"),
-        entity: String(formData.get("entity") ?? "UK"),
-        fxRate: toOptionalNumber(formData.get("fxRate")),
         shippingCostGbp: toNumber(formData.get("shippingCostGbp")),
-        shippingCostEur: toNumber(formData.get("shippingCostEur")),
         shippingLabel: toOptionalString(formData.get("shippingLabel")),
         paymentTerms: toOptionalString(formData.get("paymentTerms")),
         warrantyTerms: toOptionalString(formData.get("warrantyTerms")),
@@ -103,7 +96,6 @@ export async function updateInvoiceShipping(formData: FormData) {
       `/invoices/${id}/shipping`,
       {
         shippingCostGbp: toNumber(formData.get("shippingCostGbp")),
-        shippingCostEur: toNumber(formData.get("shippingCostEur")),
         shippingLabel: toOptionalString(formData.get("shippingLabel")),
       },
       apiToken,
@@ -155,9 +147,7 @@ export async function updateInvoiceLine(formData: FormData) {
         grade: toOptionalString(formData.get("grade")),
         qty: toNumber(formData.get("qty")),
         unitPriceGbp: toNumber(formData.get("unitPriceGbp")),
-        unitPriceEur: toNumber(formData.get("unitPriceEur")),
         buyPriceGbp: toNumber(formData.get("buyPriceGbp")),
-        buyPriceEur: toNumber(formData.get("buyPriceEur")),
       },
       apiToken,
     );
@@ -187,9 +177,7 @@ export async function addInvoiceLine(formData: FormData) {
         grade: toOptionalString(formData.get("grade")),
         qty: toNumber(formData.get("qty")),
         unitPriceGbp: toNumber(formData.get("unitPriceGbp")),
-        unitPriceEur: toNumber(formData.get("unitPriceEur")),
         buyPriceGbp: toNumber(formData.get("buyPriceGbp")),
-        buyPriceEur: toNumber(formData.get("buyPriceEur")),
       },
       apiToken,
     );

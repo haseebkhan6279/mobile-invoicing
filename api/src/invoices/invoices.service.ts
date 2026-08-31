@@ -1,7 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { nextNumberTx } from "../common/numbers";
-import { DEFAULT_FX_RATE } from "../common/money";
 import { applyCreditToInvoiceTx, rmaTotals } from "../common/rma";
 import {
   CreateInvoiceDto,
@@ -21,9 +20,7 @@ type NormalizedInvoiceLine = {
   grade: string;
   qty: number;
   unitPriceGbp: number;
-  unitPriceEur: number;
   buyPriceGbp: number;
-  buyPriceEur: number;
   imeis: string[];
   sortOrder: number;
 };
@@ -42,9 +39,7 @@ function normalizeLines(lines: CreateInvoiceDto["lines"]): NormalizedInvoiceLine
       grade: (line.grade ?? "").toString().trim() || "A",
       qty,
       unitPriceGbp: Number(line.unitPriceGbp) || 0,
-      unitPriceEur: Number(line.unitPriceEur) || 0,
       buyPriceGbp: Number(line.buyPriceGbp) || 0,
-      buyPriceEur: Number(line.buyPriceEur) || 0,
       imeis,
       sortOrder: i,
     });
@@ -107,22 +102,14 @@ export class InvoicesService {
       ? await this.prisma.stockUnit.findMany({ where: { imei: { in: allImeis } } })
       : [];
 
-    const entity = input.entity ?? "UK";
-
     return this.prisma.$transaction(async (tx) => {
-      const invoiceNumber =
-        entity === "NI"
-          ? await nextNumberTx(tx, "INV_NI", "N", "")
-          : await nextNumberTx(tx, "INV_UK", "", "");
+      const invoiceNumber = await nextNumberTx(tx, "INV_UK", "", "");
       const created = await tx.invoice.create({
         data: {
           invoiceNumber,
-          entity,
           customerId,
           status,
-          fxRate: input.fxRate ?? DEFAULT_FX_RATE,
           shippingCostGbp: Number(input.shippingCostGbp) || 0,
-          shippingCostEur: Number(input.shippingCostEur) || 0,
           shippingLabel: input.shippingLabel ?? null,
           paymentTerms: input.paymentTerms ?? "Immediate",
           warrantyTerms: input.warrantyTerms ?? "3 months",
@@ -137,9 +124,7 @@ export class InvoicesService {
               network: line.network,
               grade: line.grade,
               unitPriceGbp: line.unitPriceGbp,
-              unitPriceEur: line.unitPriceEur,
               buyPriceGbp: line.buyPriceGbp,
-              buyPriceEur: line.buyPriceEur,
               imeis: line.imeis,
               sortOrder: line.sortOrder,
             })),
@@ -176,11 +161,10 @@ export class InvoicesService {
             paymentType: "APPLIED_TO_INVOICE",
             appliedInvoiceId: created.id,
             paymentAmountGbp: credit.totalGbp,
-            paymentAmountEur: credit.totalEur,
             paymentDate: new Date(),
           },
         });
-        await applyCreditToInvoiceTx(tx, created.id, credit.totalGbp, credit.totalEur);
+        await applyCreditToInvoiceTx(tx, created.id, credit.totalGbp);
       }
 
       return created;
@@ -227,7 +211,6 @@ export class InvoicesService {
       where: { id },
       data: {
         shippingCostGbp: Number(dto.shippingCostGbp) || 0,
-        shippingCostEur: Number(dto.shippingCostEur) || 0,
         shippingLabel: dto.shippingLabel?.toString().trim() || null,
       },
     });
@@ -266,9 +249,7 @@ export class InvoicesService {
         grade: (dto.grade ?? "").toString().trim() || "A",
         qty,
         unitPriceGbp: Number(dto.unitPriceGbp) || 0,
-        unitPriceEur: Number(dto.unitPriceEur) || 0,
         buyPriceGbp: Number(dto.buyPriceGbp) || 0,
-        buyPriceEur: Number(dto.buyPriceEur) || 0,
         imeis: [],
         sortOrder: (last._max.sortOrder ?? -1) + 1,
       },
@@ -298,9 +279,7 @@ export class InvoicesService {
         grade: (dto.grade ?? "").toString().trim() || "A",
         qty,
         unitPriceGbp: Number(dto.unitPriceGbp) || 0,
-        unitPriceEur: Number(dto.unitPriceEur) || 0,
         buyPriceGbp: Number(dto.buyPriceGbp) || 0,
-        buyPriceEur: Number(dto.buyPriceEur) || 0,
       },
     });
   }

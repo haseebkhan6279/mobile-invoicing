@@ -18,7 +18,7 @@ import {
   Warehouse,
 } from "lucide-react";
 import { logoutAction } from "@/actions/auth";
-import { sellerCompany as company } from "@/lib/company";
+import { company } from "@/lib/company";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/theme-toggle";
 

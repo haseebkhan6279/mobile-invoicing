@@ -71,11 +71,10 @@ export class SuppliersService {
 
   addLedgerEntry(supplierId: string, input: LedgerEntryDto) {
     const amountGbp = Number(input.amountGbp) || 0;
-    const amountEur = Number(input.amountEur) || 0;
-    if (!supplierId || amountGbp < 0 || amountEur < 0) {
+    if (!supplierId || amountGbp < 0) {
       throw new BadRequestException("Enter valid amounts");
     }
-    if (amountGbp === 0 && amountEur === 0) {
+    if (amountGbp === 0) {
       throw new BadRequestException("Amount cannot be zero");
     }
     return this.prisma.supplierLedger.create({
@@ -83,7 +82,6 @@ export class SuppliersService {
         supplierId,
         type: input.type === "CREDIT" ? "CREDIT" : "DEBIT",
         amountGbp,
-        amountEur,
         date: input.date ? new Date(input.date) : new Date(),
         reference: input.reference ?? null,
         notes: input.notes ?? null,

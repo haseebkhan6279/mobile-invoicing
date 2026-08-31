@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth-guard";
-import { toNumber, toOptionalNumber, toOptionalString } from "@/lib/lookups";
+import { toNumber, toOptionalString } from "@/lib/lookups";
 import { apiClient, ApiError } from "@/lib/api-client";
 
 function parsePoLines(formData: FormData) {
@@ -13,7 +13,6 @@ function parsePoLines(formData: FormData) {
   const grades = formData.getAll("lineGrade");
   const qtys = formData.getAll("lineQty");
   const gbp = formData.getAll("lineCostGbp");
-  const eur = formData.getAll("lineCostEur");
   const lines = [];
   for (let i = 0; i < productNames.length; i += 1) {
     lines.push({
@@ -23,7 +22,6 @@ function parsePoLines(formData: FormData) {
       grade: toOptionalString(grades[i]),
       qty: toNumber(qtys[i], 0),
       unitCostGbp: toNumber(gbp[i]),
-      unitCostEur: toNumber(eur[i]),
     });
   }
   return lines;
@@ -51,8 +49,6 @@ export async function createPurchaseOrder(formData: FormData) {
         status: String(formData.get("status") ?? "ORDERED"),
         notes: toOptionalString(formData.get("notes")),
         shippingCostGbp: toNumber(formData.get("shippingCostGbp")),
-        shippingCostEur: toNumber(formData.get("shippingCostEur")),
-        fxRate: toOptionalNumber(formData.get("fxRate")),
         lines,
       },
       apiToken,
@@ -90,10 +86,7 @@ export async function updatePurchaseOrderMeta(formData: FormData) {
         status: String(formData.get("status") ?? "ORDERED"),
         notes: toOptionalString(formData.get("notes")),
         shippingCostGbp: toNumber(formData.get("shippingCostGbp")),
-        shippingCostEur: toNumber(formData.get("shippingCostEur")),
         actualCostGbp: toNumber(formData.get("actualCostGbp")),
-        actualCostEur: toNumber(formData.get("actualCostEur")),
-        fxRate: toOptionalNumber(formData.get("fxRate")),
         lines,
       },
       apiToken,

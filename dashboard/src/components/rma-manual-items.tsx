@@ -64,10 +64,6 @@ export function RmaManualItems({ defaultInvoiceNumber }: { defaultInvoiceNumber:
             <Input name="manualPriceGbp" type="number" step="0.01" defaultValue={0} />
           </div>
           <div>
-            <Label>Unit price EUR</Label>
-            <Input name="manualPriceEur" type="number" step="0.01" defaultValue={0} />
-          </div>
-          <div>
             <Label>Action</Label>
             <Select name="manualAction" defaultValue="RESTOCK">
               {RMA_ACTIONS.map((action) => (

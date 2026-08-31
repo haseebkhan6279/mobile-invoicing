@@ -11,7 +11,6 @@ export type ProductHit = {
   grade: string;
   count: number;
   costGbp: number;
-  costEur: number;
 };
 
 export function InvoiceLineProductField({

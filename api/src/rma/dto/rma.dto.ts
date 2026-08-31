@@ -44,10 +44,6 @@ class RmaManualItemDto {
   unitPriceGbp?: number;
 
   @IsOptional()
-  @IsNumber()
-  unitPriceEur?: number;
-
-  @IsOptional()
   @IsString()
   reason?: string | null;
 }
@@ -93,10 +89,6 @@ export class ApplyRmaCreditDto {
   @IsOptional()
   @IsNumber()
   paymentAmountGbp?: number;
-
-  @IsOptional()
-  @IsNumber()
-  paymentAmountEur?: number;
 
   @IsOptional()
   @IsString()

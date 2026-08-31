@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { DEFAULT_FX_RATE, eurFromGbp } from "@/lib/money";
 
 type Lookup = { id: string; name?: string; code?: string };
 
@@ -17,7 +16,6 @@ const emptyBatch = {
   network: "Unlocked",
   grade: "A",
   costGbp: 0,
-  costEur: 0,
   imeis: "",
 };
 
@@ -25,19 +23,13 @@ function StockBatchLine({
   grades,
   colors,
   networks,
-  fx,
   onRemove,
 }: {
   grades: Lookup[];
   colors: Lookup[];
   networks: Lookup[];
-  fx: number;
   onRemove: () => void;
 }) {
-  const [eurValue, setEurValue] = useState(emptyBatch.costEur);
-  const [eurKey, setEurKey] = useState(0);
-  const eurTouched = useRef(false);
-
   return (
     <div className="space-y-3 rounded-xl border border-slate-200 p-4 dark:border-slate-800">
       <div className="flex justify-end">
@@ -86,34 +78,7 @@ function StockBatchLine({
         </div>
         <div>
           <Label>Unit cost GBP</Label>
-          <Input
-            name="batchCostGbp"
-            type="number"
-            step="0.01"
-            defaultValue={emptyBatch.costGbp}
-            onChange={(event) => {
-              if (eurTouched.current) return;
-              const raw = event.target.value;
-              if (raw === "") return;
-              const n = Number(raw);
-              if (!Number.isFinite(n)) return;
-              setEurValue(eurFromGbp(n, fx));
-              setEurKey((k) => k + 1);
-            }}
-          />
-        </div>
-        <div>
-          <Label>Unit cost EUR</Label>
-          <Input
-            key={eurKey}
-            name="batchCostEur"
-            type="number"
-            step="0.01"
-            defaultValue={eurValue}
-            onChange={() => {
-              eurTouched.current = true;
-            }}
-          />
+          <Input name="batchCostGbp" type="number" step="0.01" defaultValue={emptyBatch.costGbp} />
         </div>
       </div>
       <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
@@ -160,7 +125,6 @@ export function StockBatchForm({
 }) {
   const nextBatchId = useRef(1);
   const [batchIds, setBatchIds] = useState<number[]>([0]);
-  const [fx] = useState(DEFAULT_FX_RATE);
   const [supplierId, setSupplierId] = useState(defaultSupplierId ?? "");
 
   return (
@@ -227,7 +191,6 @@ export function StockBatchForm({
             grades={grades}
             colors={colors}
             networks={networks}
-            fx={fx}
             onRemove={() => setBatchIds((current) => current.filter((id) => id !== batchId))}
           />
         ))}

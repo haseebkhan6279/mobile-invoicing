@@ -1,15 +1,12 @@
 import { roundMoney } from "@/lib/money";
 
 export function rmaTotals(rma: {
-  items: { unitPriceGbp: number; unitPriceEur: number }[];
+  items: { unitPriceGbp: number }[];
 }) {
   const totalGbp = roundMoney(
     rma.items.reduce((sum, item) => sum + item.unitPriceGbp, 0),
   );
-  const totalEur = roundMoney(
-    rma.items.reduce((sum, item) => sum + item.unitPriceEur, 0),
-  );
-  return { totalGbp, totalEur };
+  return { totalGbp };
 }
 
 export function groupRmaSummary(

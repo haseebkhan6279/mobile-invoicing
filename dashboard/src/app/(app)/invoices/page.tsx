@@ -8,21 +8,18 @@ import { ClickableRow } from "@/components/ui/clickable-row";
 import { requireUser } from "@/lib/auth-guard";
 import { invoiceTotals } from "@/lib/invoice";
 import { apiClient } from "@/lib/api-client";
-import { formatEur, formatGbp } from "@/lib/money";
+import { formatGbp } from "@/lib/money";
 import { formatDate } from "@/lib/utils";
 
 type InvoiceRow = {
   id: string;
   invoiceNumber: string;
-  entity: string;
   status: string;
   issuedAt: string;
   shippingCostGbp: number;
-  shippingCostEur: number;
   paidAmountGbp: number;
-  paidAmountEur: number;
   customer: { clientId: string; name: string };
-  lines: { qty: number; unitPriceGbp: number; unitPriceEur: number }[];
+  lines: { qty: number; unitPriceGbp: number }[];
 };
 
 export default async function InvoicesPage({
@@ -39,7 +36,7 @@ export default async function InvoicesPage({
     <div>
       <PageHeader
         title="Invoices"
-        description="Pending, awaiting payment, and paid. Amount shown in the invoice's billing currency."
+        description="Pending, awaiting payment, and paid."
         action={{ href: "/invoices/new", label: "Create invoice" }}
       />
       <form className="mb-4">
@@ -78,9 +75,7 @@ export default async function InvoicesPage({
                   <Td>
                     <StatusBadge status={invoice.status} />
                   </Td>
-                  <Td>
-                    {invoice.entity === "NI" ? formatEur(totals.totalEur) : formatGbp(totals.totalGbp)}
-                  </Td>
+                  <Td>{formatGbp(totals.totalGbp)}</Td>
                   <Td>{formatDate(invoice.issuedAt)}</Td>
                   <Td>
                     <EditLink
@@ -104,7 +99,7 @@ export default async function InvoicesPage({
               title={invoice.invoiceNumber}
               subtitle={invoice.customer.name}
               trailing={<StatusBadge status={invoice.status} />}
-              meta={invoice.entity === "NI" ? formatEur(totals.totalEur) : formatGbp(totals.totalGbp)}
+              meta={formatGbp(totals.totalGbp)}
             />
           );
         })}

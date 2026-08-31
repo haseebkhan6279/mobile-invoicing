@@ -1,25 +1,21 @@
 import { CompanyBrand } from "@/components/company-brand";
-import { addressLines, bankForCurrency, companyForEntity, type BankCurrency } from "@/lib/company";
+import { addressLines, company } from "@/lib/company";
 import { invoiceTotals } from "@/lib/invoice";
-import { formatEur, formatGbp } from "@/lib/money";
+import { formatGbp } from "@/lib/money";
 import { INVOICE_INVALID_UNTIL_PAID_NOTICE, INVOICE_MARGIN_NOTICE, INVOICE_TERMS } from "@/lib/terms";
 import { formatDate } from "@/lib/utils";
 import { labelStatus } from "@/lib/status";
 
 export type InvoiceDoc = {
   invoiceNumber: string;
-  entity: string;
   status: string;
   issuedAt: Date | string;
-  fxRate: number;
   shippingCostGbp: number;
-  shippingCostEur: number;
   shippingLabel: string | null;
   paymentTerms: string | null;
   warrantyTerms: string | null;
   marginVatScheme: boolean;
   paidAmountGbp: number;
-  paidAmountEur: number;
   notes: string | null;
   customer: {
     clientId: string;
@@ -39,29 +35,15 @@ export type InvoiceDoc = {
     network: string;
     grade: string;
     unitPriceGbp: number;
-    unitPriceEur: number;
     imeis?: string[];
   }[];
   stockUnits: { imei: string; invoiceLineId: string | null }[];
 };
 
-export function InvoiceDocument({
-  invoice,
-  currency,
-  rate,
-}: {
-  invoice: InvoiceDoc;
-  currency?: BankCurrency;
-  rate?: number;
-}) {
+export function InvoiceDocument({ invoice }: { invoice: InvoiceDoc }) {
   const totals = invoiceTotals(invoice);
-  const hasShipping = invoice.shippingCostGbp > 0 || invoice.shippingCostEur > 0;
-  const company = companyForEntity(invoice.entity);
-  const printCurrency = currency ?? (invoice.entity === "NI" ? "EUR" : "GBP");
-  const printRate = rate ?? invoice.fxRate;
-  const bank = bankForCurrency(company, printCurrency);
-  const money = (gbp: number) =>
-    printCurrency === "EUR" ? formatEur(gbp * printRate) : formatGbp(gbp);
+  const hasShipping = invoice.shippingCostGbp > 0;
+  const money = formatGbp;
 
   return (
     <div className="mx-auto max-w-[210mm] bg-white p-8 text-slate-900 print:p-0">
@@ -182,30 +164,11 @@ export function InvoiceDocument({
 
       <div className="mt-6 flex flex-wrap justify-between gap-6">
         <div className="max-w-sm text-sm text-slate-600">
-          <div className="text-xs uppercase tracking-wide text-slate-500">
-            Bank details ({printCurrency})
-          </div>
-          <div>Bank Name: {bank.bankName}</div>
-          <div>Account Name: {bank.accountName}</div>
-          {printCurrency === "GBP" ? (
-            <>
-              <div>Sort code: {bank.sortCode}</div>
-              <div>Account: {bank.accountNumber}</div>
-            </>
-          ) : (
-            <>
-              <div>IBAN: {bank.iban}</div>
-              <div>BIC/SWIFT: {bank.bic}</div>
-              {bank.bankAddress.length ? (
-                <div>
-                  Bank Address:
-                  {bank.bankAddress.map((line) => (
-                    <div key={line}>{line}</div>
-                  ))}
-                </div>
-              ) : null}
-            </>
-          )}
+          <div className="text-xs uppercase tracking-wide text-slate-500">Bank details</div>
+          <div>Bank Name: {company.bank.bankName}</div>
+          <div>Account Name: {company.bank.accountName}</div>
+          <div>Sort code: {company.bank.sortCode}</div>
+          <div>Account: {company.bank.accountNumber}</div>
           <div className="mt-2">
             Payment Reference: {invoice.invoiceNumber}
             <br />

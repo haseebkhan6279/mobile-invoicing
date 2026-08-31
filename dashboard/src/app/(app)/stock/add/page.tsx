@@ -25,7 +25,7 @@ export default async function AddStockPage({
     <div>
       <PageHeader
         title="Add stock"
-        description="Add IMEIs grade-wise, with colour, network, and unit cost in GBP & EUR."
+        description="Add IMEIs grade-wise, with colour, network, and unit cost in GBP."
       />
       <Notice error={error} />
       <Card>

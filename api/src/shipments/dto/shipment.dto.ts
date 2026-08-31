@@ -21,17 +21,7 @@ export class CreateShipmentDto {
   @IsOptional()
   @IsNumber()
   @Min(0)
-  shippingCostEur?: number;
-
-  @IsOptional()
-  @IsNumber()
-  @Min(0)
   actualCostGbp?: number;
-
-  @IsOptional()
-  @IsNumber()
-  @Min(0)
-  actualCostEur?: number;
 
   @IsOptional()
   @IsIn(SHIPMENT_STATUSES)
@@ -59,17 +49,7 @@ export class UpdateShipmentDto {
   @IsOptional()
   @IsNumber()
   @Min(0)
-  shippingCostEur?: number;
-
-  @IsOptional()
-  @IsNumber()
-  @Min(0)
   actualCostGbp?: number;
-
-  @IsOptional()
-  @IsNumber()
-  @Min(0)
-  actualCostEur?: number;
 
   @IsOptional()
   @IsIn(SHIPMENT_STATUSES)

@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { updateShipment } from "@/actions/shipments";
-import { MoneyPair } from "@/components/money-pair";
 import { Notice } from "@/components/notice";
 import { PageHeader } from "@/components/page-header";
 import { Card } from "@/components/ui/card";
@@ -12,6 +11,7 @@ import { SubmitButton } from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
 import { requireUser } from "@/lib/auth-guard";
 import { apiClient, ApiError } from "@/lib/api-client";
+import { formatGbp } from "@/lib/money";
 import { SHIPMENT_STATUSES } from "@/lib/status";
 
 type ShipmentDetail = {
@@ -21,9 +21,7 @@ type ShipmentDetail = {
   trackingNumber: string | null;
   carrier: string | null;
   shippingCostGbp: number;
-  shippingCostEur: number;
   actualCostGbp: number;
-  actualCostEur: number;
   status: string;
   notes: string | null;
   invoice: { invoiceNumber: string; customer: { name: string } };
@@ -63,9 +61,8 @@ export default async function ShipmentDetailPage({
             </Link>
           </div>
           <div>
-            Shipping vs actual:{" "}
-            <MoneyPair gbp={shipment.shippingCostGbp} eur={shipment.shippingCostEur} /> vs{" "}
-            <MoneyPair gbp={shipment.actualCostGbp} eur={shipment.actualCostEur} />
+            Shipping vs actual: {formatGbp(shipment.shippingCostGbp)} vs{" "}
+            {formatGbp(shipment.actualCostGbp)}
           </div>
         </div>
         <form action={updateShipment} className="space-y-4">
@@ -96,16 +93,8 @@ export default async function ShipmentDetailPage({
               <Input name="shippingCostGbp" type="number" step="0.01" defaultValue={shipment.shippingCostGbp} />
             </div>
             <div>
-              <Label>Shipping cost EUR</Label>
-              <Input name="shippingCostEur" type="number" step="0.01" defaultValue={shipment.shippingCostEur} />
-            </div>
-            <div>
               <Label>Actual cost GBP</Label>
               <Input name="actualCostGbp" type="number" step="0.01" defaultValue={shipment.actualCostGbp} />
-            </div>
-            <div>
-              <Label>Actual cost EUR</Label>
-              <Input name="actualCostEur" type="number" step="0.01" defaultValue={shipment.actualCostEur} />
             </div>
           </div>
           <div>

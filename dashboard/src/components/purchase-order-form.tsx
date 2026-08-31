@@ -6,7 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { DEFAULT_FX_RATE, eurFromGbp } from "@/lib/money";
 import { PO_STATUSES } from "@/lib/status";
 
 type Lookup = { id: string; name?: string; code?: string; label?: string };
@@ -18,7 +17,6 @@ export type PoLineSeed = {
   grade: string;
   qty: number;
   unitCostGbp: number;
-  unitCostEur: number;
 };
 
 const emptyLine: PoLineSeed = {
@@ -28,33 +26,27 @@ const emptyLine: PoLineSeed = {
   grade: "A",
   qty: 1,
   unitCostGbp: 0,
-  unitCostEur: 0,
 };
 
 function PoLine({
   colors,
   networks,
   grades,
-  fx,
   initial,
   onRemove,
 }: {
   colors: Lookup[];
   networks: Lookup[];
   grades: Lookup[];
-  fx: number;
   initial?: PoLineSeed;
   onRemove: () => void;
 }) {
   const seed = initial ?? emptyLine;
-  const [eurValue, setEurValue] = useState(seed.unitCostEur);
-  const [eurKey, setEurKey] = useState(0);
-  const eurTouched = useRef(seed.unitCostEur > 0);
   const uid = useId();
 
   return (
-    <div className="grid gap-3 rounded-lg border border-slate-200 p-3 md:grid-cols-7 dark:border-slate-800">
-      <div className="flex items-start justify-end md:col-span-7 md:order-last">
+    <div className="grid gap-3 rounded-lg border border-slate-200 p-3 md:grid-cols-6 dark:border-slate-800">
+      <div className="flex items-start justify-end md:col-span-6 md:order-last">
         <Button type="button" variant="ghost" size="sm" onClick={onRemove}>
           Remove line
         </Button>
@@ -96,34 +88,7 @@ function PoLine({
       </div>
       <div>
         <Label>Unit GBP</Label>
-        <Input
-          name="lineCostGbp"
-          type="number"
-          step="0.01"
-          defaultValue={seed.unitCostGbp}
-          onChange={(event) => {
-            if (eurTouched.current) return;
-            const raw = event.target.value;
-            if (raw === "") return;
-            const n = Number(raw);
-            if (!Number.isFinite(n)) return;
-            setEurValue(eurFromGbp(n, fx));
-            setEurKey((k) => k + 1);
-          }}
-        />
-      </div>
-      <div>
-        <Label>Unit EUR</Label>
-        <Input
-          key={eurKey}
-          name="lineCostEur"
-          type="number"
-          step="0.01"
-          defaultValue={eurValue}
-          onChange={() => {
-            eurTouched.current = true;
-          }}
-        />
+        <Input name="lineCostGbp" type="number" step="0.01" defaultValue={seed.unitCostGbp} />
       </div>
     </div>
   );
@@ -139,11 +104,8 @@ export function PurchaseOrderForm({
   initialLines,
   initialSupplierId,
   initialStatus,
-  initialFxRate,
   initialShippingGbp,
-  initialShippingEur,
   initialActualCostGbp,
-  initialActualCostEur,
   initialNotes,
   existingAttachmentName,
 }: {
@@ -156,11 +118,8 @@ export function PurchaseOrderForm({
   initialLines?: PoLineSeed[];
   initialSupplierId?: string;
   initialStatus?: string;
-  initialFxRate?: number;
   initialShippingGbp?: number;
-  initialShippingEur?: number;
   initialActualCostGbp?: number;
-  initialActualCostEur?: number;
   initialNotes?: string;
   existingAttachmentName?: string | null;
 }) {
@@ -168,7 +127,6 @@ export function PurchaseOrderForm({
   const [lineIds, setLineIds] = useState<number[]>(
     Array.from({ length: initialLines?.length ?? 1 }, (_, i) => i),
   );
-  const [fx, setFx] = useState(initialFxRate ?? DEFAULT_FX_RATE);
   const statusOptions = mode === "edit" ? PO_STATUSES : (["DRAFT", "ORDERED"] as const);
 
   return (
@@ -202,22 +160,6 @@ export function PurchaseOrderForm({
           </Select>
         </div>
         <div>
-          <Label htmlFor="fxRate">FX rate (GBP → EUR)</Label>
-          <Input
-            id="fxRate"
-            name="fxRate"
-            type="number"
-            step="0.0001"
-            defaultValue={initialFxRate ?? DEFAULT_FX_RATE}
-            onChange={(event) => {
-              const raw = event.target.value;
-              if (raw === "") return;
-              const n = Number(raw);
-              if (Number.isFinite(n)) setFx(n);
-            }}
-          />
-        </div>
-        <div>
           <Label htmlFor="shippingCostGbp">Shipping cost GBP</Label>
           <Input
             id="shippingCostGbp"
@@ -227,39 +169,17 @@ export function PurchaseOrderForm({
             defaultValue={initialShippingGbp ?? 0}
           />
         </div>
-        <div>
-          <Label htmlFor="shippingCostEur">Shipping cost EUR</Label>
-          <Input
-            id="shippingCostEur"
-            name="shippingCostEur"
-            type="number"
-            step="0.01"
-            defaultValue={initialShippingEur ?? 0}
-          />
-        </div>
         {mode === "edit" ? (
-          <>
-            <div>
-              <Label htmlFor="actualCostGbp">Actual cost GBP</Label>
-              <Input
-                id="actualCostGbp"
-                name="actualCostGbp"
-                type="number"
-                step="0.01"
-                defaultValue={initialActualCostGbp ?? 0}
-              />
-            </div>
-            <div>
-              <Label htmlFor="actualCostEur">Actual cost EUR</Label>
-              <Input
-                id="actualCostEur"
-                name="actualCostEur"
-                type="number"
-                step="0.01"
-                defaultValue={initialActualCostEur ?? 0}
-              />
-            </div>
-          </>
+          <div>
+            <Label htmlFor="actualCostGbp">Actual cost GBP</Label>
+            <Input
+              id="actualCostGbp"
+              name="actualCostGbp"
+              type="number"
+              step="0.01"
+              defaultValue={initialActualCostGbp ?? 0}
+            />
+          </div>
         ) : null}
       </div>
 
@@ -293,7 +213,6 @@ export function PurchaseOrderForm({
             colors={colors}
             networks={networks}
             grades={grades}
-            fx={fx}
             initial={initialLines?.[index]}
             onRemove={() => setLineIds((current) => current.filter((id) => id !== lineId))}
           />

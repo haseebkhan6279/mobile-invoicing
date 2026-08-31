@@ -1,12 +1,12 @@
 import Link from "next/link";
 import { MobileListRow } from "@/components/mobile-list-row";
 import { PageHeader } from "@/components/page-header";
-import { MoneyPair } from "@/components/money-pair";
 import { StatusBadge } from "@/components/status-badge";
 import { EditLink } from "@/components/ui/edit-link";
 import { Table, THead, Th, Td } from "@/components/ui/table";
 import { requireUser } from "@/lib/auth-guard";
 import { apiClient } from "@/lib/api-client";
+import { formatGbp } from "@/lib/money";
 import { formatDate } from "@/lib/utils";
 
 type PurchaseOrderRow = {
@@ -14,9 +14,7 @@ type PurchaseOrderRow = {
   poNumber: string;
   status: string;
   shippingCostGbp: number;
-  shippingCostEur: number;
   actualCostGbp: number;
-  actualCostEur: number;
   createdAt: string;
   supplier: { name: string };
   lines: { qty: number }[];
@@ -62,12 +60,8 @@ export default async function PurchaseOrdersPage() {
                   <Td>
                     <StatusBadge status={po.status} />
                   </Td>
-                  <Td>
-                    <MoneyPair gbp={po.shippingCostGbp} eur={po.shippingCostEur} stacked />
-                  </Td>
-                  <Td>
-                    <MoneyPair gbp={po.actualCostGbp} eur={po.actualCostEur} stacked />
-                  </Td>
+                  <Td>{formatGbp(po.shippingCostGbp)}</Td>
+                  <Td>{formatGbp(po.actualCostGbp)}</Td>
                   <Td>
                     {po.stockUnits.length}/{ordered}
                   </Td>

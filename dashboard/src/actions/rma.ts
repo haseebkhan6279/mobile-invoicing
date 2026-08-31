@@ -10,7 +10,7 @@ export type AvailableRmaCredit = {
   id: string;
   rmaNumber: string;
   invoice: { invoiceNumber: string };
-  items: { unitPriceGbp: number; unitPriceEur: number }[];
+  items: { unitPriceGbp: number }[];
 };
 
 export async function getAvailableRmaCredits(customerId: string) {
@@ -32,7 +32,6 @@ export async function createRma(formData: FormData) {
   const manualColors = formData.getAll("manualColor");
   const manualGrades = formData.getAll("manualGrade");
   const manualPriceGbp = formData.getAll("manualPriceGbp");
-  const manualPriceEur = formData.getAll("manualPriceEur");
   const manualActions = formData.getAll("manualAction");
   const manualReasons = formData.getAll("manualReason");
   const manualItems = manualProductNames
@@ -43,7 +42,6 @@ export async function createRma(formData: FormData) {
       color: toOptionalString(manualColors[i]),
       grade: toOptionalString(manualGrades[i]),
       unitPriceGbp: toNumber(manualPriceGbp[i]),
-      unitPriceEur: toNumber(manualPriceEur[i]),
       action: String(manualActions[i] || "RESTOCK"),
       reason: toOptionalString(manualReasons[i]),
     }))
@@ -88,7 +86,6 @@ export async function applyRmaCredit(formData: FormData) {
         paymentType: String(formData.get("paymentType") ?? "PENDING"),
         appliedInvoiceId,
         paymentAmountGbp: toNumber(formData.get("paymentAmountGbp")),
-        paymentAmountEur: toNumber(formData.get("paymentAmountEur")),
         paymentDate: toOptionalString(formData.get("paymentDate")),
       },
       apiToken,

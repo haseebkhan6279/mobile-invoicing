@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { MobileListRow } from "@/components/mobile-list-row";
 import { PageHeader } from "@/components/page-header";
-import { MoneyPair } from "@/components/money-pair";
 import { StatusBadge } from "@/components/status-badge";
 import { Table, THead, Th, Td } from "@/components/ui/table";
 import { requireUser } from "@/lib/auth-guard";
 import { apiClient } from "@/lib/api-client";
+import { formatGbp } from "@/lib/money";
 import { formatDate } from "@/lib/utils";
 
 type ShipmentRow = {
@@ -14,9 +14,7 @@ type ShipmentRow = {
   trackingNumber: string | null;
   carrier: string | null;
   shippingCostGbp: number;
-  shippingCostEur: number;
   actualCostGbp: number;
-  actualCostEur: number;
   status: string;
   createdAt: string;
   invoice: { invoiceNumber: string };
@@ -58,12 +56,8 @@ export default async function ShipmentsPage() {
                 <Td>{shipment.invoice.invoiceNumber}</Td>
                 <Td className="font-mono text-xs">{shipment.trackingNumber || "—"}</Td>
                 <Td>{shipment.carrier || "—"}</Td>
-                <Td>
-                  <MoneyPair gbp={shipment.shippingCostGbp} eur={shipment.shippingCostEur} stacked />
-                </Td>
-                <Td>
-                  <MoneyPair gbp={shipment.actualCostGbp} eur={shipment.actualCostEur} stacked />
-                </Td>
+                <Td>{formatGbp(shipment.shippingCostGbp)}</Td>
+                <Td>{formatGbp(shipment.actualCostGbp)}</Td>
                 <Td>
                   <StatusBadge status={shipment.status} />
                 </Td>

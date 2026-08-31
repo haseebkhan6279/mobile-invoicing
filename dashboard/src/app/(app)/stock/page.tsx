@@ -2,7 +2,6 @@ import Link from "next/link";
 import { updateStockUnitImei } from "@/actions/stock";
 import { MobileListRow } from "@/components/mobile-list-row";
 import { PageHeader } from "@/components/page-header";
-import { MoneyPair } from "@/components/money-pair";
 import { Notice } from "@/components/notice";
 import { StatusBadge } from "@/components/status-badge";
 import { Input } from "@/components/ui/input";
@@ -11,6 +10,7 @@ import { SubmitButton } from "@/components/ui/submit-button";
 import { Table, THead, Th, Td } from "@/components/ui/table";
 import { requireUser } from "@/lib/auth-guard";
 import { apiClient } from "@/lib/api-client";
+import { formatGbp } from "@/lib/money";
 
 type StockUnitRow = {
   id: string;
@@ -20,7 +20,6 @@ type StockUnitRow = {
   network: string;
   grade: string;
   costGbp: number;
-  costEur: number;
   status: string;
   supplier: { name: string } | null;
   invoice: { id: string; invoiceNumber: string } | null;
@@ -110,9 +109,7 @@ export default async function StockPage({
                 <Td>{unit.color}</Td>
                 <Td>{unit.network}</Td>
                 <Td>{unit.grade}</Td>
-                <Td>
-                  <MoneyPair gbp={unit.costGbp} eur={unit.costEur} stacked />
-                </Td>
+                <Td>{formatGbp(unit.costGbp)}</Td>
                 <Td>
                   <StatusBadge status={unit.status} />
                   {unit.invoice ? (

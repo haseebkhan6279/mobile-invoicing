@@ -1,5 +1,5 @@
 import { LoginForm } from "@/components/login-form";
-import { sellerCompany as company } from "@/lib/company";
+import { company } from "@/lib/company";
 
 export default function LoginPage() {
   return (

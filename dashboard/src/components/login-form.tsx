@@ -6,7 +6,7 @@ import { loginAction, type AuthState } from "@/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { sellerCompany as company } from "@/lib/company";
+import { company } from "@/lib/company";
 
 export function LoginForm() {
   const [state, action, pending] = useActionState<AuthState, FormData>(

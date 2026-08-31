@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { removePoAttachment, updatePurchaseOrderMeta } from "@/actions/purchase-orders";
-import { MoneyPair } from "@/components/money-pair";
 import { Notice } from "@/components/notice";
 import { PageHeader } from "@/components/page-header";
 import { PurchaseOrderForm } from "@/components/purchase-order-form";
@@ -12,6 +11,7 @@ import { Table, THead, Th, Td } from "@/components/ui/table";
 import { requireUser } from "@/lib/auth-guard";
 import { apiClient, ApiError } from "@/lib/api-client";
 import { getLookups } from "@/lib/lookups";
+import { formatGbp } from "@/lib/money";
 import { formatDate } from "@/lib/utils";
 
 type PurchaseOrderDetail = {
@@ -20,11 +20,8 @@ type PurchaseOrderDetail = {
   supplierId: string;
   status: string;
   notes: string | null;
-  fxRate: number;
   shippingCostGbp: number;
-  shippingCostEur: number;
   actualCostGbp: number;
-  actualCostEur: number;
   attachmentFilename: string | null;
   createdAt: string;
   supplier: { name: string };
@@ -36,7 +33,6 @@ type PurchaseOrderDetail = {
     network: string | null;
     grade: string | null;
     unitCostGbp: number;
-    unitCostEur: number;
   }[];
   stockUnits: { id: string; imei: string | null; productName: string; grade: string; status: string }[];
 };
@@ -89,11 +85,11 @@ export default async function PurchaseOrderDetailPage({
         </Card>
         <Card>
           <div className="text-xs text-slate-500 dark:text-slate-400">Shipping cost</div>
-          <MoneyPair gbp={po.shippingCostGbp} eur={po.shippingCostEur} stacked />
+          {formatGbp(po.shippingCostGbp)}
         </Card>
         <Card>
           <div className="text-xs text-slate-500 dark:text-slate-400">Actual / landed cost</div>
-          <MoneyPair gbp={po.actualCostGbp} eur={po.actualCostEur} stacked />
+          {formatGbp(po.actualCostGbp)}
         </Card>
       </div>
 
@@ -167,14 +163,10 @@ export default async function PurchaseOrderDetailPage({
               grade: line.grade || "A",
               qty: line.qty,
               unitCostGbp: line.unitCostGbp,
-              unitCostEur: line.unitCostEur,
             }))}
             initialStatus={po.status}
-            initialFxRate={po.fxRate}
             initialShippingGbp={po.shippingCostGbp}
-            initialShippingEur={po.shippingCostEur}
             initialActualCostGbp={po.actualCostGbp}
-            initialActualCostEur={po.actualCostEur}
             initialNotes={po.notes ?? ""}
             existingAttachmentName={po.attachmentFilename}
           />

@@ -79,7 +79,6 @@ export async function addLedgerEntry(formData: FormData) {
       {
         type: String(formData.get("type") ?? "DEBIT"),
         amountGbp: toNumber(formData.get("amountGbp")),
-        amountEur: toNumber(formData.get("amountEur")),
         date: toOptionalString(formData.get("date")),
         reference: toOptionalString(formData.get("reference")),
         notes: toOptionalString(formData.get("notes")),

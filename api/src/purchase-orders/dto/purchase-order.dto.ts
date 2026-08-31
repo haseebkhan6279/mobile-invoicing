@@ -24,10 +24,6 @@ export class PoLineDto {
   @IsOptional()
   @IsNumber()
   unitCostGbp?: number;
-
-  @IsOptional()
-  @IsNumber()
-  unitCostEur?: number;
 }
 
 export class CreatePurchaseOrderDto {
@@ -46,15 +42,6 @@ export class CreatePurchaseOrderDto {
   @IsNumber()
   @Min(0)
   shippingCostGbp?: number;
-
-  @IsOptional()
-  @IsNumber()
-  @Min(0)
-  shippingCostEur?: number;
-
-  @IsOptional()
-  @IsNumber()
-  fxRate?: number;
 
   @IsArray()
   @ValidateNested({ each: true })
@@ -79,21 +66,7 @@ export class UpdatePurchaseOrderMetaDto {
   @IsOptional()
   @IsNumber()
   @Min(0)
-  shippingCostEur?: number;
-
-  @IsOptional()
-  @IsNumber()
-  @Min(0)
   actualCostGbp?: number;
-
-  @IsOptional()
-  @IsNumber()
-  @Min(0)
-  actualCostEur?: number;
-
-  @IsOptional()
-  @IsNumber()
-  fxRate?: number;
 
   @IsOptional()
   @IsArray()

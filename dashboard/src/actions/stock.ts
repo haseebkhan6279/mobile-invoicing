@@ -14,7 +14,6 @@ function parseBatches(formData: FormData) {
   const networks = formData.getAll("batchNetwork");
   const grades = formData.getAll("batchGrade");
   const gbp = formData.getAll("batchCostGbp");
-  const eur = formData.getAll("batchCostEur");
   const imeiFields = formData.getAll("batchImeis");
   const qtys = formData.getAll("batchQty");
   const batches = [];
@@ -26,7 +25,6 @@ function parseBatches(formData: FormData) {
       network: String(networks[i] ?? "").trim(),
       grade: String(grades[i] ?? "").trim(),
       costGbp: toNumber(gbp[i]),
-      costEur: toNumber(eur[i]),
       imeis: parseImeis(String(imeiFields[i] ?? "")),
       qty: toNumber(qtys[i]),
     });
@@ -97,6 +95,6 @@ export async function searchStockProducts(query: string) {
   const { apiToken } = await requireUser();
   const params = new URLSearchParams({ q: query });
   return apiClient.get<
-    { productName: string; color: string; network: string; grade: string; count: number; costGbp: number; costEur: number }[]
+    { productName: string; color: string; network: string; grade: string; count: number; costGbp: number }[]
   >(`/stock/search-products?${params}`, apiToken);
 }

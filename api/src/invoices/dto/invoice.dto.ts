@@ -9,7 +9,7 @@ import {
   Min,
   ValidateNested,
 } from "class-validator";
-import { INVOICE_ENTITIES, INVOICE_STATUSES } from "../../common/status";
+import { INVOICE_STATUSES } from "../../common/status";
 
 class InvoiceLineDto {
   @IsString()
@@ -36,15 +36,7 @@ class InvoiceLineDto {
 
   @IsOptional()
   @IsNumber()
-  unitPriceEur?: number;
-
-  @IsOptional()
-  @IsNumber()
   buyPriceGbp?: number;
-
-  @IsOptional()
-  @IsNumber()
-  buyPriceEur?: number;
 
   @IsOptional()
   @IsArray()
@@ -61,22 +53,9 @@ export class CreateInvoiceDto {
   status?: string;
 
   @IsOptional()
-  @IsIn(INVOICE_ENTITIES)
-  entity?: string;
-
-  @IsOptional()
-  @IsNumber()
-  fxRate?: number;
-
-  @IsOptional()
   @IsNumber()
   @Min(0)
   shippingCostGbp?: number;
-
-  @IsOptional()
-  @IsNumber()
-  @Min(0)
-  shippingCostEur?: number;
 
   @IsOptional()
   @IsString()
@@ -121,11 +100,6 @@ export class UpdateInvoiceShippingDto {
   shippingCostGbp?: number;
 
   @IsOptional()
-  @IsNumber()
-  @Min(0)
-  shippingCostEur?: number;
-
-  @IsOptional()
   @IsString()
   shippingLabel?: string | null;
 }
@@ -166,13 +140,5 @@ export class UpdateInvoiceLineDto {
 
   @IsOptional()
   @IsNumber()
-  unitPriceEur?: number;
-
-  @IsOptional()
-  @IsNumber()
   buyPriceGbp?: number;
-
-  @IsOptional()
-  @IsNumber()
-  buyPriceEur?: number;
 }

@@ -11,7 +11,6 @@ type NormalizedBatch = {
   network: string;
   grade: string;
   costGbp: number;
-  costEur: number;
   // One entry per unit to create; null means "no IMEI yet".
   imeis: (string | null)[];
 };
@@ -49,7 +48,6 @@ function normalizeBatches(batches: ReceiveStockDto["batches"]): NormalizedBatch[
       network: (batch.network ?? "").toString().trim() || "Unlocked",
       grade: (batch.grade ?? "").toString().trim() || "A",
       costGbp: Number(batch.costGbp) || 0,
-      costEur: Number(batch.costEur) || 0,
       imeis,
     });
   }
@@ -97,9 +95,6 @@ export class StockService {
     const goodsGbp = roundMoney(
       batches.reduce((sum, batch) => sum + batch.costGbp * batch.imeis.length, 0),
     );
-    const goodsEur = roundMoney(
-      batches.reduce((sum, batch) => sum + batch.costEur * batch.imeis.length, 0),
-    );
 
     return this.prisma.$transaction(async (tx) => {
       for (const batch of batches) {
@@ -112,7 +107,6 @@ export class StockService {
             network: batch.network,
             grade: batch.grade,
             costGbp: batch.costGbp,
-            costEur: batch.costEur,
             status: "IN_STOCK",
             supplierId,
             purchaseOrderId,
@@ -130,7 +124,6 @@ export class StockService {
           const ordered = po.lines.reduce((sum, line) => sum + line.qty, 0);
           const received = units.length;
           const receivedGbp = roundMoney(units.reduce((sum, unit) => sum + unit.costGbp, 0));
-          const receivedEur = roundMoney(units.reduce((sum, unit) => sum + unit.costEur, 0));
           await tx.purchaseOrder.update({
             where: { id: purchaseOrderId },
             data: {
@@ -142,19 +135,17 @@ export class StockService {
                     : po.status,
               receivedAt: new Date(),
               actualCostGbp: roundMoney(receivedGbp + po.shippingCostGbp),
-              actualCostEur: roundMoney(receivedEur + po.shippingCostEur),
             },
           });
         }
       }
 
-      if (postLedger && supplierId && (goodsGbp > 0 || goodsEur > 0)) {
+      if (postLedger && supplierId && goodsGbp > 0) {
         await tx.supplierLedger.create({
           data: {
             supplierId,
             type: "CREDIT",
             amountGbp: goodsGbp,
-            amountEur: goodsEur,
             reference: purchaseOrderId
               ? (await tx.purchaseOrder.findUnique({ where: { id: purchaseOrderId } }))?.poNumber
               : "Stock intake",
@@ -205,7 +196,7 @@ export class StockService {
       by: ["productName", "color", "network", "grade"],
       where: { status: "IN_STOCK", productName: { contains: q, mode: "insensitive" } },
       _count: { _all: true },
-      _avg: { costGbp: true, costEur: true },
+      _avg: { costGbp: true },
       orderBy: { productName: "asc" },
       take: 10,
     });
@@ -216,7 +207,6 @@ export class StockService {
       grade: g.grade,
       count: g._count._all,
       costGbp: roundMoney(g._avg.costGbp ?? 0),
-      costEur: roundMoney(g._avg.costEur ?? 0),
     }));
   }
 }
