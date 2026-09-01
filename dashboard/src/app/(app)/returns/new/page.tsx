@@ -20,6 +20,14 @@ type InvoiceOption = {
 };
 type InvoiceWithStock = InvoiceOption & {
   stockUnits: { id: string; imei: string; productName: string; color: string; grade: string }[];
+  lines: {
+    id: string;
+    productName: string;
+    color: string;
+    grade: string;
+    qty: number;
+    unitPriceGbp: number;
+  }[];
 };
 
 export default async function NewRmaPage({
@@ -87,8 +95,27 @@ export default async function NewRmaPage({
                   </Select>
                 </label>
               ))}
+              {!selected.stockUnits.length ? (
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  No tracked IMEIs on this invoice yet — pick from its line items below instead.
+                </p>
+              ) : null}
             </div>
-            <RmaManualItems defaultInvoiceNumber={selected.invoiceNumber} />
+            <RmaManualItems
+              defaultInvoiceNumber={selected.invoiceNumber}
+              quickAdd={
+                !selected.stockUnits.length
+                  ? selected.lines.map((line) => ({
+                      invoiceNumber: selected.invoiceNumber,
+                      productName: line.productName,
+                      color: line.color,
+                      grade: line.grade,
+                      unitPriceGbp: line.unitPriceGbp,
+                      qty: line.qty,
+                    }))
+                  : undefined
+              }
+            />
             <div>
               <Label htmlFor="notes">Notes</Label>
               <Textarea id="notes" name="notes" />
