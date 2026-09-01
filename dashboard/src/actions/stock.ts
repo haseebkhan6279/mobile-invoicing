@@ -91,6 +91,53 @@ export async function updateStockUnitImei(formData: FormData) {
   redirect("/stock?ok=IMEI updated");
 }
 
+export async function getStockUnit(id: string) {
+  const { apiToken } = await requireUser();
+  return apiClient.get<{
+    id: string;
+    imei: string | null;
+    productName: string;
+    brand: string | null;
+    color: string;
+    network: string;
+    grade: string;
+    costGbp: number;
+    status: string;
+    supplierId: string | null;
+    supplier: { id: string; name: string } | null;
+    invoice: { id: string; invoiceNumber: string } | null;
+  }>(`/stock/${id}`, apiToken);
+}
+
+export async function updateStockUnit(formData: FormData) {
+  const { apiToken } = await requireUser();
+  const id = String(formData.get("id") ?? "");
+
+  try {
+    await apiClient.patch(
+      `/stock/${id}`,
+      {
+        productName: String(formData.get("productName") ?? "").trim(),
+        brand: toOptionalString(formData.get("brand")),
+        color: String(formData.get("color") ?? "").trim(),
+        network: String(formData.get("network") ?? "").trim(),
+        grade: String(formData.get("grade") ?? "").trim(),
+        costGbp: toNumber(formData.get("costGbp")),
+        supplierId: toOptionalString(formData.get("supplierId")),
+        imei: toOptionalString(formData.get("imei")),
+      },
+      apiToken,
+    );
+  } catch (err) {
+    if (err instanceof ApiError) redirect(`/stock/${id}?error=${encodeURIComponent(err.message)}`);
+    throw err;
+  }
+
+  revalidatePath("/stock");
+  revalidatePath(`/stock/${id}`);
+  redirect(`/stock/${id}?ok=Saved`);
+}
+
 export async function searchStockProducts(query: string) {
   const { apiToken } = await requireUser();
   const params = new URLSearchParams({ q: query });

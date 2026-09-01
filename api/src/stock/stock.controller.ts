@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from "@nestjs/common";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import { StockService } from "./stock.service";
-import { ReceiveStockDto, UpdateStockUnitImeiDto } from "./dto/stock.dto";
+import { ReceiveStockDto, UpdateStockUnitDto, UpdateStockUnitImeiDto } from "./dto/stock.dto";
 
 @Controller("stock")
 @UseGuards(JwtAuthGuard)
@@ -42,5 +42,17 @@ export class StockController {
   @Get("search-products")
   searchProducts(@Query("q") q = "") {
     return this.stock.searchStockProducts(q);
+  }
+
+  // Declared after the literal routes above (available-imeis, search-products)
+  // so ":id" doesn't shadow them.
+  @Get(":id")
+  findOne(@Param("id") id: string) {
+    return this.stock.getStockUnit(id);
+  }
+
+  @Patch(":id")
+  update(@Param("id") id: string, @Body() dto: UpdateStockUnitDto) {
+    return this.stock.updateStockUnit(id, dto);
   }
 }

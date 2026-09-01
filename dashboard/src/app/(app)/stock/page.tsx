@@ -3,6 +3,7 @@ import { updateStockUnitImei } from "@/actions/stock";
 import { PageHeader } from "@/components/page-header";
 import { Notice } from "@/components/notice";
 import { StatusBadge } from "@/components/status-badge";
+import { EditLink } from "@/components/ui/edit-link";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { SubmitButton } from "@/components/ui/submit-button";
@@ -84,6 +85,7 @@ export default async function StockPage({
               <Th>Cost</Th>
               <Th>Status</Th>
               <Th>Supplier</Th>
+              <Th>Actions</Th>
             </tr>
           </THead>
           <tbody>
@@ -119,6 +121,9 @@ export default async function StockPage({
                   ) : null}
                 </Td>
                 <Td>{unit.supplier?.name ?? "—"}</Td>
+                <Td>
+                  <EditLink href={`/stock/${unit.id}`} label={`Edit ${unit.productName}`} />
+                </Td>
               </tr>
             ))}
           </tbody>
@@ -155,7 +160,10 @@ export default async function StockPage({
                 </Link>
               ) : null}
             </div>
-            <StatusBadge status={unit.status} />
+            <div className="flex shrink-0 flex-col items-end gap-2">
+              <StatusBadge status={unit.status} />
+              <EditLink href={`/stock/${unit.id}`} label={`Edit ${unit.productName}`} className="h-7 w-7" />
+            </div>
           </div>
         ))}
         {!units.length ? (

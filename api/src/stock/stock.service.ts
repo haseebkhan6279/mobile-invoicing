@@ -1,8 +1,9 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from "@nestjs/common";
+import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
 import { isValidImei, validateImeiList } from "../common/imei";
 import { roundMoney } from "../common/money";
-import { ReceiveStockDto } from "./dto/stock.dto";
+import { ReceiveStockDto, UpdateStockUnitDto } from "./dto/stock.dto";
 
 type NormalizedBatch = {
   productName: string;
@@ -187,6 +188,48 @@ export class StockService {
     }
 
     return this.prisma.stockUnit.update({ where: { id }, data: { imei: trimmed } });
+  }
+
+  async getStockUnit(id: string) {
+    const unit = await this.prisma.stockUnit.findUnique({
+      where: { id },
+      include: { supplier: true, invoice: true },
+    });
+    if (!unit) throw new NotFoundException("Stock unit not found");
+    return unit;
+  }
+
+  async updateStockUnit(id: string, dto: UpdateStockUnitDto) {
+    const unit = await this.prisma.stockUnit.findUnique({ where: { id } });
+    if (!unit) throw new NotFoundException("Stock unit not found");
+
+    const data: Prisma.StockUnitUpdateInput = {};
+    if (dto.productName !== undefined) data.productName = dto.productName.trim();
+    if (dto.brand !== undefined) data.brand = dto.brand?.trim() || null;
+    if (dto.color !== undefined) data.color = dto.color.trim() || "Black";
+    if (dto.network !== undefined) data.network = dto.network.trim() || "Unlocked";
+    if (dto.grade !== undefined) data.grade = dto.grade.trim() || "A";
+    if (dto.costGbp !== undefined) data.costGbp = Number(dto.costGbp) || 0;
+    if (dto.supplierId !== undefined) {
+      data.supplier = dto.supplierId ? { connect: { id: dto.supplierId } } : { disconnect: true };
+    }
+    if (dto.imei !== undefined) {
+      const trimmed = dto.imei?.trim() || null;
+      if (trimmed) {
+        if (!isValidImei(trimmed)) throw new BadRequestException("Invalid IMEI. Use 15 digits.");
+        const existing = await this.prisma.stockUnit.findUnique({ where: { imei: trimmed } });
+        if (existing && existing.id !== id) {
+          throw new ConflictException(`IMEI already in stock: ${trimmed}`);
+        }
+      }
+      data.imei = trimmed;
+    }
+
+    return this.prisma.stockUnit.update({
+      where: { id },
+      data,
+      include: { supplier: true, invoice: true },
+    });
   }
 
   async searchStockProducts(query: string) {

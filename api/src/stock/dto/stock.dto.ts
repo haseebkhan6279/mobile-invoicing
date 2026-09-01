@@ -43,6 +43,40 @@ export class UpdateStockUnitImeiDto {
   imei: string;
 }
 
+export class UpdateStockUnitDto {
+  @IsOptional()
+  @IsString()
+  productName?: string;
+
+  @IsOptional()
+  @IsString()
+  brand?: string | null;
+
+  @IsOptional()
+  @IsString()
+  color?: string;
+
+  @IsOptional()
+  @IsString()
+  network?: string;
+
+  @IsOptional()
+  @IsString()
+  grade?: string;
+
+  @IsOptional()
+  @IsNumber()
+  costGbp?: number;
+
+  @IsOptional()
+  @IsString()
+  supplierId?: string | null;
+
+  @IsOptional()
+  @IsString()
+  imei?: string | null;
+}
+
 export class ReceiveStockDto {
   @IsOptional()
   @IsString()
