@@ -2,7 +2,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
   addInvoiceLine,
-  updateInvoiceLine,
   updateInvoiceLineImeis,
   updateInvoiceMarginVat,
   updateInvoiceShipping,
@@ -116,87 +115,16 @@ export default async function InvoiceDetailPage({
         </Link>
       </div>
       <Card className="p-0">
-        <InvoiceDocument invoice={invoice} />
+        <InvoiceDocument invoice={invoice} editable />
       </Card>
 
       <Card className="no-print">
-        <h2 className="mb-3 font-medium">Edit invoice lines</h2>
+        <h2 className="mb-3 font-medium">Add invoice line</h2>
         <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">
-          Change the product name, color, network, grade, quantity, or price shown in the table above.
+          To edit an existing line, click into any field in the table above and hit Save on that
+          row. Use this to add a brand new line instead.
         </p>
         <div className="space-y-3">
-          {invoice.lines.map((line) => (
-            <form
-              key={line.id}
-              action={updateInvoiceLine}
-              className="grid grid-cols-2 gap-x-3 gap-y-2 rounded-xl border border-slate-200 p-4 dark:border-slate-800 sm:grid-cols-4 lg:grid-cols-[1.8fr_1fr_1fr_0.6fr_0.5fr_1fr_1fr] lg:gap-y-1.5"
-            >
-              <input type="hidden" name="id" value={invoice.id} />
-              <input type="hidden" name="lineId" value={line.id} />
-              <div className="col-span-2 sm:col-span-4 lg:col-span-1">
-                <Label>Product name</Label>
-                <Input name="productName" defaultValue={line.productName} required />
-              </div>
-              <div>
-                <Label>Color</Label>
-                <Input name="color" list={`colors-${line.id}`} defaultValue={line.color} />
-                <datalist id={`colors-${line.id}`}>
-                  {lookups.colors.map((c) => (
-                    <option key={c.id} value={c.name} />
-                  ))}
-                </datalist>
-              </div>
-              <div>
-                <Label>Network</Label>
-                <Input name="network" list={`networks-${line.id}`} defaultValue={line.network} />
-                <datalist id={`networks-${line.id}`}>
-                  {lookups.networks.map((n) => (
-                    <option key={n.id} value={n.name} />
-                  ))}
-                </datalist>
-              </div>
-              <div>
-                <Label>Grade</Label>
-                <Input name="grade" list={`grades-${line.id}`} defaultValue={line.grade} />
-                <datalist id={`grades-${line.id}`}>
-                  {lookups.grades.map((g) => (
-                    <option key={g.id} value={g.code} />
-                  ))}
-                </datalist>
-              </div>
-              <div>
-                <Label>Qty</Label>
-                <Input name="qty" type="number" min={1} defaultValue={line.qty} required />
-              </div>
-              <div>
-                <Label>Buy £</Label>
-                <Input
-                  name="buyPriceGbp"
-                  type="number"
-                  step="0.01"
-                  defaultValue={line.buyPriceGbp}
-                />
-              </div>
-              <div>
-                <Label>Sell £</Label>
-                <Input
-                  name="unitPriceGbp"
-                  type="number"
-                  step="0.01"
-                  defaultValue={line.unitPriceGbp}
-                />
-              </div>
-              <div className="col-span-2 flex flex-wrap items-center justify-between gap-3 sm:col-span-4 lg:col-span-7">
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  Buying price is for internal reference only and never appears on the printed invoice.
-                </p>
-                <SubmitButton pendingText="Saving…" size="sm">
-                  Save line details
-                </SubmitButton>
-              </div>
-            </form>
-          ))}
-
           <form
             action={addInvoiceLine}
             className="grid grid-cols-2 gap-x-3 gap-y-2 rounded-xl border border-dashed border-slate-300 p-4 dark:border-slate-700 sm:grid-cols-4 lg:grid-cols-[1.8fr_1fr_1fr_0.6fr_0.5fr_1fr_1fr] lg:gap-y-1.5"

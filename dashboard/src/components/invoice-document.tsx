@@ -1,3 +1,4 @@
+import { updateInvoiceLine } from "@/actions/invoices";
 import { CompanyBrand } from "@/components/company-brand";
 import { addressLines, company } from "@/lib/company";
 import { invoiceTotals } from "@/lib/invoice";
@@ -7,6 +8,7 @@ import { formatDate } from "@/lib/utils";
 import { labelStatus } from "@/lib/status";
 
 export type InvoiceDoc = {
+  id: string;
   invoiceNumber: string;
   status: string;
   issuedAt: Date | string;
@@ -35,12 +37,22 @@ export type InvoiceDoc = {
     network: string;
     grade: string;
     unitPriceGbp: number;
+    buyPriceGbp?: number;
     imeis?: string[];
   }[];
   stockUnits: { imei: string; invoiceLineId: string | null }[];
 };
 
-export function InvoiceDocument({ invoice }: { invoice: InvoiceDoc }) {
+const editableCellClass =
+  "w-full rounded border border-transparent bg-transparent px-1 py-0.5 outline-none transition hover:border-slate-200 hover:bg-slate-50 focus:border-[#0b3a6e] focus:bg-white focus:ring-2 focus:ring-[#0b3a6e]/10";
+
+export function InvoiceDocument({
+  invoice,
+  editable = false,
+}: {
+  invoice: InvoiceDoc;
+  editable?: boolean;
+}) {
   const totals = invoiceTotals(invoice);
   const hasShipping = invoice.shippingCostGbp > 0;
   const money = formatGbp;
@@ -114,24 +126,103 @@ export function InvoiceDocument({ invoice }: { invoice: InvoiceDoc }) {
             <th className="py-2 pr-2">Grade</th>
             <th className="py-2 pr-2 text-right">Unit price</th>
             <th className="py-2 text-right">Total</th>
+            {editable ? <th className="no-print py-2 pl-2" /> : null}
           </tr>
         </thead>
         <tbody>
-          {invoice.lines.map((line) => (
-            <tr key={line.id} className="border-b border-slate-100">
-              <td className="py-2 pr-2">{line.qty}</td>
-              <td className="py-2 pr-2">{line.productName}</td>
-              <td className="py-2 pr-2">{line.color}</td>
-              <td className="py-2 pr-2">{line.network}</td>
-              <td className="py-2 pr-2">{line.grade}</td>
-              <td className="py-2 pr-2 text-right tabular-nums">
-                {money(line.unitPriceGbp)}
-              </td>
-              <td className="py-2 text-right tabular-nums">
-                {money(line.qty * line.unitPriceGbp)}
-              </td>
-            </tr>
-          ))}
+          {invoice.lines.map((line) =>
+            editable ? (
+              <tr key={line.id} className="border-b border-slate-100">
+                <td className="py-1 pr-2">
+                  <input
+                    form={`line-${line.id}`}
+                    name="qty"
+                    type="number"
+                    min={1}
+                    defaultValue={line.qty}
+                    className={`${editableCellClass} w-14`}
+                  />
+                </td>
+                <td className="py-1 pr-2">
+                  <input
+                    form={`line-${line.id}`}
+                    name="productName"
+                    defaultValue={line.productName}
+                    className={editableCellClass}
+                  />
+                </td>
+                <td className="py-1 pr-2">
+                  <input
+                    form={`line-${line.id}`}
+                    name="color"
+                    defaultValue={line.color}
+                    className={`${editableCellClass} w-20`}
+                  />
+                </td>
+                <td className="py-1 pr-2">
+                  <input
+                    form={`line-${line.id}`}
+                    name="network"
+                    defaultValue={line.network}
+                    className={`${editableCellClass} w-24`}
+                  />
+                </td>
+                <td className="py-1 pr-2">
+                  <input
+                    form={`line-${line.id}`}
+                    name="grade"
+                    defaultValue={line.grade}
+                    className={`${editableCellClass} w-16`}
+                  />
+                </td>
+                <td className="py-1 pr-2 text-right tabular-nums">
+                  <input
+                    form={`line-${line.id}`}
+                    name="unitPriceGbp"
+                    type="number"
+                    step="0.01"
+                    defaultValue={line.unitPriceGbp}
+                    className={`${editableCellClass} text-right`}
+                  />
+                </td>
+                <td className="py-2 text-right tabular-nums">
+                  {money(line.qty * line.unitPriceGbp)}
+                </td>
+                <td className="no-print py-1 pl-2 text-right">
+                  <button
+                    form={`line-${line.id}`}
+                    type="submit"
+                    className="rounded-lg px-2 py-1 text-xs font-medium text-[#0b3a6e] hover:bg-slate-100 dark:text-sky-400"
+                  >
+                    Save
+                  </button>
+                  <form
+                    id={`line-${line.id}`}
+                    action={updateInvoiceLine}
+                    className="hidden"
+                  >
+                    <input type="hidden" name="id" value={invoice.id} />
+                    <input type="hidden" name="lineId" value={line.id} />
+                    <input type="hidden" name="buyPriceGbp" value={line.buyPriceGbp ?? 0} />
+                  </form>
+                </td>
+              </tr>
+            ) : (
+              <tr key={line.id} className="border-b border-slate-100">
+                <td className="py-2 pr-2">{line.qty}</td>
+                <td className="py-2 pr-2">{line.productName}</td>
+                <td className="py-2 pr-2">{line.color}</td>
+                <td className="py-2 pr-2">{line.network}</td>
+                <td className="py-2 pr-2">{line.grade}</td>
+                <td className="py-2 pr-2 text-right tabular-nums">
+                  {money(line.unitPriceGbp)}
+                </td>
+                <td className="py-2 text-right tabular-nums">
+                  {money(line.qty * line.unitPriceGbp)}
+                </td>
+              </tr>
+            ),
+          )}
           {hasShipping ? (
             <tr className="border-b border-slate-100">
               <td className="py-2 pr-2">1</td>
@@ -144,6 +235,7 @@ export function InvoiceDocument({ invoice }: { invoice: InvoiceDoc }) {
               <td className="py-2 text-right tabular-nums">
                 {money(invoice.shippingCostGbp)}
               </td>
+              {editable ? <td className="no-print" /> : null}
             </tr>
           ) : null}
         </tbody>
