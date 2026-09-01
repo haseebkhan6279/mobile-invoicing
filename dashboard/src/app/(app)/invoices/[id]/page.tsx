@@ -120,65 +120,9 @@ export default async function InvoiceDetailPage({
       </Card>
 
       <Card className="no-print">
-        <h2 className="mb-3 font-medium">Margin VAT scheme</h2>
-        <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">
-          When on, a Margin VAT Scheme notice is shown prominently at the top of the printed
-          invoice.
-        </p>
-        <form action={updateInvoiceMarginVat} className="flex items-center gap-3">
-          <input type="hidden" name="id" value={invoice.id} />
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              name="marginVatScheme"
-              defaultChecked={invoice.marginVatScheme}
-              className="rounded"
-            />
-            Sold under the Margin VAT Scheme
-          </label>
-          <SubmitButton pendingText="Saving…" size="sm">
-            Save
-          </SubmitButton>
-        </form>
-      </Card>
-
-      <Card className="no-print">
-        <h2 className="mb-3 font-medium">Shipping</h2>
-        <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">
-          This is the shipping cost that appears on the printed invoice total — separate from the
-          courier tracking added via "Add shipment".
-        </p>
-        <form action={updateInvoiceShipping} className="grid gap-3 sm:grid-cols-3">
-          <input type="hidden" name="id" value={invoice.id} />
-          <div>
-            <Label>Shipping cost GBP</Label>
-            <Input
-              name="shippingCostGbp"
-              type="number"
-              step="0.01"
-              defaultValue={invoice.shippingCostGbp}
-            />
-          </div>
-          <div>
-            <Label>Shipping line description</Label>
-            <Input
-              name="shippingLabel"
-              placeholder="UPS Express Saver / Postage &amp; Packaging"
-              defaultValue={invoice.shippingLabel ?? ""}
-            />
-          </div>
-          <div className="flex items-end sm:col-span-3 sm:justify-end">
-            <SubmitButton pendingText="Saving…" size="sm">
-              Save shipping
-            </SubmitButton>
-          </div>
-        </form>
-      </Card>
-
-      <Card className="no-print">
         <h2 className="mb-3 font-medium">Edit invoice lines</h2>
         <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">
-          Change product details, quantity, or price on an existing line.
+          Change the product name, color, network, grade, quantity, or price shown in the table above.
         </p>
         <div className="space-y-3">
           {invoice.lines.map((line) => (
@@ -311,6 +255,62 @@ export default async function InvoiceDetailPage({
             </div>
           </form>
         </div>
+      </Card>
+
+      <Card className="no-print">
+        <h2 className="mb-3 font-medium">Margin VAT scheme</h2>
+        <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">
+          When on, a Margin VAT Scheme notice is shown prominently at the top of the printed
+          invoice.
+        </p>
+        <form action={updateInvoiceMarginVat} className="flex items-center gap-3">
+          <input type="hidden" name="id" value={invoice.id} />
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              name="marginVatScheme"
+              defaultChecked={invoice.marginVatScheme}
+              className="rounded"
+            />
+            Sold under the Margin VAT Scheme
+          </label>
+          <SubmitButton pendingText="Saving…" size="sm">
+            Save
+          </SubmitButton>
+        </form>
+      </Card>
+
+      <Card className="no-print">
+        <h2 className="mb-3 font-medium">Shipping</h2>
+        <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">
+          This is the shipping cost that appears on the printed invoice total — separate from the
+          courier tracking added via &ldquo;Add shipment&rdquo;.
+        </p>
+        <form action={updateInvoiceShipping} className="grid gap-3 sm:grid-cols-3">
+          <input type="hidden" name="id" value={invoice.id} />
+          <div>
+            <Label>Shipping cost GBP</Label>
+            <Input
+              name="shippingCostGbp"
+              type="number"
+              step="0.01"
+              defaultValue={invoice.shippingCostGbp}
+            />
+          </div>
+          <div>
+            <Label>Shipping line description</Label>
+            <Input
+              name="shippingLabel"
+              placeholder="UPS Express Saver / Postage &amp; Packaging"
+              defaultValue={invoice.shippingLabel ?? ""}
+            />
+          </div>
+          <div className="flex items-end sm:col-span-3 sm:justify-end">
+            <SubmitButton pendingText="Saving…" size="sm">
+              Save shipping
+            </SubmitButton>
+          </div>
+        </form>
       </Card>
 
       <Card className="no-print">
