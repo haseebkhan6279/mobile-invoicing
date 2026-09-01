@@ -115,7 +115,7 @@ export default async function InvoiceDetailPage({
         </Link>
       </div>
       <Card className="p-0">
-        <InvoiceDocument invoice={invoice} editable />
+        <InvoiceDocument invoice={invoice} editable lookups={lookups} />
       </Card>
 
       <Card className="no-print">

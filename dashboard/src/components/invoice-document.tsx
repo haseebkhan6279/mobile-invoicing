@@ -44,14 +44,22 @@ export type InvoiceDoc = {
 };
 
 const editableCellClass =
-  "w-full rounded border border-transparent bg-transparent px-1 py-0.5 outline-none transition hover:border-slate-200 hover:bg-slate-50 focus:border-[#0b3a6e] focus:bg-white focus:ring-2 focus:ring-[#0b3a6e]/10";
+  "w-full min-w-0 rounded border border-transparent bg-transparent px-1 py-0.5 outline-none transition hover:border-slate-200 hover:bg-slate-50 focus:border-[#0b3a6e] focus:bg-white focus:ring-2 focus:ring-[#0b3a6e]/10";
+
+export type InvoiceDocLookups = {
+  colors: { id: string; name: string }[];
+  networks: { id: string; name: string }[];
+  grades: { id: string; code: string }[];
+};
 
 export function InvoiceDocument({
   invoice,
   editable = false,
+  lookups,
 }: {
   invoice: InvoiceDoc;
   editable?: boolean;
+  lookups?: InvoiceDocLookups;
 }) {
   const totals = invoiceTotals(invoice);
   const hasShipping = invoice.shippingCostGbp > 0;
@@ -116,7 +124,17 @@ export function InvoiceDocument({
       </div>
 
       <div className="mt-8 overflow-x-auto">
-      <table className="w-full text-left text-sm">
+      <table className="w-full table-fixed text-left text-sm">
+        <colgroup>
+          <col className="w-10" />
+          <col />
+          <col className="w-16" />
+          <col className="w-20" />
+          <col className="w-14" />
+          <col className="w-20" />
+          <col className="w-24" />
+          {editable ? <col className="w-14" /> : null}
+        </colgroup>
         <thead>
           <tr className="border-y border-slate-300 text-xs uppercase tracking-wide text-slate-500">
             <th className="py-2 pr-2">Qty</th>
@@ -140,7 +158,7 @@ export function InvoiceDocument({
                     type="number"
                     min={1}
                     defaultValue={line.qty}
-                    className={`${editableCellClass} w-14`}
+                    className={editableCellClass}
                   />
                 </td>
                 <td className="py-1 pr-2">
@@ -155,25 +173,49 @@ export function InvoiceDocument({
                   <input
                     form={`line-${line.id}`}
                     name="color"
+                    list={`doc-colors-${line.id}`}
                     defaultValue={line.color}
-                    className={`${editableCellClass} w-20`}
+                    className={editableCellClass}
                   />
+                  {lookups ? (
+                    <datalist id={`doc-colors-${line.id}`}>
+                      {lookups.colors.map((c) => (
+                        <option key={c.id} value={c.name} />
+                      ))}
+                    </datalist>
+                  ) : null}
                 </td>
                 <td className="py-1 pr-2">
                   <input
                     form={`line-${line.id}`}
                     name="network"
+                    list={`doc-networks-${line.id}`}
                     defaultValue={line.network}
-                    className={`${editableCellClass} w-24`}
+                    className={editableCellClass}
                   />
+                  {lookups ? (
+                    <datalist id={`doc-networks-${line.id}`}>
+                      {lookups.networks.map((n) => (
+                        <option key={n.id} value={n.name} />
+                      ))}
+                    </datalist>
+                  ) : null}
                 </td>
                 <td className="py-1 pr-2">
                   <input
                     form={`line-${line.id}`}
                     name="grade"
+                    list={`doc-grades-${line.id}`}
                     defaultValue={line.grade}
-                    className={`${editableCellClass} w-16`}
+                    className={editableCellClass}
                   />
+                  {lookups ? (
+                    <datalist id={`doc-grades-${line.id}`}>
+                      {lookups.grades.map((g) => (
+                        <option key={g.id} value={g.code} />
+                      ))}
+                    </datalist>
+                  ) : null}
                 </td>
                 <td className="py-1 pr-2 text-right tabular-nums">
                   <input
