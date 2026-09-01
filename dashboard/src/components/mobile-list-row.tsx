@@ -47,7 +47,7 @@ export function MobileListRow({
     <Link
       href={href}
       className={cn(
-        "flex items-center gap-3 px-4 py-3 active:bg-slate-50 dark:active:bg-slate-800",
+        "flex items-center gap-3 px-4 py-3 transition-colors active:bg-sky-50/60 dark:active:bg-slate-800",
         className,
       )}
     >

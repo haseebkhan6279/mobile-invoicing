@@ -162,7 +162,7 @@ export class StockService {
 
   async getAvailableImeis(
     spec: { productName: string; color: string; network: string; grade: string },
-    limit = 50,
+    limit = 1000,
   ) {
     const units = await this.prisma.stockUnit.findMany({
       where: { status: "IN_STOCK", imei: { not: null }, ...spec },
@@ -193,13 +193,23 @@ export class StockService {
     const q = query.trim();
     if (!q) return [];
     const groups = await this.prisma.stockUnit.groupBy({
-      by: ["productName", "color", "network", "grade"],
+      by: ["productName", "color", "network", "grade", "supplierId"],
       where: { status: "IN_STOCK", productName: { contains: q, mode: "insensitive" } },
       _count: { _all: true },
       _avg: { costGbp: true },
       orderBy: { productName: "asc" },
-      take: 10,
+      take: 15,
     });
+
+    const supplierIds = [...new Set(groups.map((g) => g.supplierId).filter((id): id is string => !!id))];
+    const suppliers = supplierIds.length
+      ? await this.prisma.supplier.findMany({
+          where: { id: { in: supplierIds } },
+          select: { id: true, name: true },
+        })
+      : [];
+    const supplierNameById = new Map(suppliers.map((s) => [s.id, s.name]));
+
     return groups.map((g) => ({
       productName: g.productName,
       color: g.color,
@@ -207,6 +217,10 @@ export class StockService {
       grade: g.grade,
       count: g._count._all,
       costGbp: roundMoney(g._avg.costGbp ?? 0),
+      // Internal reference only — the invoice line builder shows this so
+      // staff know which supplier the stock came from; it is never sent
+      // to the invoice DTO or printed on the invoice document.
+      supplierName: g.supplierId ? (supplierNameById.get(g.supplierId) ?? null) : null,
     }));
   }
 }

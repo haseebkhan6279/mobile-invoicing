@@ -185,11 +185,11 @@ export default async function InvoiceDetailPage({
             <form
               key={line.id}
               action={updateInvoiceLine}
-              className="grid gap-3 rounded-xl border border-slate-200 p-4 dark:border-slate-800 sm:grid-cols-6"
+              className="grid grid-cols-2 gap-x-3 gap-y-2 rounded-xl border border-slate-200 p-4 dark:border-slate-800 sm:grid-cols-4 lg:grid-cols-[1.8fr_1fr_1fr_0.6fr_0.5fr_1fr_1fr] lg:gap-y-1.5"
             >
               <input type="hidden" name="id" value={invoice.id} />
               <input type="hidden" name="lineId" value={line.id} />
-              <div className="sm:col-span-2">
+              <div className="col-span-2 sm:col-span-4 lg:col-span-1">
                 <Label>Product name</Label>
                 <Input name="productName" defaultValue={line.productName} required />
               </div>
@@ -225,7 +225,7 @@ export default async function InvoiceDetailPage({
                 <Input name="qty" type="number" min={1} defaultValue={line.qty} required />
               </div>
               <div>
-                <Label>Buying price GBP</Label>
+                <Label>Buy £</Label>
                 <Input
                   name="buyPriceGbp"
                   type="number"
@@ -234,7 +234,7 @@ export default async function InvoiceDetailPage({
                 />
               </div>
               <div>
-                <Label>Selling price GBP</Label>
+                <Label>Sell £</Label>
                 <Input
                   name="unitPriceGbp"
                   type="number"
@@ -242,10 +242,10 @@ export default async function InvoiceDetailPage({
                   defaultValue={line.unitPriceGbp}
                 />
               </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 sm:col-span-6">
-                Buying price is for internal reference only and never appears on the printed invoice.
-              </p>
-              <div className="flex items-end sm:col-span-6 sm:justify-end">
+              <div className="col-span-2 flex flex-wrap items-center justify-between gap-3 sm:col-span-4 lg:col-span-7">
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Buying price is for internal reference only and never appears on the printed invoice.
+                </p>
                 <SubmitButton pendingText="Saving…" size="sm">
                   Save line details
                 </SubmitButton>
@@ -255,10 +255,10 @@ export default async function InvoiceDetailPage({
 
           <form
             action={addInvoiceLine}
-            className="grid gap-3 rounded-xl border border-dashed border-slate-300 p-4 dark:border-slate-700 sm:grid-cols-6"
+            className="grid grid-cols-2 gap-x-3 gap-y-2 rounded-xl border border-dashed border-slate-300 p-4 dark:border-slate-700 sm:grid-cols-4 lg:grid-cols-[1.8fr_1fr_1fr_0.6fr_0.5fr_1fr_1fr] lg:gap-y-1.5"
           >
             <input type="hidden" name="id" value={invoice.id} />
-            <div className="sm:col-span-2">
+            <div className="col-span-2 sm:col-span-4 lg:col-span-1">
               <Label>Product name</Label>
               <Input name="productName" required />
             </div>
@@ -294,17 +294,17 @@ export default async function InvoiceDetailPage({
               <Input name="qty" type="number" min={1} defaultValue={1} required />
             </div>
             <div>
-              <Label>Buying price GBP</Label>
+              <Label>Buy £</Label>
               <Input name="buyPriceGbp" type="number" step="0.01" defaultValue={0} />
             </div>
             <div>
-              <Label>Selling price GBP</Label>
+              <Label>Sell £</Label>
               <Input name="unitPriceGbp" type="number" step="0.01" defaultValue={0} />
             </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 sm:col-span-6">
-              Buying price is for internal reference only and never appears on the printed invoice.
-            </p>
-            <div className="flex items-end sm:col-span-6 sm:justify-end">
+            <div className="col-span-2 flex flex-wrap items-center justify-between gap-3 sm:col-span-4 lg:col-span-7">
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Buying price is for internal reference only and never appears on the printed invoice.
+              </p>
               <SubmitButton pendingText="Adding…" size="sm">
                 Add line
               </SubmitButton>

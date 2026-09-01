@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Boxes, FileText, Truck, Warehouse } from "lucide-react";
+import { Boxes, Clock3, FileText, Layers, Package, Receipt, Truck, Warehouse } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { MobileListRow } from "@/components/mobile-list-row";
 import { StatCard } from "@/components/stat-card";
@@ -67,8 +67,14 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
-          {greeting()}, {firstName}
+        <div className="text-xs font-semibold uppercase tracking-widest text-sky-600 dark:text-sky-400">
+          Dashboard
+        </div>
+        <h1 className="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl dark:text-slate-100">
+          {greeting()},{" "}
+          <span className="bg-gradient-to-r from-[#0b3a6e] to-sky-500 bg-clip-text text-transparent dark:from-sky-300 dark:to-blue-400">
+            {firstName}
+          </span>
         </h1>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
           Here&apos;s what&apos;s happening across stock, invoices, and suppliers today.
@@ -89,7 +95,12 @@ export default async function DashboardPage() {
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card>
-          <h2 className="mb-3 font-medium text-slate-900 dark:text-slate-100">In stock by grade</h2>
+          <h2 className="mb-3 flex items-center gap-2 font-semibold text-slate-900 dark:text-slate-100">
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-sky-400 to-blue-600 text-white shadow-sm shadow-sky-500/30">
+              <Layers className="h-3.5 w-3.5" />
+            </span>
+            In stock by grade
+          </h2>
           <div className="flex flex-wrap gap-2">
             {stockCounts.length ? (
               stockCounts.map((row) => (
@@ -107,7 +118,12 @@ export default async function DashboardPage() {
           </div>
         </Card>
         <Card>
-          <h2 className="mb-3 font-medium text-slate-900 dark:text-slate-100">Awaiting payment</h2>
+          <h2 className="mb-3 flex items-center gap-2 font-semibold text-slate-900 dark:text-slate-100">
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-sm shadow-amber-500/30">
+              <Clock3 className="h-3.5 w-3.5" />
+            </span>
+            Awaiting payment
+          </h2>
           {unpaid.length ? (
             <ul className="divide-y divide-slate-100 dark:divide-slate-800">
               {unpaid.map((invoice) => (
@@ -127,7 +143,12 @@ export default async function DashboardPage() {
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card className="p-0">
-          <h2 className="px-5 pt-5 font-medium text-slate-900 dark:text-slate-100">Recent purchase orders</h2>
+          <h2 className="flex items-center gap-2 px-5 pt-5 font-semibold text-slate-900 dark:text-slate-100">
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-violet-400 to-purple-600 text-white shadow-sm shadow-violet-500/30">
+              <Package className="h-3.5 w-3.5" />
+            </span>
+            Recent purchase orders
+          </h2>
           <div className="mt-3 hidden lg:block">
             <Table>
               <THead>
@@ -173,7 +194,12 @@ export default async function DashboardPage() {
           </div>
         </Card>
         <Card className="p-0">
-          <h2 className="px-5 pt-5 font-medium text-slate-900 dark:text-slate-100">Recent invoices</h2>
+          <h2 className="flex items-center gap-2 px-5 pt-5 font-semibold text-slate-900 dark:text-slate-100">
+            <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-400 to-teal-600 text-white shadow-sm shadow-emerald-500/30">
+              <Receipt className="h-3.5 w-3.5" />
+            </span>
+            Recent invoices
+          </h2>
           <div className="mt-3 hidden lg:block">
             <Table>
               <THead>

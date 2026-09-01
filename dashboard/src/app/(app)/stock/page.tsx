@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { updateStockUnitImei } from "@/actions/stock";
-import { MobileListRow } from "@/components/mobile-list-row";
 import { PageHeader } from "@/components/page-header";
 import { Notice } from "@/components/notice";
 import { StatusBadge } from "@/components/status-badge";
@@ -91,19 +90,18 @@ export default async function StockPage({
             {units.map((unit) => (
               <tr key={unit.id}>
                 <Td className="font-mono text-xs">
-                  {unit.imei ?? (
-                    <form action={updateStockUnitImei} className="flex items-center gap-1">
-                      <input type="hidden" name="id" value={unit.id} />
-                      <Input
-                        name="imei"
-                        placeholder="Add IMEI"
-                        className="h-7 w-32 px-2 text-xs"
-                      />
-                      <SubmitButton pendingText="…" size="sm" variant="ghost" className="h-7 px-2">
-                        Save
-                      </SubmitButton>
-                    </form>
-                  )}
+                  <form action={updateStockUnitImei} className="flex items-center gap-1">
+                    <input type="hidden" name="id" value={unit.id} />
+                    <Input
+                      name="imei"
+                      placeholder="Add IMEI"
+                      defaultValue={unit.imei ?? ""}
+                      className="h-7 w-36 px-2 text-xs"
+                    />
+                    <SubmitButton pendingText="…" size="sm" variant="ghost" className="h-7 px-2">
+                      Save
+                    </SubmitButton>
+                  </form>
                 </Td>
                 <Td>{unit.productName}</Td>
                 <Td>{unit.color}</Td>
@@ -128,24 +126,37 @@ export default async function StockPage({
       </div>
       <div className="divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200 bg-white lg:hidden dark:divide-slate-800 dark:border-slate-800 dark:bg-slate-900">
         {units.map((unit) => (
-          <MobileListRow
-            key={unit.id}
-            title={unit.productName}
-            subtitle={unit.imei ?? "No IMEI yet"}
-            trailing={<StatusBadge status={unit.status} />}
-            meta={
-              <>
-                <div>
-                  {unit.grade} · {unit.color}
-                </div>
-                {unit.invoice ? (
-                  <Link className="text-[#0b3a6e] dark:text-sky-400" href={`/invoices/${unit.invoice.id}`}>
-                    {unit.invoice.invoiceNumber}
-                  </Link>
-                ) : null}
-              </>
-            }
-          />
+          <div key={unit.id} className="flex items-start justify-between gap-3 p-4">
+            <div className="min-w-0 flex-1">
+              <div className="truncate text-sm font-medium text-slate-900 dark:text-slate-100">
+                {unit.productName}
+              </div>
+              <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                {unit.grade} · {unit.color}
+              </div>
+              <form action={updateStockUnitImei} className="mt-1.5 flex items-center gap-1.5">
+                <input type="hidden" name="id" value={unit.id} />
+                <Input
+                  name="imei"
+                  placeholder="Add IMEI"
+                  defaultValue={unit.imei ?? ""}
+                  className="h-7 flex-1 px-2 font-mono text-xs"
+                />
+                <SubmitButton pendingText="…" size="sm" variant="ghost" className="h-7 shrink-0 px-2 text-xs">
+                  Save
+                </SubmitButton>
+              </form>
+              {unit.invoice ? (
+                <Link
+                  className="mt-1.5 inline-block text-xs font-medium text-[#0b3a6e] hover:underline dark:text-sky-400"
+                  href={`/invoices/${unit.invoice.id}`}
+                >
+                  {unit.invoice.invoiceNumber}
+                </Link>
+              ) : null}
+            </div>
+            <StatusBadge status={unit.status} />
+          </div>
         ))}
         {!units.length ? (
           <p className="px-4 py-8 text-center text-sm text-slate-500 dark:text-slate-400">No stock yet.</p>

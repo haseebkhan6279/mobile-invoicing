@@ -26,7 +26,7 @@ export function PageHeader({
       {action ? (
         <Link
           href={action.href}
-          className="inline-flex h-10 items-center rounded-lg bg-[#0b3a6e] px-4 text-sm font-medium text-white hover:bg-[#082c54]"
+          className="inline-flex h-10 items-center rounded-xl bg-gradient-to-b from-[#164d8c] to-[#0b3a6e] px-4 text-sm font-semibold text-white shadow-md shadow-blue-900/25 ring-1 ring-inset ring-white/10 transition-all duration-150 hover:brightness-110 hover:shadow-lg hover:shadow-blue-900/30 active:scale-[0.98]"
         >
           {action.label}
         </Link>

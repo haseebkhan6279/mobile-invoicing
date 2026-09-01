@@ -45,13 +45,13 @@ function PoLine({
   const uid = useId();
 
   return (
-    <div className="grid gap-3 rounded-lg border border-slate-200 p-3 md:grid-cols-6 dark:border-slate-800">
-      <div className="flex items-start justify-end md:col-span-6 md:order-last">
+    <div className="grid grid-cols-2 gap-x-3 gap-y-2 rounded-lg border border-slate-200 p-3 sm:grid-cols-3 lg:grid-cols-[1.8fr_1fr_1fr_0.6fr_0.5fr_1fr] lg:gap-y-1.5 dark:border-slate-800">
+      <div className="col-span-2 flex justify-end sm:col-span-3 lg:order-last lg:col-span-6">
         <Button type="button" variant="ghost" size="sm" onClick={onRemove}>
           Remove line
         </Button>
       </div>
-      <div className="md:col-span-2">
+      <div className="col-span-2 sm:col-span-3 lg:col-span-1">
         <Label>Product</Label>
         <Input name="lineProduct" required defaultValue={seed.productName} />
       </div>
@@ -196,17 +196,7 @@ export function PurchaseOrderForm({
       </div>
 
       <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h2 className="font-medium">Lines</h2>
-          <Button
-            type="button"
-            variant="secondary"
-            size="sm"
-            onClick={() => setLineIds((current) => [...current, nextLineId.current++])}
-          >
-            Add line
-          </Button>
-        </div>
+        <h2 className="font-medium">Lines</h2>
         {lineIds.map((lineId, index) => (
           <PoLine
             key={lineId}
@@ -217,6 +207,16 @@ export function PurchaseOrderForm({
             onRemove={() => setLineIds((current) => current.filter((id) => id !== lineId))}
           />
         ))}
+        <div className="flex justify-end">
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            onClick={() => setLineIds((current) => [...current, nextLineId.current++])}
+          >
+            Add line
+          </Button>
+        </div>
       </div>
 
       <div>

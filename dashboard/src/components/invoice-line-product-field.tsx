@@ -11,6 +11,7 @@ export type ProductHit = {
   grade: string;
   count: number;
   costGbp: number;
+  supplierName: string | null;
 };
 
 export function InvoiceLineProductField({
@@ -77,6 +78,7 @@ export function InvoiceLineProductField({
                 <div className="font-medium">{hit.productName}</div>
                 <div className="text-xs text-slate-500 dark:text-slate-400">
                   {hit.color} · {hit.network} · {hit.grade} · {hit.count} in stock
+                  {hit.supplierName ? ` · from ${hit.supplierName}` : ""}
                 </div>
               </button>
             </li>

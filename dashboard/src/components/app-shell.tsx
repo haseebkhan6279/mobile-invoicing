@@ -62,7 +62,7 @@ export function AppShell({
     <div className="flex min-h-screen bg-slate-100 dark:bg-slate-950">
       <aside className="no-print hidden w-64 shrink-0 flex-col bg-gradient-to-b from-[#07162f] to-[#0a1f3d] text-white lg:flex">
         <div className="flex items-center gap-3 border-b border-white/10 px-5 py-5">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-sky-400 to-blue-600 text-sm font-bold text-white shadow-lg shadow-sky-500/20">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-sky-400 to-blue-600 text-sm font-bold text-white shadow-lg shadow-sky-500/30 ring-1 ring-white/20">
             {company.shortName[0]}
           </div>
           <div>
@@ -84,12 +84,15 @@ export function AppShell({
                 key={item.href}
                 href={item.href}
                 className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
+                  "relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors",
                   active
-                    ? "bg-white/10 font-medium text-white ring-1 ring-inset ring-white/10"
+                    ? "bg-gradient-to-r from-sky-500/20 to-blue-500/5 font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] ring-1 ring-inset ring-sky-400/20"
                     : "text-slate-300 hover:bg-white/5 hover:text-white",
                 )}
               >
+                {active ? (
+                  <span className="absolute inset-y-1.5 left-0 w-1 rounded-full bg-gradient-to-b from-sky-400 to-blue-500" />
+                ) : null}
                 <Icon className={cn("h-4 w-4", active ? "text-sky-300" : "text-slate-400")} />
                 {item.label}
               </Link>
@@ -118,7 +121,7 @@ export function AppShell({
               <input
                 name="q"
                 placeholder="Search IMEI, invoice, PO, customer, tracking…"
-                className="h-10 w-full rounded-full border border-slate-200 bg-slate-50 pl-10 pr-3 text-sm outline-none transition focus:border-[#0b3a6e] focus:bg-white focus:ring-2 focus:ring-[#0b3a6e]/10 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-sky-500 dark:focus:bg-slate-800 dark:focus:ring-sky-500/10"
+                className="h-10 w-full rounded-full border border-slate-200 bg-slate-50 pl-10 pr-3 text-sm shadow-sm outline-none transition focus:border-[#0b3a6e] focus:bg-white focus:shadow-md focus:ring-4 focus:ring-[#0b3a6e]/10 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:focus:border-sky-500 dark:focus:bg-slate-800 dark:focus:ring-sky-500/10"
               />
             </div>
           </form>
@@ -151,12 +154,15 @@ export function AppShell({
               key={item.href}
               href={item.href}
               className={cn(
-                "flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px]",
+                "relative flex flex-1 flex-col items-center gap-0.5 py-2 text-[11px]",
                 active
-                  ? "font-medium text-[#0b3a6e] dark:text-sky-400"
+                  ? "font-semibold text-[#0b3a6e] dark:text-sky-400"
                   : "text-slate-500 dark:text-slate-400",
               )}
             >
+              {active ? (
+                <span className="absolute top-0 h-0.5 w-8 rounded-full bg-gradient-to-r from-sky-400 to-blue-600" />
+              ) : null}
               <Icon className="h-5 w-5" />
               {item.label}
             </Link>

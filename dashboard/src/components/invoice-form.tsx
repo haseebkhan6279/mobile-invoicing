@@ -51,11 +51,15 @@ function InvoiceLine({
   const [seed, setSeed] = useState<LineSeed>(emptySeed);
   const [autofillKey, setAutofillKey] = useState(0);
   const [availableImeis, setAvailableImeis] = useState<string[]>([]);
+  const [supplierName, setSupplierName] = useState<string | null>(null);
   const qtyRef = useRef<HTMLInputElement>(null);
 
   const handleSelect = async (hit: ProductHit) => {
     setProductName(hit.productName);
+    setSupplierName(hit.supplierName);
     const qty = Math.max(1, Number(qtyRef.current?.value) || 1);
+    // Fetch by product spec only (no supplier filter) so every matching unit
+    // in stock is offered here, regardless of which supplier it came from.
     const imeiList = await getAvailableImeis({
       productName: hit.productName,
       color: hit.color,
@@ -87,17 +91,17 @@ function InvoiceLine({
           Remove line
         </Button>
       </div>
-      <div className="grid gap-x-3 gap-y-2 md:grid-cols-6">
-        <div className="md:col-span-2">
+      <div className="grid grid-cols-2 gap-x-3 gap-y-2 sm:grid-cols-4 lg:grid-cols-[1.6fr_0.9fr_0.9fr_0.55fr_0.5fr_0.85fr_0.85fr_1.5fr] lg:gap-y-1.5">
+        <div className="col-span-2 sm:col-span-4 lg:col-span-1">
           <Label className="mb-1">Product name</Label>
           <InvoiceLineProductField
             value={productName}
-            onChange={setProductName}
+            onChange={(next) => {
+              setProductName(next);
+              setSupplierName(null);
+            }}
             onSelect={handleSelect}
           />
-          <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
-            Start typing to pick from stock on hand and auto-fill details, or enter a new product.
-          </p>
         </div>
         <div>
           <Label className="mb-1">Color</Label>
@@ -146,7 +150,7 @@ function InvoiceLine({
           <Input ref={qtyRef} name="lineQty" type="number" min={1} defaultValue={1} />
         </div>
         <div>
-          <Label className="mb-1">Buying price GBP</Label>
+          <Label className="mb-1">Buy £</Label>
           <Input
             key={`buy-gbp-${autofillKey}`}
             name="lineBuyPriceGbp"
@@ -156,22 +160,25 @@ function InvoiceLine({
           />
         </div>
         <div>
-          <Label className="mb-1">Selling price GBP</Label>
+          <Label className="mb-1">Sell £</Label>
           <Input key={`gbp-${autofillKey}`} name="linePriceGbp" type="number" step="0.01" defaultValue="" />
         </div>
-        <div className="md:col-span-2">
+        <div className="col-span-2 sm:col-span-4 lg:col-span-1">
           <Label className="mb-1">IMEIs (optional)</Label>
           <Textarea
             key={`imeis-${autofillKey}`}
             name="lineImeis"
             rows={1}
-            className="min-h-10 resize-y"
+            className="min-h-11 resize-y"
             placeholder="One 15-digit IMEI per line"
             defaultValue={seed.imeis}
           />
         </div>
       </div>
       <p className="text-xs text-slate-400 dark:text-slate-500">
+        {supplierName ? (
+          <span className="font-medium text-slate-500 dark:text-slate-400">Purchased from {supplierName} (internal only, not printed on invoice). </span>
+        ) : null}
         Buying price is internal only and never appears on the printed invoice.
         {availableImeis.length
           ? ` ${availableImeis.length} IMEIs available for this spec — pre-filled above, edit to swap, add, or clear.`
@@ -297,14 +304,16 @@ export function InvoiceForm({
             onRemove={() => setLineIds((current) => current.filter((id) => id !== lineId))}
           />
         ))}
-        <Button
-          type="button"
-          variant="secondary"
-          size="sm"
-          onClick={() => setLineIds((current) => [...current, nextLineId.current++])}
-        >
-          Add line
-        </Button>
+        <div className="flex justify-end">
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            onClick={() => setLineIds((current) => [...current, nextLineId.current++])}
+          >
+            Add line
+          </Button>
+        </div>
       </div>
       <div>
         <Label htmlFor="notes">Notes</Label>

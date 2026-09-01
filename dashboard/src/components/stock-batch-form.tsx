@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,17 +19,48 @@ const emptyBatch = {
   imeis: "",
 };
 
+function countImeis(text: string) {
+  return text
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean).length;
+}
+
 function StockBatchLine({
   grades,
   colors,
   networks,
   onRemove,
+  onTotalChange,
 }: {
   grades: Lookup[];
   colors: Lookup[];
   networks: Lookup[];
   onRemove: () => void;
+  onTotalChange: (total: number) => void;
 }) {
+  const [imeisText, setImeisText] = useState("");
+  const [qtyText, setQtyText] = useState("");
+
+  const imeiCount = countImeis(imeisText);
+  const qty = Number(qtyText) || 0;
+  // The backend treats batchQty as the total unit count for the batch — any
+  // pasted IMEIs are tagged first, the rest are created without an IMEI yet.
+  const total = Math.max(imeiCount, qty);
+
+  useEffect(() => {
+    onTotalChange(total);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [total]);
+
+  const handleImeisChange = (text: string) => {
+    setImeisText(text);
+    // Keep the total-quantity field truthful if pasted IMEIs outnumber it —
+    // never silently drop IMEIs the user just entered.
+    const nextImeiCount = countImeis(text);
+    if (nextImeiCount > qty) setQtyText(String(nextImeiCount));
+  };
+
   return (
     <div className="space-y-3 rounded-xl border border-slate-200 p-4 dark:border-slate-800">
       <div className="flex justify-end">
@@ -37,8 +68,8 @@ function StockBatchLine({
           Remove batch
         </Button>
       </div>
-      <div className="grid gap-3 md:grid-cols-4">
-        <div className="md:col-span-2">
+      <div className="grid grid-cols-2 gap-x-3 gap-y-2 sm:grid-cols-4 lg:grid-cols-[1.5fr_0.9fr_0.55fr_0.8fr_0.8fr_0.85fr_0.65fr_1.5fr] lg:gap-y-1.5">
+        <div className="col-span-2 sm:col-span-4 lg:col-span-1">
           <Label>Product name</Label>
           <Input name="batchProduct" required placeholder="iPhone 14 128GB" />
         </div>
@@ -80,25 +111,34 @@ function StockBatchLine({
           <Label>Unit cost GBP</Label>
           <Input name="batchCostGbp" type="number" step="0.01" defaultValue={emptyBatch.costGbp} />
         </div>
-      </div>
-      <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
         <div>
-          <Label>IMEIs (one per line, 15 digits, optional)</Label>
-          <Textarea name="batchImeis" placeholder="353456789012345" />
-        </div>
-        <div>
-          <Label>Qty without IMEI</Label>
+          <Label className="whitespace-nowrap">Total qty</Label>
           <Input
             name="batchQty"
             type="number"
             min={0}
             placeholder="0"
-            className="sm:w-28"
+            value={qtyText}
+            onChange={(event) => setQtyText(event.target.value)}
+          />
+        </div>
+        <div className="col-span-2 sm:col-span-4 lg:col-span-1">
+          <Label>IMEIs (optional)</Label>
+          <Textarea
+            name="batchImeis"
+            rows={1}
+            className="min-h-11 resize-y"
+            placeholder="One 15-digit IMEI per line"
+            value={imeisText}
+            onChange={(event) => handleImeisChange(event.target.value)}
           />
         </div>
       </div>
       <p className="text-xs text-slate-500 dark:text-slate-400">
-        IMEIs are optional — leave blank and set a quantity to add units you&rsquo;ll IMEI-tag later.
+        {imeiCount > 0
+          ? `${imeiCount} of ${total} units have an IMEI. `
+          : ""}
+        Total qty is the full batch size — paste IMEIs above to tag specific units, the rest are added without one (taggable later).
       </p>
     </div>
   );
@@ -126,6 +166,21 @@ export function StockBatchForm({
   const nextBatchId = useRef(1);
   const [batchIds, setBatchIds] = useState<number[]>([0]);
   const [supplierId, setSupplierId] = useState(defaultSupplierId ?? "");
+  const [batchTotals, setBatchTotals] = useState<Record<number, number>>({});
+
+  const grandTotal = useMemo(
+    () => Object.values(batchTotals).reduce((sum, n) => sum + n, 0),
+    [batchTotals],
+  );
+
+  const removeBatch = (batchId: number) => {
+    setBatchIds((current) => current.filter((id) => id !== batchId));
+    setBatchTotals((current) => {
+      const next = { ...current };
+      delete next[batchId];
+      return next;
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -174,8 +229,25 @@ export function StockBatchForm({
       )}
 
       <div className="space-y-3">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-3">
           <h2 className="font-medium">Grade-wise batches</h2>
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 ring-1 ring-inset ring-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:ring-emerald-900">
+            {grandTotal} total {grandTotal === 1 ? "piece" : "pieces"}
+          </span>
+        </div>
+        {batchIds.map((batchId) => (
+          <StockBatchLine
+            key={batchId}
+            grades={grades}
+            colors={colors}
+            networks={networks}
+            onRemove={() => removeBatch(batchId)}
+            onTotalChange={(total) =>
+              setBatchTotals((current) => ({ ...current, [batchId]: total }))
+            }
+          />
+        ))}
+        <div className="flex justify-end">
           <Button
             type="button"
             variant="secondary"
@@ -185,15 +257,6 @@ export function StockBatchForm({
             Add grade batch
           </Button>
         </div>
-        {batchIds.map((batchId) => (
-          <StockBatchLine
-            key={batchId}
-            grades={grades}
-            colors={colors}
-            networks={networks}
-            onRemove={() => setBatchIds((current) => current.filter((id) => id !== batchId))}
-          />
-        ))}
       </div>
     </div>
   );

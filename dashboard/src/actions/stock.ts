@@ -68,7 +68,7 @@ export async function addStock(formData: FormData) {
 
 export async function getAvailableImeis(
   spec: { productName: string; color: string; network: string; grade: string },
-  limit = 50,
+  limit = 1000,
 ) {
   const { apiToken } = await requireUser();
   const params = new URLSearchParams({ ...spec, limit: String(limit) });
@@ -95,6 +95,14 @@ export async function searchStockProducts(query: string) {
   const { apiToken } = await requireUser();
   const params = new URLSearchParams({ q: query });
   return apiClient.get<
-    { productName: string; color: string; network: string; grade: string; count: number; costGbp: number }[]
+    {
+      productName: string;
+      color: string;
+      network: string;
+      grade: string;
+      count: number;
+      costGbp: number;
+      supplierName: string | null;
+    }[]
   >(`/stock/search-products?${params}`, apiToken);
 }
