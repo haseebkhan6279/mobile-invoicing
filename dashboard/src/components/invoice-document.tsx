@@ -126,11 +126,11 @@ export function InvoiceDocument({
       <div className="mt-8 overflow-x-auto">
       <table className="w-full table-fixed text-left text-sm">
         <colgroup>
-          <col className="w-10" />
+          <col className="w-12" />
           <col />
           <col className="w-16" />
+          <col className="w-28" />
           <col className="w-20" />
-          <col className="w-14" />
           <col className="w-20" />
           <col className="w-24" />
           {editable ? <col className="w-14" /> : null}
@@ -175,7 +175,7 @@ export function InvoiceDocument({
                     name="color"
                     list={`doc-colors-${line.id}`}
                     defaultValue={line.color}
-                    className={editableCellClass}
+                    className={`${editableCellClass} pr-4`}
                   />
                   {lookups ? (
                     <datalist id={`doc-colors-${line.id}`}>
@@ -191,7 +191,7 @@ export function InvoiceDocument({
                     name="network"
                     list={`doc-networks-${line.id}`}
                     defaultValue={line.network}
-                    className={editableCellClass}
+                    className={`${editableCellClass} pr-4`}
                   />
                   {lookups ? (
                     <datalist id={`doc-networks-${line.id}`}>
@@ -207,7 +207,7 @@ export function InvoiceDocument({
                     name="grade"
                     list={`doc-grades-${line.id}`}
                     defaultValue={line.grade}
-                    className={editableCellClass}
+                    className={`${editableCellClass} pr-4`}
                   />
                   {lookups ? (
                     <datalist id={`doc-grades-${line.id}`}>
