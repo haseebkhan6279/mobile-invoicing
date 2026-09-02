@@ -162,6 +162,8 @@ model Invoice {
   rmas            Rma[]
   shipments       Shipment[]
   appliedCredits  Rma[]         @relation("RmaAppliedInvoice")
+  payments        Payment[]
+  installments    Installment[]
 }
 
 model InvoiceLine {
@@ -214,6 +216,32 @@ model RmaItem {
   action        String     @default("RESTOCK")
   unitPriceGbp  Float      @default(0)
   reason        String?
+}
+
+model Payment {
+  id            String       @id @default(cuid())
+  invoiceId     String
+  invoice       Invoice      @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  installmentId String?      @unique
+  installment   Installment? @relation(fields: [installmentId], references: [id])
+  amountGbp     Float
+  method        String?
+  notes         String?
+  paidAt        DateTime     @default(now())
+  createdAt     DateTime     @default(now())
+}
+
+model Installment {
+  id        String   @id @default(cuid())
+  invoiceId String
+  invoice   Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  sortOrder Int      @default(0)
+  dueDate   DateTime
+  amountGbp Float
+  status    String   @default("PENDING")
+  payment   Payment?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Shipment {

@@ -2,11 +2,15 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
   addInvoiceLine,
+  createInstallmentPlan,
+  payInstallment,
+  recordInvoicePayment,
   updateInvoiceLineImeis,
   updateInvoiceMarginVat,
   updateInvoiceShipping,
   updateInvoiceStatus,
 } from "@/actions/invoices";
+import { EmailInvoiceForm } from "@/components/email-invoice-form";
 import { InvoiceDocument } from "@/components/invoice-document";
 import { Notice } from "@/components/notice";
 import { PageHeader } from "@/components/page-header";
@@ -20,6 +24,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { requireUser } from "@/lib/auth-guard";
 import { apiClient, ApiError } from "@/lib/api-client";
 import { getLookups } from "@/lib/lookups";
+import { invoiceTotals } from "@/lib/invoice";
+import { formatGbp } from "@/lib/money";
+import { formatDate } from "@/lib/utils";
 import { INVOICE_STATUSES } from "@/lib/status";
 
 type InvoiceDetail = {
@@ -56,6 +63,19 @@ type InvoiceDetail = {
     imeis: string[];
   }[];
   stockUnits: { imei: string; invoiceLineId: string | null }[];
+  payments: {
+    id: string;
+    amountGbp: number;
+    method: string | null;
+    notes: string | null;
+    paidAt: string;
+  }[];
+  installments: {
+    id: string;
+    dueDate: string;
+    amountGbp: number;
+    status: string;
+  }[];
 };
 
 export default async function InvoiceDetailPage({
@@ -76,6 +96,7 @@ export default async function InvoiceDetailPage({
     throw err;
   }
   const lookups = await getLookups(apiToken);
+  const totals = invoiceTotals(invoice);
 
   return (
     <div className="space-y-6">
@@ -113,9 +134,149 @@ export default async function InvoiceDetailPage({
         >
           Add shipment
         </Link>
+        <EmailInvoiceForm
+          invoiceId={invoice.id}
+          customerEmail={invoice.customer.email}
+          returnTo={`/invoices/${invoice.id}`}
+        />
       </div>
       <Card className="p-0">
         <InvoiceDocument invoice={invoice} editable lookups={lookups} />
+      </Card>
+
+      <Card className="no-print">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <h2 className="font-medium">Payments</h2>
+          <div className="text-sm text-slate-500 dark:text-slate-400">
+            Paid {formatGbp(totals.paidGbp)} of {formatGbp(totals.totalGbp)} — balance due{" "}
+            <span className="font-medium text-slate-700 dark:text-slate-200">
+              {formatGbp(totals.dueGbp)}
+            </span>
+          </div>
+        </div>
+
+        {invoice.payments.length ? (
+          <Table>
+            <THead>
+              <tr>
+                <Th>Date</Th>
+                <Th>Amount</Th>
+                <Th>Method</Th>
+                <Th>Notes</Th>
+              </tr>
+            </THead>
+            <tbody>
+              {invoice.payments.map((payment) => (
+                <tr key={payment.id}>
+                  <Td>{formatDate(payment.paidAt)}</Td>
+                  <Td>{formatGbp(payment.amountGbp)}</Td>
+                  <Td>{payment.method ?? "—"}</Td>
+                  <Td>{payment.notes ?? "—"}</Td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        ) : (
+          <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">
+            No payments recorded yet.
+          </p>
+        )}
+
+        {totals.dueGbp > 0 ? (
+          <form
+            action={recordInvoicePayment}
+            className="mt-4 grid gap-3 rounded-xl border border-dashed border-slate-300 p-4 dark:border-slate-700 sm:grid-cols-4"
+          >
+            <input type="hidden" name="id" value={invoice.id} />
+            <div>
+              <Label>Amount £</Label>
+              <Input name="amountGbp" type="number" step="0.01" min={0.01} required />
+            </div>
+            <div>
+              <Label>Method</Label>
+              <Input name="method" placeholder="Bank transfer" />
+            </div>
+            <div className="sm:col-span-2">
+              <Label>Notes</Label>
+              <Input name="notes" />
+            </div>
+            <div className="sm:col-span-4 flex justify-end">
+              <SubmitButton pendingText="Recording…" size="sm">
+                Record payment
+              </SubmitButton>
+            </div>
+          </form>
+        ) : null}
+      </Card>
+
+      <Card className="no-print">
+        <h2 className="mb-3 font-medium">Installment plan</h2>
+        {invoice.installments.length ? (
+          <Table>
+            <THead>
+              <tr>
+                <Th>Due date</Th>
+                <Th>Amount</Th>
+                <Th>Status</Th>
+                <Th>{""}</Th>
+              </tr>
+            </THead>
+            <tbody>
+              {invoice.installments.map((installment) => (
+                <tr key={installment.id}>
+                  <Td>{formatDate(installment.dueDate)}</Td>
+                  <Td>{formatGbp(installment.amountGbp)}</Td>
+                  <Td>{installment.status === "PAID" ? "Paid" : "Pending"}</Td>
+                  <Td>
+                    {installment.status === "PENDING" ? (
+                      <form action={payInstallment}>
+                        <input type="hidden" name="id" value={invoice.id} />
+                        <input type="hidden" name="installmentId" value={installment.id} />
+                        <SubmitButton pendingText="Saving…" size="sm" variant="secondary">
+                          Mark paid
+                        </SubmitButton>
+                      </form>
+                    ) : null}
+                  </Td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        ) : (
+          <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">
+            No installment plan set up for this invoice yet.
+          </p>
+        )}
+
+        {totals.dueGbp > 0 ? (
+          <form
+            action={createInstallmentPlan}
+            className="mt-4 grid gap-3 rounded-xl border border-dashed border-slate-300 p-4 dark:border-slate-700 sm:grid-cols-4"
+          >
+            <input type="hidden" name="id" value={invoice.id} />
+            <div>
+              <Label>Number of installments</Label>
+              <Input name="count" type="number" min={2} defaultValue={3} required />
+            </div>
+            <div>
+              <Label>First due date</Label>
+              <Input name="startDate" type="date" />
+            </div>
+            <div>
+              <Label>Days between installments</Label>
+              <Input name="intervalDays" type="number" min={1} defaultValue={30} />
+            </div>
+            <div className="flex items-end">
+              <SubmitButton pendingText="Saving…" size="sm">
+                {invoice.installments.length ? "Replace plan" : "Create plan"}
+              </SubmitButton>
+            </div>
+            <p className="text-xs text-slate-400 dark:text-slate-500 sm:col-span-4">
+              Splits the current balance due ({formatGbp(totals.dueGbp)}) evenly across these
+              installments. Any pending (unpaid) installments from an existing plan are replaced.
+            </p>
+          </form>
+        ) : null}
       </Card>
 
       <Card className="no-print">

@@ -203,6 +203,7 @@ export function InvoiceForm({
   const [lineIds, setLineIds] = useState<number[]>([0]);
   const [credits, setCredits] = useState<AvailableRmaCredit[]>([]);
   const [selectedCreditIds, setSelectedCreditIds] = useState<string[]>([]);
+  const [installmentPlanEnabled, setInstallmentPlanEnabled] = useState(false);
 
   return (
     <div className="space-y-6">
@@ -277,6 +278,67 @@ export function InvoiceForm({
           <Label htmlFor="warrantyTerms">Warranty terms</Label>
           <Input id="warrantyTerms" name="warrantyTerms" defaultValue="3 months" />
         </div>
+      </div>
+
+      <div className="space-y-3 rounded-xl border border-slate-200 p-4 dark:border-slate-800">
+        <h2 className="font-medium">Payment</h2>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div>
+            <Label htmlFor="initialPaymentGbp">Payment received now (£)</Label>
+            <Input
+              id="initialPaymentGbp"
+              name="initialPaymentGbp"
+              type="number"
+              step="0.01"
+              min={0}
+              defaultValue="0"
+            />
+          </div>
+        </div>
+
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            name="installmentPlanEnabled"
+            checked={installmentPlanEnabled}
+            onChange={(event) => setInstallmentPlanEnabled(event.target.checked)}
+            className="rounded"
+          />
+          Split the remaining balance into installments
+        </label>
+
+        {installmentPlanEnabled ? (
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div>
+              <Label htmlFor="installmentCount">Number of installments</Label>
+              <Input
+                id="installmentCount"
+                name="installmentCount"
+                type="number"
+                min={2}
+                defaultValue={3}
+              />
+            </div>
+            <div>
+              <Label htmlFor="installmentStartDate">First due date</Label>
+              <Input id="installmentStartDate" name="installmentStartDate" type="date" />
+            </div>
+            <div>
+              <Label htmlFor="installmentIntervalDays">Days between installments</Label>
+              <Input
+                id="installmentIntervalDays"
+                name="installmentIntervalDays"
+                type="number"
+                min={1}
+                defaultValue={30}
+              />
+            </div>
+            <p className="text-xs text-slate-400 dark:text-slate-500 sm:col-span-3">
+              The remaining balance after the payment above is split evenly across these
+              installments, starting on the due date given (defaults to today).
+            </p>
+          </div>
+        ) : null}
       </div>
 
       <label className="flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200">

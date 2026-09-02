@@ -13,3 +13,22 @@ export const RMA_PAYMENT_TYPES = ["PENDING", "APPLIED_TO_INVOICE", "REFUNDED"] a
 export const SHIPMENT_STATUSES = ["PREPARING", "SHIPPED", "IN_TRANSIT", "DELIVERED"] as const;
 
 export const LEDGER_TYPES = ["CREDIT", "DEBIT"] as const;
+
+export const INSTALLMENT_STATUSES = ["PENDING", "PAID"] as const;
+
+export function labelStatus(value: string) {
+  return value
+    .toLowerCase()
+    .split("_")
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+export function formatDate(value: Date | string) {
+  const date = typeof value === "string" ? new Date(value) : value;
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(date);
+}

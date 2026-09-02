@@ -2,6 +2,8 @@ import { Type } from "class-transformer";
 import {
   IsArray,
   IsBoolean,
+  IsDateString,
+  IsEmail,
   IsIn,
   IsNumber,
   IsOptional,
@@ -82,6 +84,25 @@ export class CreateInvoiceDto {
   @IsString({ each: true })
   appliedRmaIds?: string[];
 
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  initialPaymentGbp?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(2)
+  installmentCount?: number;
+
+  @IsOptional()
+  @IsDateString()
+  installmentStartDate?: string;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  installmentIntervalDays?: number;
+
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => InvoiceLineDto)
@@ -141,4 +162,66 @@ export class UpdateInvoiceLineDto {
   @IsOptional()
   @IsNumber()
   buyPriceGbp?: number;
+}
+
+export class SendInvoiceEmailDto {
+  @IsOptional()
+  @IsEmail()
+  email?: string;
+
+  @IsOptional()
+  @IsString()
+  message?: string;
+}
+
+export class RecordPaymentDto {
+  @IsNumber()
+  @Min(0.01)
+  amountGbp: number;
+
+  @IsOptional()
+  @IsString()
+  method?: string;
+
+  @IsOptional()
+  @IsString()
+  notes?: string;
+
+  @IsOptional()
+  @IsDateString()
+  paidAt?: string;
+}
+
+export class CreateInstallmentPlanDto {
+  @IsNumber()
+  @Min(2)
+  count: number;
+
+  @IsOptional()
+  @IsDateString()
+  startDate?: string;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  intervalDays?: number;
+}
+
+export class PayInstallmentDto {
+  @IsOptional()
+  @IsNumber()
+  @Min(0.01)
+  amountGbp?: number;
+
+  @IsOptional()
+  @IsString()
+  method?: string;
+
+  @IsOptional()
+  @IsString()
+  notes?: string;
+
+  @IsOptional()
+  @IsDateString()
+  paidAt?: string;
 }

@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth-guard";
 import { parseImeis } from "@/lib/imei";
-import { toNumber, toOptionalString } from "@/lib/lookups";
+import { toNumber, toOptionalNumber, toOptionalString } from "@/lib/lookups";
 import { apiClient, ApiError } from "@/lib/api-client";
 
 function parseInvoiceLines(formData: FormData) {
@@ -51,6 +51,13 @@ export async function createInvoice(formData: FormData) {
         notes: toOptionalString(formData.get("notes")),
         marginVatScheme: formData.get("marginVatScheme") === "on",
         appliedRmaIds,
+        initialPaymentGbp: toOptionalNumber(formData.get("initialPaymentGbp")),
+        installmentCount:
+          formData.get("installmentPlanEnabled") === "on"
+            ? toOptionalNumber(formData.get("installmentCount"))
+            : undefined,
+        installmentStartDate: toOptionalString(formData.get("installmentStartDate")),
+        installmentIntervalDays: toOptionalNumber(formData.get("installmentIntervalDays")),
         lines,
       },
       apiToken,
@@ -191,6 +198,97 @@ export async function addInvoiceLine(formData: FormData) {
   revalidatePath(`/invoices/${id}`);
   revalidatePath("/stock");
   redirect(`/invoices/${id}?ok=Line added`);
+}
+
+export async function sendInvoiceEmail(formData: FormData) {
+  const { apiToken } = await requireUser();
+  const id = String(formData.get("id") ?? "");
+  const email = toOptionalString(formData.get("email"));
+  const returnTo = String(formData.get("returnTo") ?? `/invoices/${id}`);
+
+  let result: { sentTo: string };
+  try {
+    result = await apiClient.post<{ sentTo: string }>(
+      `/invoices/${id}/send-email`,
+      { email },
+      apiToken,
+    );
+  } catch (err) {
+    if (err instanceof ApiError) {
+      redirect(`${returnTo}?error=${encodeURIComponent(err.message)}`);
+    }
+    throw err;
+  }
+
+  redirect(`${returnTo}?ok=${encodeURIComponent(`Invoice emailed to ${result.sentTo}`)}`);
+}
+
+export async function recordInvoicePayment(formData: FormData) {
+  const { apiToken } = await requireUser();
+  const id = String(formData.get("id") ?? "");
+
+  try {
+    await apiClient.post(
+      `/invoices/${id}/payments`,
+      {
+        amountGbp: toNumber(formData.get("amountGbp")),
+        method: toOptionalString(formData.get("method")),
+        notes: toOptionalString(formData.get("notes")),
+      },
+      apiToken,
+    );
+  } catch (err) {
+    if (err instanceof ApiError) {
+      redirect(`/invoices/${id}?error=${encodeURIComponent(err.message)}`);
+    }
+    throw err;
+  }
+
+  revalidatePath(`/invoices/${id}`);
+  redirect(`/invoices/${id}?ok=Payment recorded`);
+}
+
+export async function createInstallmentPlan(formData: FormData) {
+  const { apiToken } = await requireUser();
+  const id = String(formData.get("id") ?? "");
+
+  try {
+    await apiClient.post(
+      `/invoices/${id}/installments/plan`,
+      {
+        count: toNumber(formData.get("count")),
+        startDate: toOptionalString(formData.get("startDate")),
+        intervalDays: toOptionalNumber(formData.get("intervalDays")),
+      },
+      apiToken,
+    );
+  } catch (err) {
+    if (err instanceof ApiError) {
+      redirect(`/invoices/${id}?error=${encodeURIComponent(err.message)}`);
+    }
+    throw err;
+  }
+
+  revalidatePath(`/invoices/${id}`);
+  redirect(`/invoices/${id}?ok=Installment plan created`);
+}
+
+export async function payInstallment(formData: FormData) {
+  const { apiToken } = await requireUser();
+  const id = String(formData.get("id") ?? "");
+  const installmentId = String(formData.get("installmentId") ?? "");
+
+  try {
+    await apiClient.patch(`/invoices/${id}/installments/${installmentId}/pay`, {}, apiToken);
+  } catch (err) {
+    if (err instanceof ApiError) {
+      redirect(`/invoices/${id}?error=${encodeURIComponent(err.message)}`);
+    }
+    throw err;
+  }
+
+  revalidatePath(`/invoices/${id}`);
+  redirect(`/invoices/${id}?ok=Installment marked as paid`);
 }
 
 export async function updateInvoiceLineImeis(formData: FormData) {

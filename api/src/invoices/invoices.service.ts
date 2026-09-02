@@ -2,8 +2,17 @@ import { BadRequestException, Injectable, NotFoundException } from "@nestjs/comm
 import { PrismaService } from "../prisma/prisma.service";
 import { nextNumberTx } from "../common/numbers";
 import { applyCreditToInvoiceTx, rmaTotals } from "../common/rma";
+import { invoiceTotals } from "../common/invoice";
+import { formatGbp } from "../common/money";
+import { buildEvenInstallments, recordPaymentTx } from "../common/payments";
+import { MailService } from "../mail/mail.service";
+import { buildInvoicePdf } from "./invoice-pdf";
 import {
+  CreateInstallmentPlanDto,
   CreateInvoiceDto,
+  PayInstallmentDto,
+  RecordPaymentDto,
+  SendInvoiceEmailDto,
   UpdateInvoiceLineDto,
   UpdateInvoiceMarginVatDto,
   UpdateInvoiceShippingDto,
@@ -49,7 +58,10 @@ function normalizeLines(lines: CreateInvoiceDto["lines"]): NormalizedInvoiceLine
 
 @Injectable()
 export class InvoicesService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private mail: MailService,
+  ) {}
 
   listInvoices(status?: string) {
     return this.prisma.invoice.findMany({
@@ -67,6 +79,8 @@ export class InvoicesService {
         lines: { orderBy: { sortOrder: "asc" } },
         stockUnits: true,
         shipments: true,
+        payments: { orderBy: { paidAt: "desc" } },
+        installments: { orderBy: { sortOrder: "asc" } },
       },
     });
     if (!invoice) throw new NotFoundException("Invoice not found");
@@ -165,6 +179,34 @@ export class InvoicesService {
           },
         });
         await applyCreditToInvoiceTx(tx, created.id, credit.totalGbp);
+      }
+
+      if (input.initialPaymentGbp && input.initialPaymentGbp > 0) {
+        await recordPaymentTx(tx, created.id, { amountGbp: input.initialPaymentGbp });
+      }
+
+      if (input.installmentCount && input.installmentCount >= 2) {
+        const current = await tx.invoice.findUniqueOrThrow({
+          where: { id: created.id },
+          include: { lines: true },
+        });
+        const totals = invoiceTotals(current);
+        if (totals.dueGbp > 0) {
+          const rows = buildEvenInstallments(
+            totals.dueGbp,
+            input.installmentCount,
+            input.installmentStartDate ? new Date(input.installmentStartDate) : current.issuedAt,
+            input.installmentIntervalDays ?? 30,
+          );
+          await tx.installment.createMany({
+            data: rows.map((row) => ({
+              invoiceId: created.id,
+              dueDate: row.dueDate,
+              amountGbp: row.amountGbp,
+              sortOrder: row.sortOrder,
+            })),
+          });
+        }
       }
 
       return created;
@@ -324,5 +366,111 @@ export class InvoicesService {
 
       return updated;
     });
+  }
+
+  async sendInvoiceEmail(id: string, dto: SendInvoiceEmailDto) {
+    const invoice = await this.getInvoice(id);
+    const to = dto.email?.trim() || invoice.customer.email;
+    if (!to) {
+      throw new BadRequestException(
+        "No email address on file for this customer. Provide one to send to.",
+      );
+    }
+
+    const pdf = await buildInvoicePdf(invoice);
+    const totals = invoiceTotals(invoice);
+
+    const html = `
+      <p>Dear ${invoice.customer.name},</p>
+      <p>Please find attached your invoice <strong>${invoice.invoiceNumber}</strong>.</p>
+      <p>
+        Grand total: <strong>${formatGbp(totals.totalGbp)}</strong><br />
+        Payment due: <strong>${formatGbp(totals.dueGbp)}</strong>
+      </p>
+      ${dto.message ? `<p>${dto.message.replace(/\n/g, "<br />")}</p>` : ""}
+      <p>Thank you for your business.</p>
+    `.trim();
+
+    await this.mail.sendMail({
+      to,
+      subject: `Invoice ${invoice.invoiceNumber}`,
+      html,
+      attachments: [
+        {
+          filename: `Invoice-${invoice.invoiceNumber}.pdf`,
+          content: pdf,
+          contentType: "application/pdf",
+        },
+      ],
+    });
+
+    return { sentTo: to };
+  }
+
+  async recordPayment(invoiceId: string, dto: RecordPaymentDto) {
+    return this.prisma.$transaction((tx) =>
+      recordPaymentTx(tx, invoiceId, {
+        amountGbp: dto.amountGbp,
+        method: dto.method,
+        notes: dto.notes,
+        paidAt: dto.paidAt ? new Date(dto.paidAt) : undefined,
+      }),
+    );
+  }
+
+  async createInstallmentPlan(invoiceId: string, dto: CreateInstallmentPlanDto) {
+    const invoice = await this.prisma.invoice.findUnique({
+      where: { id: invoiceId },
+      include: { lines: true },
+    });
+    if (!invoice) throw new NotFoundException("Invoice not found");
+    if (invoice.status === "CANCELLED") {
+      throw new BadRequestException("Cannot schedule installments on a cancelled invoice");
+    }
+
+    const totals = invoiceTotals(invoice);
+    if (totals.dueGbp <= 0) {
+      throw new BadRequestException("This invoice has no remaining balance to schedule");
+    }
+
+    const rows = buildEvenInstallments(
+      totals.dueGbp,
+      dto.count,
+      dto.startDate ? new Date(dto.startDate) : new Date(),
+      dto.intervalDays ?? 30,
+    );
+
+    return this.prisma.$transaction(async (tx) => {
+      await tx.installment.deleteMany({ where: { invoiceId, status: "PENDING" } });
+      await tx.installment.createMany({
+        data: rows.map((row) => ({
+          invoiceId,
+          dueDate: row.dueDate,
+          amountGbp: row.amountGbp,
+          sortOrder: row.sortOrder,
+        })),
+      });
+      return tx.installment.findMany({ where: { invoiceId }, orderBy: { sortOrder: "asc" } });
+    });
+  }
+
+  async payInstallment(invoiceId: string, installmentId: string, dto: PayInstallmentDto) {
+    const installment = await this.prisma.installment.findUnique({ where: { id: installmentId } });
+    if (!installment || installment.invoiceId !== invoiceId) {
+      throw new NotFoundException("Installment not found");
+    }
+    if (installment.status === "PAID") {
+      throw new BadRequestException("This installment is already paid");
+    }
+
+    return this.prisma.$transaction((tx) =>
+      recordPaymentTx(tx, invoiceId, {
+        amountGbp: dto.amountGbp ?? installment.amountGbp,
+        method: dto.method,
+        notes: dto.notes,
+        paidAt: dto.paidAt ? new Date(dto.paidAt) : undefined,
+        installmentId,
+      }),
+    );
   }
 }

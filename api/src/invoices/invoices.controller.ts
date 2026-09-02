@@ -2,7 +2,11 @@ import { Body, Controller, Get, Param, Patch, Post, Query, UseGuards } from "@ne
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import { InvoicesService } from "./invoices.service";
 import {
+  CreateInstallmentPlanDto,
   CreateInvoiceDto,
+  PayInstallmentDto,
+  RecordPaymentDto,
+  SendInvoiceEmailDto,
   UpdateInvoiceLineDto,
   UpdateInvoiceLineImeisDto,
   UpdateInvoiceMarginVatDto,
@@ -66,5 +70,29 @@ export class InvoicesController {
     @Body() dto: UpdateInvoiceLineImeisDto,
   ) {
     return this.invoices.updateInvoiceLineImeis(id, lineId, dto.imeis);
+  }
+
+  @Post(":id/send-email")
+  sendEmail(@Param("id") id: string, @Body() dto: SendInvoiceEmailDto) {
+    return this.invoices.sendInvoiceEmail(id, dto);
+  }
+
+  @Post(":id/payments")
+  recordPayment(@Param("id") id: string, @Body() dto: RecordPaymentDto) {
+    return this.invoices.recordPayment(id, dto);
+  }
+
+  @Post(":id/installments/plan")
+  createInstallmentPlan(@Param("id") id: string, @Body() dto: CreateInstallmentPlanDto) {
+    return this.invoices.createInstallmentPlan(id, dto);
+  }
+
+  @Patch(":id/installments/:installmentId/pay")
+  payInstallment(
+    @Param("id") id: string,
+    @Param("installmentId") installmentId: string,
+    @Body() dto: PayInstallmentDto,
+  ) {
+    return this.invoices.payInstallment(id, installmentId, dto);
   }
 }
