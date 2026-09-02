@@ -1,10 +1,10 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { nextNumberTx } from "../common/numbers";
-import { applyCreditToInvoiceTx, rmaTotals } from "../common/rma";
+import { rmaRemainingCredit } from "../common/rma";
 import { invoiceTotals } from "../common/invoice";
 import { formatGbp } from "../common/money";
-import { buildEvenInstallments, recordPaymentTx } from "../common/payments";
+import { buildEvenInstallments, recordPaymentTx, updatePaymentTx } from "../common/payments";
 import { MailService } from "../mail/mail.service";
 import { buildInvoicePdf } from "./invoice-pdf";
 import {
@@ -16,6 +16,7 @@ import {
   UpdateInvoiceLineDto,
   UpdateInvoiceMarginVatDto,
   UpdateInvoiceShippingDto,
+  UpdatePaymentDto,
 } from "./dto/invoice.dto";
 
 function stockStatusForInvoice(status: string) {
@@ -79,7 +80,10 @@ export class InvoicesService {
         lines: { orderBy: { sortOrder: "asc" } },
         stockUnits: true,
         shipments: true,
-        payments: { orderBy: { paidAt: "desc" } },
+        payments: {
+          orderBy: { paidAt: "desc" },
+          include: { rma: { select: { id: true, rmaNumber: true } } },
+        },
         installments: { orderBy: { sortOrder: "asc" } },
       },
     });
@@ -166,19 +170,18 @@ export class InvoicesService {
 
       const appliedRmaIds = (input.appliedRmaIds ?? []).filter(Boolean);
       for (const rmaId of appliedRmaIds) {
-        const rma = await tx.rma.findUnique({ where: { id: rmaId }, include: { items: true } });
-        if (!rma || rma.customerId !== customerId || rma.paymentType !== "PENDING") continue;
-        const credit = rmaTotals(rma);
-        await tx.rma.update({
+        const rma = await tx.rma.findUnique({
           where: { id: rmaId },
-          data: {
-            paymentType: "APPLIED_TO_INVOICE",
-            appliedInvoiceId: created.id,
-            paymentAmountGbp: credit.totalGbp,
-            paymentDate: new Date(),
-          },
+          include: { items: true, payments: true },
         });
-        await applyCreditToInvoiceTx(tx, created.id, credit.totalGbp);
+        if (!rma || rma.customerId !== customerId || rma.paymentType !== "PENDING") continue;
+        const remaining = rmaRemainingCredit(rma);
+        if (remaining <= 0) continue;
+        await recordPaymentTx(tx, created.id, {
+          amountGbp: remaining,
+          rmaId: rma.id,
+          method: "RMA credit",
+        });
       }
 
       if (input.initialPaymentGbp && input.initialPaymentGbp > 0) {
@@ -210,7 +213,7 @@ export class InvoicesService {
       }
 
       return created;
-    });
+    }, { timeout: 15000 });
   }
 
   async updateInvoiceStatus(id: string, status: string) {
@@ -410,6 +413,18 @@ export class InvoicesService {
   async recordPayment(invoiceId: string, dto: RecordPaymentDto) {
     return this.prisma.$transaction((tx) =>
       recordPaymentTx(tx, invoiceId, {
+        amountGbp: dto.amountGbp,
+        method: dto.method,
+        notes: dto.notes,
+        paidAt: dto.paidAt ? new Date(dto.paidAt) : undefined,
+        rmaId: dto.rmaId,
+      }),
+    );
+  }
+
+  async updatePayment(invoiceId: string, paymentId: string, dto: UpdatePaymentDto) {
+    return this.prisma.$transaction((tx) =>
+      updatePaymentTx(tx, invoiceId, paymentId, {
         amountGbp: dto.amountGbp,
         method: dto.method,
         notes: dto.notes,

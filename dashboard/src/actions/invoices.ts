@@ -6,6 +6,12 @@ import { requireUser } from "@/lib/auth-guard";
 import { parseImeis } from "@/lib/imei";
 import { toNumber, toOptionalNumber, toOptionalString } from "@/lib/lookups";
 import { apiClient, ApiError } from "@/lib/api-client";
+import type { InvoiceDoc } from "@/components/invoice-document";
+
+export async function getInvoicePreview(id: string) {
+  const { apiToken } = await requireUser();
+  return apiClient.get<InvoiceDoc>(`/invoices/${id}`, apiToken);
+}
 
 function parseInvoiceLines(formData: FormData) {
   const products = formData.getAll("lineProduct");
@@ -234,6 +240,8 @@ export async function recordInvoicePayment(formData: FormData) {
         amountGbp: toNumber(formData.get("amountGbp")),
         method: toOptionalString(formData.get("method")),
         notes: toOptionalString(formData.get("notes")),
+        paidAt: toOptionalString(formData.get("paidAt")),
+        rmaId: toOptionalString(formData.get("rmaId")),
       },
       apiToken,
     );
@@ -246,6 +254,33 @@ export async function recordInvoicePayment(formData: FormData) {
 
   revalidatePath(`/invoices/${id}`);
   redirect(`/invoices/${id}?ok=Payment recorded`);
+}
+
+export async function updateInvoicePayment(formData: FormData) {
+  const { apiToken } = await requireUser();
+  const id = String(formData.get("id") ?? "");
+  const paymentId = String(formData.get("paymentId") ?? "");
+
+  try {
+    await apiClient.patch(
+      `/invoices/${id}/payments/${paymentId}`,
+      {
+        amountGbp: toNumber(formData.get("amountGbp")),
+        method: toOptionalString(formData.get("method")),
+        notes: toOptionalString(formData.get("notes")),
+        paidAt: toOptionalString(formData.get("paidAt")),
+      },
+      apiToken,
+    );
+  } catch (err) {
+    if (err instanceof ApiError) {
+      redirect(`/invoices/${id}?error=${encodeURIComponent(err.message)}`);
+    }
+    throw err;
+  }
+
+  revalidatePath(`/invoices/${id}`);
+  redirect(`/invoices/${id}?ok=Payment updated`);
 }
 
 export async function createInstallmentPlan(formData: FormData) {

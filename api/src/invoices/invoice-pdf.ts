@@ -228,20 +228,6 @@ export function buildInvoicePdf(invoice: InvoiceForPdf): Promise<Buffer> {
     .stroke();
   doc.moveDown(0.6);
 
-  const allImeis = Array.from(
-    new Set([
-      ...invoice.stockUnits.map((unit) => unit.imei).filter((imei): imei is string => Boolean(imei)),
-      ...invoice.lines.flatMap((line) => line.imeis ?? []),
-    ]),
-  );
-  if (allImeis.length) {
-    doc.fontSize(7).fillColor("#64748b").text(`IMEIs: ${allImeis.join(", ")}`, MARGIN, doc.y, {
-      width: contentWidth,
-    });
-    doc.fillColor("black");
-    doc.moveDown(0.8);
-  }
-
   ensureSpace(140);
   const summaryTop = doc.y;
   doc

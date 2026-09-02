@@ -128,9 +128,9 @@ export function InvoiceDocument({
         <colgroup>
           <col className="w-12" />
           <col />
+          <col className="w-24" />
+          <col className="w-24" />
           <col className="w-16" />
-          <col className="w-28" />
-          <col className="w-20" />
           <col className="w-20" />
           <col className="w-24" />
           {editable ? <col className="w-14" /> : null}
@@ -141,7 +141,7 @@ export function InvoiceDocument({
             <th className="py-2 pr-2">Product name</th>
             <th className="py-2 pr-2">Color</th>
             <th className="py-2 pr-2">Network</th>
-            <th className="py-2 pr-2">Grade</th>
+            <th className="py-2 pr-2 text-center">Grade</th>
             <th className="py-2 pr-2 text-right">Unit price</th>
             <th className="py-2 text-right">Total</th>
             {editable ? <th className="no-print py-2 pl-2" /> : null}
@@ -207,7 +207,7 @@ export function InvoiceDocument({
                     name="grade"
                     list={`doc-grades-${line.id}`}
                     defaultValue={line.grade}
-                    className={`${editableCellClass} pr-4`}
+                    className={`${editableCellClass} text-center`}
                   />
                   {lookups ? (
                     <datalist id={`doc-grades-${line.id}`}>
@@ -255,7 +255,7 @@ export function InvoiceDocument({
                 <td className="py-2 pr-2">{line.productName}</td>
                 <td className="py-2 pr-2">{line.color}</td>
                 <td className="py-2 pr-2">{line.network}</td>
-                <td className="py-2 pr-2">{line.grade}</td>
+                <td className="py-2 pr-2 text-center">{line.grade}</td>
                 <td className="py-2 pr-2 text-right tabular-nums">
                   {money(line.unitPriceGbp)}
                 </td>
@@ -283,18 +283,6 @@ export function InvoiceDocument({
         </tbody>
       </table>
       </div>
-
-      {(() => {
-        const allImeis = Array.from(
-          new Set([
-            ...invoice.stockUnits.map((unit) => unit.imei),
-            ...invoice.lines.flatMap((line) => line.imeis ?? []),
-          ]),
-        );
-        return allImeis.length ? (
-          <div className="mt-4 text-xs text-slate-500">IMEIs: {allImeis.join(", ")}</div>
-        ) : null;
-      })()}
 
       <div className="mt-6 flex flex-wrap justify-between gap-6">
         <div className="max-w-sm text-sm text-slate-600">

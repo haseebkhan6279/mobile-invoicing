@@ -11,11 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { formatGbp } from "@/lib/money";
-
-function creditValue(credit: AvailableRmaCredit) {
-  const totalGbp = credit.items.reduce((sum, item) => sum + item.unitPriceGbp, 0);
-  return { totalGbp };
-}
+import { rmaRemainingCredit } from "@/lib/rma";
 
 type Lookup = { id: string; name?: string; code?: string };
 
@@ -219,7 +215,7 @@ export function InvoiceForm({
         <div className="space-y-2 rounded-xl border border-slate-200 p-4 dark:border-slate-800">
           <h2 className="font-medium">Available RMA credit</h2>
           {credits.map((credit) => {
-            const { totalGbp } = creditValue(credit);
+            const remainingGbp = rmaRemainingCredit(credit);
             const checked = selectedCreditIds.includes(credit.id);
             return (
               <label key={credit.id} className="flex items-center gap-2 text-sm">
@@ -236,7 +232,7 @@ export function InvoiceForm({
                     )
                   }
                 />
-                {credit.rmaNumber} — {formatGbp(totalGbp)} · from Invoice{" "}
+                {credit.rmaNumber} — {formatGbp(remainingGbp)} remaining · from Invoice{" "}
                 {credit.invoice.invoiceNumber}
               </label>
             );

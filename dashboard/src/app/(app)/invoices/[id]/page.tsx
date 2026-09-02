@@ -7,13 +7,16 @@ import {
   recordInvoicePayment,
   updateInvoiceLineImeis,
   updateInvoiceMarginVat,
+  updateInvoicePayment,
   updateInvoiceShipping,
   updateInvoiceStatus,
 } from "@/actions/invoices";
+import { applyRmaCreditToInvoice, getAvailableRmaCredits } from "@/actions/rma";
 import { EmailInvoiceForm } from "@/components/email-invoice-form";
 import { InvoiceDocument } from "@/components/invoice-document";
 import { Notice } from "@/components/notice";
 import { PageHeader } from "@/components/page-header";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -27,7 +30,10 @@ import { getLookups } from "@/lib/lookups";
 import { invoiceTotals } from "@/lib/invoice";
 import { formatGbp } from "@/lib/money";
 import { formatDate } from "@/lib/utils";
+import { rmaRemainingCredit } from "@/lib/rma";
 import { INVOICE_STATUSES } from "@/lib/status";
+
+const PAYMENT_METHODS = ["Manual", "Bank transfer", "Cash", "Card", "Other"];
 
 type InvoiceDetail = {
   id: string;
@@ -42,6 +48,7 @@ type InvoiceDetail = {
   paidAmountGbp: number;
   notes: string | null;
   customer: {
+    id: string;
     clientId: string;
     name: string;
     businessName: string | null;
@@ -69,6 +76,7 @@ type InvoiceDetail = {
     method: string | null;
     notes: string | null;
     paidAt: string;
+    rma: { id: string; rmaNumber: string } | null;
   }[];
   installments: {
     id: string;
@@ -97,6 +105,8 @@ export default async function InvoiceDetailPage({
   }
   const lookups = await getLookups(apiToken);
   const totals = invoiceTotals(invoice);
+  const availableCredits = await getAvailableRmaCredits(invoice.customer.id);
+  const today = new Date().toISOString().slice(0, 10);
 
   return (
     <div className="space-y-6">
@@ -162,16 +172,82 @@ export default async function InvoiceDetailPage({
                 <Th>Date</Th>
                 <Th>Amount</Th>
                 <Th>Method</Th>
+                <Th>Via</Th>
                 <Th>Notes</Th>
+                <Th>{""}</Th>
               </tr>
             </THead>
             <tbody>
               {invoice.payments.map((payment) => (
                 <tr key={payment.id}>
-                  <Td>{formatDate(payment.paidAt)}</Td>
-                  <Td>{formatGbp(payment.amountGbp)}</Td>
-                  <Td>{payment.method ?? "—"}</Td>
-                  <Td>{payment.notes ?? "—"}</Td>
+                  <Td>
+                    <Input
+                      form={`payment-${payment.id}`}
+                      name="paidAt"
+                      type="date"
+                      defaultValue={payment.paidAt.slice(0, 10)}
+                      className="w-36"
+                    />
+                  </Td>
+                  <Td>
+                    <Input
+                      form={`payment-${payment.id}`}
+                      name="amountGbp"
+                      type="number"
+                      step="0.01"
+                      min={0.01}
+                      defaultValue={payment.amountGbp}
+                      className="w-28"
+                    />
+                  </Td>
+                  <Td>
+                    <Select
+                      form={`payment-${payment.id}`}
+                      name="method"
+                      defaultValue={payment.method ?? ""}
+                      className="w-36"
+                    >
+                      <option value="">—</option>
+                      {PAYMENT_METHODS.concat(
+                        payment.method && !PAYMENT_METHODS.includes(payment.method)
+                          ? [payment.method]
+                          : [],
+                      ).map((method) => (
+                        <option key={method} value={method}>
+                          {method}
+                        </option>
+                      ))}
+                    </Select>
+                  </Td>
+                  <Td>
+                    {payment.rma ? (
+                      <Link
+                        href={`/returns/${payment.rma.id}`}
+                        className="text-[#0b3a6e] hover:underline dark:text-sky-400"
+                      >
+                        {payment.rma.rmaNumber}
+                      </Link>
+                    ) : (
+                      "—"
+                    )}
+                  </Td>
+                  <Td>
+                    <Input
+                      form={`payment-${payment.id}`}
+                      name="notes"
+                      defaultValue={payment.notes ?? ""}
+                      className="w-40"
+                    />
+                  </Td>
+                  <Td>
+                    <Button type="submit" form={`payment-${payment.id}`} size="sm" variant="secondary">
+                      Save
+                    </Button>
+                    <form id={`payment-${payment.id}`} action={updateInvoicePayment} className="hidden">
+                      <input type="hidden" name="id" value={invoice.id} />
+                      <input type="hidden" name="paymentId" value={payment.id} />
+                    </form>
+                  </Td>
                 </tr>
               ))}
             </tbody>
@@ -193,10 +269,20 @@ export default async function InvoiceDetailPage({
               <Input name="amountGbp" type="number" step="0.01" min={0.01} required />
             </div>
             <div>
-              <Label>Method</Label>
-              <Input name="method" placeholder="Bank transfer" />
+              <Label>Date</Label>
+              <Input name="paidAt" type="date" defaultValue={today} />
             </div>
-            <div className="sm:col-span-2">
+            <div>
+              <Label>Method</Label>
+              <Select name="method" defaultValue="Manual">
+                {PAYMENT_METHODS.map((method) => (
+                  <option key={method} value={method}>
+                    {method}
+                  </option>
+                ))}
+              </Select>
+            </div>
+            <div>
               <Label>Notes</Label>
               <Input name="notes" />
             </div>
@@ -206,6 +292,53 @@ export default async function InvoiceDetailPage({
               </SubmitButton>
             </div>
           </form>
+        ) : null}
+
+        {totals.dueGbp > 0 && availableCredits.length ? (
+          <div className="mt-4 space-y-2 rounded-xl border border-dashed border-slate-300 p-4 dark:border-slate-700">
+            <h3 className="text-sm font-medium">Apply RMA credit</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              {invoice.customer.name} has credit available from returns. Apply all or part of it
+              toward this invoice&apos;s balance — any amount left over stays available for other
+              invoices.
+            </p>
+            {availableCredits.map((credit) => {
+              const remainingGbp = rmaRemainingCredit(credit);
+              const suggested = Math.min(remainingGbp, totals.dueGbp);
+              return (
+                <form
+                  key={credit.id}
+                  action={applyRmaCreditToInvoice}
+                  className="flex flex-wrap items-end gap-3 border-t border-slate-100 pt-3 first:border-0 first:pt-0 dark:border-slate-800"
+                >
+                  <input type="hidden" name="invoiceId" value={invoice.id} />
+                  <input type="hidden" name="rmaId" value={credit.id} />
+                  <p className="text-sm">
+                    {credit.rmaNumber} — {formatGbp(remainingGbp)} remaining
+                    <span className="text-slate-500 dark:text-slate-400">
+                      {" "}
+                      (from Invoice {credit.invoice.invoiceNumber})
+                    </span>
+                  </p>
+                  <div>
+                    <Label>Amount £</Label>
+                    <Input
+                      name="amountGbp"
+                      type="number"
+                      step="0.01"
+                      min={0.01}
+                      max={remainingGbp}
+                      defaultValue={suggested}
+                      required
+                    />
+                  </div>
+                  <SubmitButton pendingText="Applying…" size="sm" variant="secondary">
+                    Apply
+                  </SubmitButton>
+                </form>
+              );
+            })}
+          </div>
         ) : null}
       </Card>
 

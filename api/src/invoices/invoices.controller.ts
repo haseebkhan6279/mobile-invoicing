@@ -12,6 +12,7 @@ import {
   UpdateInvoiceMarginVatDto,
   UpdateInvoiceShippingDto,
   UpdateInvoiceStatusDto,
+  UpdatePaymentDto,
 } from "./dto/invoice.dto";
 
 @Controller("invoices")
@@ -80,6 +81,15 @@ export class InvoicesController {
   @Post(":id/payments")
   recordPayment(@Param("id") id: string, @Body() dto: RecordPaymentDto) {
     return this.invoices.recordPayment(id, dto);
+  }
+
+  @Patch(":id/payments/:paymentId")
+  updatePayment(
+    @Param("id") id: string,
+    @Param("paymentId") paymentId: string,
+    @Body() dto: UpdatePaymentDto,
+  ) {
+    return this.invoices.updatePayment(id, paymentId, dto);
   }
 
   @Post(":id/installments/plan")

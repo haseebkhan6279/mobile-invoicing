@@ -2,6 +2,9 @@ import type { Prisma } from "@prisma/client";
 import { BadRequestException, NotFoundException } from "@nestjs/common";
 import { invoiceTotals } from "./invoice";
 import { roundMoney } from "./money";
+import { rmaRemainingCredit, rmaTotals } from "./rma";
+
+const EPSILON_GBP = 0.005;
 
 export async function recordPaymentTx(
   tx: Prisma.TransactionClient,
@@ -12,6 +15,7 @@ export async function recordPaymentTx(
     notes?: string | null;
     paidAt?: Date;
     installmentId?: string;
+    rmaId?: string;
   },
 ) {
   const invoice = await tx.invoice.findUnique({
@@ -23,6 +27,28 @@ export async function recordPaymentTx(
     throw new BadRequestException("Cannot record a payment on a cancelled invoice");
   }
 
+  let rmaRemainingAfter: number | null = null;
+  if (input.rmaId) {
+    const rma = await tx.rma.findUnique({
+      where: { id: input.rmaId },
+      include: { items: true, payments: true },
+    });
+    if (!rma) throw new NotFoundException("RMA not found");
+    if (rma.customerId !== invoice.customerId) {
+      throw new BadRequestException("This RMA credit belongs to a different customer");
+    }
+    if (rma.paymentType !== "PENDING") {
+      throw new BadRequestException("This RMA credit has already been fully applied");
+    }
+    const remaining = rmaRemainingCredit(rma);
+    if (input.amountGbp > remaining + EPSILON_GBP) {
+      throw new BadRequestException(
+        `Amount exceeds the RMA's remaining credit (${remaining.toFixed(2)} left)`,
+      );
+    }
+    rmaRemainingAfter = roundMoney(remaining - input.amountGbp);
+  }
+
   const payment = await tx.payment.create({
     data: {
       invoiceId,
@@ -31,6 +57,7 @@ export async function recordPaymentTx(
       notes: input.notes ?? null,
       paidAt: input.paidAt ?? new Date(),
       installmentId: input.installmentId,
+      rmaId: input.rmaId,
     },
   });
 
@@ -55,7 +82,111 @@ export async function recordPaymentTx(
     });
   }
 
+  if (input.rmaId && rmaRemainingAfter !== null) {
+    const consumedSoFar = await tx.payment.aggregate({
+      where: { rmaId: input.rmaId },
+      _sum: { amountGbp: true },
+    });
+    const update: Prisma.RmaUpdateInput = {
+      paymentAmountGbp: roundMoney(consumedSoFar._sum.amountGbp ?? 0),
+    };
+    if (rmaRemainingAfter <= EPSILON_GBP) {
+      update.paymentType = "APPLIED_TO_INVOICE";
+      update.paymentDate = new Date();
+      update.appliedInvoice = { connect: { id: invoiceId } };
+    }
+    await tx.rma.update({ where: { id: input.rmaId }, data: update });
+  }
+
   return { payment, invoice: updatedInvoice };
+}
+
+export async function updatePaymentTx(
+  tx: Prisma.TransactionClient,
+  invoiceId: string,
+  paymentId: string,
+  input: {
+    amountGbp?: number;
+    method?: string | null;
+    notes?: string | null;
+    paidAt?: Date;
+  },
+) {
+  const payment = await tx.payment.findUnique({ where: { id: paymentId } });
+  if (!payment || payment.invoiceId !== invoiceId) {
+    throw new NotFoundException("Payment not found");
+  }
+
+  const invoice = await tx.invoice.findUnique({
+    where: { id: invoiceId },
+    include: { lines: true },
+  });
+  if (!invoice) throw new NotFoundException("Invoice not found");
+  if (invoice.status === "CANCELLED") {
+    throw new BadRequestException("Cannot edit a payment on a cancelled invoice");
+  }
+
+  const newAmountGbp =
+    input.amountGbp !== undefined ? roundMoney(input.amountGbp) : payment.amountGbp;
+
+  if (payment.rmaId && newAmountGbp !== payment.amountGbp) {
+    const rma = await tx.rma.findUnique({
+      where: { id: payment.rmaId },
+      include: { items: true, payments: true },
+    });
+    if (rma) {
+      const remainingExcludingSelf = roundMoney(rmaRemainingCredit(rma) + payment.amountGbp);
+      if (newAmountGbp > remainingExcludingSelf + EPSILON_GBP) {
+        throw new BadRequestException(
+          `Amount exceeds the RMA's remaining credit (${remainingExcludingSelf.toFixed(2)} available)`,
+        );
+      }
+    }
+  }
+
+  const updatedPayment = await tx.payment.update({
+    where: { id: paymentId },
+    data: {
+      amountGbp: newAmountGbp,
+      method: input.method !== undefined ? input.method : payment.method,
+      notes: input.notes !== undefined ? input.notes : payment.notes,
+      paidAt: input.paidAt ?? payment.paidAt,
+    },
+  });
+
+  const newPaidGbp = roundMoney(invoice.paidAmountGbp - payment.amountGbp + newAmountGbp);
+  const totals = invoiceTotals({ ...invoice, paidAmountGbp: newPaidGbp });
+  const nextStatus = totals.dueGbp <= 0 ? "PAID" : newPaidGbp > 0 ? "AWAITING_PAYMENT" : "PENDING";
+
+  const updatedInvoice = await tx.invoice.update({
+    where: { id: invoiceId },
+    data: {
+      paidAmountGbp: newPaidGbp,
+      status: nextStatus,
+      paidAt: nextStatus === "PAID" ? new Date() : null,
+    },
+  });
+
+  if (payment.rmaId) {
+    const consumedSoFar = await tx.payment.aggregate({
+      where: { rmaId: payment.rmaId },
+      _sum: { amountGbp: true },
+    });
+    const rma = await tx.rma.findUnique({ where: { id: payment.rmaId }, include: { items: true } });
+    if (rma) {
+      const totalConsumed = roundMoney(consumedSoFar._sum.amountGbp ?? 0);
+      const remaining = roundMoney(rmaTotals(rma).totalGbp - totalConsumed);
+      await tx.rma.update({
+        where: { id: payment.rmaId },
+        data: {
+          paymentAmountGbp: totalConsumed,
+          paymentType: remaining <= EPSILON_GBP ? "APPLIED_TO_INVOICE" : "PENDING",
+        },
+      });
+    }
+  }
+
+  return { payment: updatedPayment, invoice: updatedInvoice };
 }
 
 export function buildEvenInstallments(

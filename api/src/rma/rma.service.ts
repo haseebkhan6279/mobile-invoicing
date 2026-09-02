@@ -1,6 +1,6 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
-import { applyCreditToInvoiceTx } from "../common/rma";
+import { recordPaymentTx } from "../common/payments";
 import { nextNumberTx } from "../common/numbers";
 import { ApplyRmaCreditDto, CreateRmaDto } from "./dto/rma.dto";
 
@@ -11,7 +11,7 @@ export class RmaService {
   listRmas(customerId?: string) {
     return this.prisma.rma.findMany({
       where: customerId ? { customerId } : undefined,
-      include: { customer: true, invoice: true, items: true },
+      include: { customer: true, invoice: true, items: true, payments: true },
       orderBy: { createdAt: "desc" },
     });
   }
@@ -24,6 +24,7 @@ export class RmaService {
         invoice: true,
         appliedInvoice: true,
         items: { include: { stockUnit: true } },
+        payments: { include: { invoice: { select: { id: true, invoiceNumber: true } } } },
       },
     });
     if (!rma) throw new NotFoundException("RMA not found");
@@ -108,27 +109,32 @@ export class RmaService {
     const paymentAmountGbp = Number(input.paymentAmountGbp) || 0;
     const paymentDateRaw = input.paymentDate || null;
 
-    if (paymentType === "APPLIED_TO_INVOICE" && !appliedInvoiceId) {
-      throw new BadRequestException("Select an invoice to apply the credit to");
+    if (paymentType === "APPLIED_TO_INVOICE") {
+      if (!appliedInvoiceId) {
+        throw new BadRequestException("Select an invoice to apply the credit to");
+      }
+      if (paymentAmountGbp <= 0) {
+        throw new BadRequestException("Enter an amount to apply");
+      }
+      return this.prisma.$transaction((tx) =>
+        recordPaymentTx(tx, appliedInvoiceId, {
+          amountGbp: paymentAmountGbp,
+          rmaId,
+          method: "RMA credit",
+          paidAt: paymentDateRaw ? new Date(paymentDateRaw) : undefined,
+        }),
+      );
     }
 
-    return this.prisma.$transaction(async (tx) => {
-      const updated = await tx.rma.update({
-        where: { id: rmaId },
-        data: {
-          paymentType,
-          paymentDate: paymentDateRaw ? new Date(paymentDateRaw) : new Date(),
-          paymentAmountGbp,
-          appliedInvoiceId: paymentType === "APPLIED_TO_INVOICE" ? appliedInvoiceId : null,
-        },
-      });
-
-      if (paymentType === "APPLIED_TO_INVOICE" && appliedInvoiceId) {
-        const target = await applyCreditToInvoiceTx(tx, appliedInvoiceId, paymentAmountGbp);
-        if (!target) throw new BadRequestException("Invoice not found");
-      }
-
-      return updated;
+    // PENDING (reset) or REFUNDED: administrative status change only, no invoice/payment side effects.
+    return this.prisma.rma.update({
+      where: { id: rmaId },
+      data: {
+        paymentType,
+        paymentDate: paymentDateRaw ? new Date(paymentDateRaw) : new Date(),
+        paymentAmountGbp,
+        appliedInvoiceId: null,
+      },
     });
   }
 

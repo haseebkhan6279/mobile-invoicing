@@ -1,40 +1,16 @@
-import type { Prisma } from "@prisma/client";
-import { invoiceTotals } from "./invoice";
 import { roundMoney } from "./money";
-
-export async function applyCreditToInvoiceTx(
-  tx: Prisma.TransactionClient,
-  invoiceId: string,
-  amountGbp: number,
-) {
-  const target = await tx.invoice.findUnique({
-    where: { id: invoiceId },
-    include: { lines: true },
-  });
-  if (!target) return null;
-
-  const newPaidGbp = target.paidAmountGbp + amountGbp;
-  const totals = invoiceTotals({ ...target, paidAmountGbp: newPaidGbp });
-  const nextStatus =
-    totals.dueGbp <= 0
-      ? "PAID"
-      : target.status === "PENDING"
-        ? "AWAITING_PAYMENT"
-        : target.status;
-
-  return tx.invoice.update({
-    where: { id: invoiceId },
-    data: {
-      paidAmountGbp: newPaidGbp,
-      status: nextStatus,
-      paidAt: nextStatus === "PAID" ? new Date() : target.paidAt,
-    },
-  });
-}
 
 export function rmaTotals(rma: { items: { unitPriceGbp: number }[] }) {
   const totalGbp = roundMoney(rma.items.reduce((sum, item) => sum + item.unitPriceGbp, 0));
   return { totalGbp };
+}
+
+export function rmaRemainingCredit(rma: {
+  items: { unitPriceGbp: number }[];
+  payments: { amountGbp: number }[];
+}) {
+  const consumedGbp = roundMoney(rma.payments.reduce((sum, payment) => sum + payment.amountGbp, 0));
+  return roundMoney(rmaTotals(rma).totalGbp - consumedGbp);
 }
 
 export function groupRmaSummary(

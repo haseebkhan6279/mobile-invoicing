@@ -12,8 +12,9 @@ import { SubmitButton } from "@/components/ui/submit-button";
 import { Table, THead, Th, Td } from "@/components/ui/table";
 import { requireUser } from "@/lib/auth-guard";
 import { formatGbp } from "@/lib/money";
+import { formatDate } from "@/lib/utils";
 import { apiClient, ApiError } from "@/lib/api-client";
-import { rmaTotals } from "@/lib/rma";
+import { rmaRemainingCredit, rmaTotals } from "@/lib/rma";
 import { RMA_PAYMENT_TYPES, RMA_STATUSES } from "@/lib/status";
 
 type RmaDetail = {
@@ -30,6 +31,12 @@ type RmaDetail = {
   customer: { name: string };
   invoice: { invoiceNumber: string };
   appliedInvoice: { id: string; invoiceNumber: string } | null;
+  payments: {
+    id: string;
+    amountGbp: number;
+    paidAt: string;
+    invoice: { id: string; invoiceNumber: string };
+  }[];
   items: {
     id: string;
     reason: string | null;
@@ -63,6 +70,7 @@ export default async function RmaDetailPage({
   }
 
   const totals = rmaTotals(rma);
+  const remainingGbp = rmaRemainingCredit(rma);
   const invoices = (await apiClient.get<InvoiceOption[]>("/invoices", apiToken)).slice(0, 100);
 
   return (
@@ -92,7 +100,7 @@ export default async function RmaDetailPage({
           </Link>
         </p>
         <p className="mt-2 text-sm font-medium">
-          Credit value: {formatGbp(totals.totalGbp)}
+          Credit value: {formatGbp(totals.totalGbp)} · Remaining: {formatGbp(remainingGbp)}
         </p>
       </Card>
       <Card>
@@ -183,7 +191,8 @@ export default async function RmaDetailPage({
                 name="paymentAmountGbp"
                 type="number"
                 step="0.01"
-                defaultValue={rma.paymentAmountGbp || totals.totalGbp}
+                max={remainingGbp}
+                defaultValue={remainingGbp}
               />
             </div>
             <div>
@@ -198,13 +207,35 @@ export default async function RmaDetailPage({
           </div>
           <SubmitButton pendingText="Saving…">Save credit</SubmitButton>
         </form>
-        {rma.appliedInvoice ? (
-          <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
-            Currently applied to{" "}
-            <Link className="text-[#0b3a6e] hover:underline dark:text-sky-400" href={`/invoices/${rma.appliedInvoice.id}`}>
-              {rma.appliedInvoice.invoiceNumber}
-            </Link>
-          </p>
+        {rma.payments.length ? (
+          <div className="mt-4">
+            <h3 className="mb-2 text-sm font-medium">Applied to invoices</h3>
+            <Table>
+              <THead>
+                <tr>
+                  <Th>Date</Th>
+                  <Th>Amount</Th>
+                  <Th>Invoice</Th>
+                </tr>
+              </THead>
+              <tbody>
+                {rma.payments.map((payment) => (
+                  <tr key={payment.id}>
+                    <Td>{formatDate(payment.paidAt)}</Td>
+                    <Td>{formatGbp(payment.amountGbp)}</Td>
+                    <Td>
+                      <Link
+                        className="text-[#0b3a6e] hover:underline dark:text-sky-400"
+                        href={`/invoices/${payment.invoice.id}`}
+                      >
+                        {payment.invoice.invoiceNumber}
+                      </Link>
+                    </Td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+          </div>
         ) : null}
       </Card>
     </div>

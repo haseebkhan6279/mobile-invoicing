@@ -200,6 +200,7 @@ model Rma {
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
   items            RmaItem[]
+  payments         Payment[]
 }
 
 model RmaItem {
@@ -224,6 +225,8 @@ model Payment {
   invoice       Invoice      @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
   installmentId String?      @unique
   installment   Installment? @relation(fields: [installmentId], references: [id])
+  rmaId         String?
+  rma           Rma?         @relation(fields: [rmaId], references: [id])
   amountGbp     Float
   method        String?
   notes         String?

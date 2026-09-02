@@ -190,6 +190,10 @@ export class RecordPaymentDto {
   @IsOptional()
   @IsDateString()
   paidAt?: string;
+
+  @IsOptional()
+  @IsString()
+  rmaId?: string;
 }
 
 export class CreateInstallmentPlanDto {
@@ -205,6 +209,25 @@ export class CreateInstallmentPlanDto {
   @IsNumber()
   @Min(1)
   intervalDays?: number;
+}
+
+export class UpdatePaymentDto {
+  @IsOptional()
+  @IsNumber()
+  @Min(0.01)
+  amountGbp?: number;
+
+  @IsOptional()
+  @IsString()
+  method?: string;
+
+  @IsOptional()
+  @IsString()
+  notes?: string;
+
+  @IsOptional()
+  @IsDateString()
+  paidAt?: string;
 }
 
 export class PayInstallmentDto {

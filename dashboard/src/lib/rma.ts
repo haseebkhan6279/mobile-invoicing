@@ -9,6 +9,16 @@ export function rmaTotals(rma: {
   return { totalGbp };
 }
 
+export function rmaRemainingCredit(rma: {
+  items: { unitPriceGbp: number }[];
+  payments: { amountGbp: number }[];
+}) {
+  const consumedGbp = roundMoney(
+    rma.payments.reduce((sum, payment) => sum + payment.amountGbp, 0),
+  );
+  return roundMoney(rmaTotals(rma).totalGbp - consumedGbp);
+}
+
 export function groupRmaSummary(
   items: {
     stockUnit: { productName: string; color: string; grade: string } | null;

@@ -5,12 +5,14 @@ import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth-guard";
 import { toNumber, toOptionalString } from "@/lib/lookups";
 import { apiClient, ApiError } from "@/lib/api-client";
+import { rmaRemainingCredit } from "@/lib/rma";
 
 export type AvailableRmaCredit = {
   id: string;
   rmaNumber: string;
   invoice: { invoiceNumber: string };
   items: { unitPriceGbp: number }[];
+  payments: { amountGbp: number }[];
 };
 
 export async function getAvailableRmaCredits(customerId: string) {
@@ -19,7 +21,7 @@ export async function getAvailableRmaCredits(customerId: string) {
   const rmas = await apiClient.get<
     (AvailableRmaCredit & { paymentType: string })[]
   >(`/rma?customerId=${encodeURIComponent(customerId)}`, apiToken);
-  return rmas.filter((rma) => rma.paymentType === "PENDING");
+  return rmas.filter((rma) => rma.paymentType === "PENDING" && rmaRemainingCredit(rma) > 0);
 }
 
 export async function createRma(formData: FormData) {
@@ -102,6 +104,33 @@ export async function applyRmaCredit(formData: FormData) {
   if (appliedInvoiceId) revalidatePath(`/invoices/${appliedInvoiceId}`);
   revalidatePath("/invoices");
   redirect(`/returns/${rmaId}?ok=Credit updated`);
+}
+
+export async function applyRmaCreditToInvoice(formData: FormData) {
+  const { apiToken } = await requireUser();
+  const invoiceId = String(formData.get("invoiceId") ?? "");
+  const rmaId = String(formData.get("rmaId") ?? "");
+
+  try {
+    await apiClient.post(
+      `/invoices/${invoiceId}/payments`,
+      {
+        amountGbp: toNumber(formData.get("amountGbp")),
+        rmaId,
+        method: "RMA credit",
+      },
+      apiToken,
+    );
+  } catch (err) {
+    if (err instanceof ApiError) {
+      redirect(`/invoices/${invoiceId}?error=${encodeURIComponent(err.message)}`);
+    }
+    throw err;
+  }
+
+  revalidatePath(`/invoices/${invoiceId}`);
+  revalidatePath("/returns");
+  redirect(`/invoices/${invoiceId}?ok=RMA credit applied`);
 }
 
 export async function processRma(formData: FormData) {
