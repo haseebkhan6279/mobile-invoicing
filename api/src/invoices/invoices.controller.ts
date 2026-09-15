@@ -80,13 +80,18 @@ export class InvoicesController {
     return this.invoices.updateInvoiceLine(id, lineId, dto);
   }
 
+  @Delete(":id/lines/:lineId")
+  removeLine(@Param("id") id: string, @Param("lineId") lineId: string) {
+    return this.invoices.deleteInvoiceLine(id, lineId);
+  }
+
   @Patch(":id/lines/:lineId/imeis")
   updateLineImeis(
     @Param("id") id: string,
     @Param("lineId") lineId: string,
     @Body() dto: UpdateInvoiceLineImeisDto,
   ) {
-    return this.invoices.updateInvoiceLineImeis(id, lineId, dto.imeis);
+    return this.invoices.updateInvoiceLineImeis(id, lineId, dto);
   }
 
   @Post(":id/send-email")

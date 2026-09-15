@@ -167,11 +167,15 @@ export class StockService {
   ) {
     const units = await this.prisma.stockUnit.findMany({
       where: { status: "IN_STOCK", imei: { not: null }, ...spec },
-      select: { imei: true },
+      select: { imei: true, notes: true, supplier: { select: { name: true } } },
       orderBy: { createdAt: "asc" },
       take: limit,
     });
-    return units.map((u) => u.imei as string);
+    return units.map((u) => ({
+      imei: u.imei as string,
+      supplierName: u.supplier?.name ?? null,
+      notes: u.notes,
+    }));
   }
 
   async updateStockUnitImei(id: string, imei: string) {

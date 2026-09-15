@@ -13,6 +13,15 @@ import {
 } from "class-validator";
 import { INVOICE_STATUSES } from "../../common/status";
 
+export class InvoiceImeiEntryDto {
+  @IsString()
+  imei: string;
+
+  @IsOptional()
+  @IsString()
+  notes?: string | null;
+}
+
 class InvoiceLineDto {
   @IsString()
   productName: string;
@@ -44,6 +53,16 @@ class InvoiceLineDto {
   @IsArray()
   @IsString({ each: true })
   imeis?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => InvoiceImeiEntryDto)
+  imeiEntries?: InvoiceImeiEntryDto[];
+
+  @IsOptional()
+  @IsString()
+  supplierNote?: string | null;
 }
 
 class AppliedRmaCreditDto {
@@ -170,6 +189,12 @@ export class UpdateInvoiceLineImeisDto {
   @IsArray()
   @IsString({ each: true })
   imeis: string[];
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => InvoiceImeiEntryDto)
+  imeiEntries?: InvoiceImeiEntryDto[];
 }
 
 export class UpdateInvoiceLineDto {
@@ -198,6 +223,10 @@ export class UpdateInvoiceLineDto {
   @IsOptional()
   @IsNumber()
   buyPriceGbp?: number;
+
+  @IsOptional()
+  @IsString()
+  supplierNote?: string | null;
 }
 
 export class SendInvoiceEmailDto {

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth-guard";
 import { parseImeis } from "@/lib/imei";
+import { parseImeiEntriesJson } from "@/lib/imei-notes";
 import { toNumber, toOptionalNumber, toOptionalString } from "@/lib/lookups";
 import { apiClient, ApiError } from "@/lib/api-client";
 import type { InvoiceDoc } from "@/components/invoice-document";
@@ -21,18 +22,25 @@ function parseInvoiceLines(formData: FormData) {
   const qtys = formData.getAll("lineQty");
   const gbp = formData.getAll("linePriceGbp");
   const buyGbp = formData.getAll("lineBuyPriceGbp");
-  const imeis = formData.getAll("lineImeis");
+  const imeiEntries = formData.getAll("lineImeiEntries");
+  const supplierNotes = formData.getAll("lineSupplierNote");
   const lines = [];
   for (let i = 0; i < products.length; i += 1) {
+    const productName = String(products[i] ?? "").trim();
+    const entries = parseImeiEntriesJson(String(imeiEntries[i] ?? "[]"));
+    const qty = toNumber(qtys[i], 0);
+    if (!productName || qty <= 0) continue;
     lines.push({
-      productName: String(products[i] ?? "").trim(),
+      productName,
       color: String(colors[i] ?? "").trim(),
       network: String(networks[i] ?? "").trim(),
       grade: String(grades[i] ?? "").trim(),
-      qty: toNumber(qtys[i], 0),
+      qty,
       unitPriceGbp: toNumber(gbp[i]),
       buyPriceGbp: toNumber(buyGbp[i]),
-      imeis: parseImeis(String(imeis[i] ?? "")),
+      imeis: entries.map((entry) => entry.imei),
+      imeiEntries: entries,
+      supplierNote: toOptionalString(supplierNotes[i]),
     });
   }
   return lines;
@@ -193,6 +201,7 @@ export async function updateInvoiceLine(formData: FormData) {
         qty: toNumber(formData.get("qty")),
         unitPriceGbp: toNumber(formData.get("unitPriceGbp")),
         buyPriceGbp: toNumber(formData.get("buyPriceGbp")),
+        supplierNote: toOptionalString(formData.get("supplierNote")),
       },
       apiToken,
     );
@@ -223,6 +232,7 @@ export async function addInvoiceLine(formData: FormData) {
         qty: toNumber(formData.get("qty")),
         unitPriceGbp: toNumber(formData.get("unitPriceGbp")),
         buyPriceGbp: toNumber(formData.get("buyPriceGbp")),
+        supplierNote: toOptionalString(formData.get("supplierNote")),
       },
       apiToken,
     );
@@ -236,6 +246,25 @@ export async function addInvoiceLine(formData: FormData) {
   revalidatePath(`/invoices/${id}`);
   revalidatePath("/stock");
   redirect(`/invoices/${id}?ok=Line added`);
+}
+
+export async function deleteInvoiceLine(formData: FormData) {
+  const { apiToken } = await requireUser();
+  const id = String(formData.get("id") ?? "");
+  const lineId = String(formData.get("lineId") ?? "");
+
+  try {
+    await apiClient.delete(`/invoices/${id}/lines/${lineId}`, apiToken);
+  } catch (err) {
+    if (err instanceof ApiError) {
+      redirect(`/invoices/${id}?error=${encodeURIComponent(err.message)}`);
+    }
+    throw err;
+  }
+
+  revalidatePath(`/invoices/${id}`);
+  revalidatePath("/stock");
+  redirect(`/invoices/${id}?ok=Line removed`);
 }
 
 /** Appends a query param, preserving any the caller already put on the path. */
@@ -404,10 +433,17 @@ export async function updateInvoiceLineImeis(formData: FormData) {
   const { apiToken } = await requireUser();
   const id = String(formData.get("id") ?? "");
   const lineId = String(formData.get("lineId") ?? "");
-  const imeis = parseImeis(String(formData.get("imeis") ?? ""));
+  const imeiEntries = parseImeiEntriesJson(String(formData.get("imeiEntries") ?? "[]"));
+  const imeis = imeiEntries.length
+    ? imeiEntries.map((entry) => entry.imei)
+    : parseImeis(String(formData.get("imeis") ?? ""));
 
   try {
-    await apiClient.patch(`/invoices/${id}/lines/${lineId}/imeis`, { imeis }, apiToken);
+    await apiClient.patch(
+      `/invoices/${id}/lines/${lineId}/imeis`,
+      { imeis, imeiEntries },
+      apiToken,
+    );
   } catch (err) {
     if (err instanceof ApiError) {
       redirect(`/invoices/${id}?error=${encodeURIComponent(err.message)}`);

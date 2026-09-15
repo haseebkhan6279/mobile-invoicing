@@ -182,6 +182,10 @@ model InvoiceLine {
   unitPriceGbp Float
   buyPriceGbp  Float       @default(0)
   imeis        String[]    @default([])
+  // Internal vendor/source note for the product model (not printed).
+  supplierNote String?
+  // Map of IMEI -> notes/supplier for that serial (not printed).
+  imeiNotes    Json        @default("{}")
   sortOrder    Int         @default(0)
   stockUnits   StockUnit[]
 }

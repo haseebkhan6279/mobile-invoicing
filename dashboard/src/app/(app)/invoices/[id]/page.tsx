@@ -17,6 +17,7 @@ import {
 import { applyRmaCreditToInvoice, getAvailableRmaCredits } from "@/actions/rma";
 import { EmailInvoiceForm } from "@/components/email-invoice-form";
 import { InvoiceDocument } from "@/components/invoice-document";
+import { InvoiceImeiEntriesField } from "@/components/invoice-imei-entries";
 import { GoodsNotReceivedWarning } from "@/components/goods-not-received-warning";
 import { Notice } from "@/components/notice";
 import { PageHeader } from "@/components/page-header";
@@ -37,6 +38,7 @@ import { formatGbp } from "@/lib/money";
 import { formatDate } from "@/lib/utils";
 import { rmaCreditSummary, rmaGoodsReceived } from "@/lib/rma";
 import { INVOICE_STATUSES } from "@/lib/status";
+import { entriesFromLine } from "@/lib/imei-notes";
 
 const PAYMENT_METHODS = ["Manual", "Bank transfer", "Cash", "Card", "Other"];
 
@@ -73,6 +75,8 @@ type InvoiceDetail = {
     unitPriceGbp: number;
     buyPriceGbp: number;
     imeis: string[];
+    supplierNote: string | null;
+    imeiNotes: unknown;
   }[];
   stockUnits: { imei: string; invoiceLineId: string | null }[];
   payments: {
@@ -478,7 +482,8 @@ export default async function InvoiceDetailPage({
                 <h2 className="mb-3 font-medium">Add invoice line</h2>
                 <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">
                   To edit an existing line, open the Invoice tab, click into any field in the
-                  line table and hit Save on that row. Use this to add a brand new line instead.
+                  line table and hit Save on that row. Use Remove on a row to delete it and
+                  recalculate totals. Use this to add a brand new line instead.
                 </p>
                 <div className="space-y-3">
                   <form
@@ -528,6 +533,10 @@ export default async function InvoiceDetailPage({
                     <div>
                       <Label>Sell £</Label>
                       <Input name="unitPriceGbp" type="number" step="0.01" defaultValue={0} />
+                    </div>
+                    <div className="col-span-2 sm:col-span-4 lg:col-span-7">
+                      <Label>Notes / supplier</Label>
+                      <Input name="supplierNote" placeholder="Vendor, source, or other internal note" />
                     </div>
                     <div className="col-span-2 flex flex-wrap items-center justify-between gap-3 sm:col-span-4 lg:col-span-7">
                       <p className="text-xs text-slate-500 dark:text-slate-400">
@@ -642,13 +651,14 @@ export default async function InvoiceDetailPage({
                 <h2 className="mb-3 font-medium">Line IMEIs</h2>
                 <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">
                   IMEI is optional at invoice creation — add or edit it here at any time.
+                  Notes / supplier stay with that serial and are never printed on the invoice.
                 </p>
                 <Table>
                   <THead>
                     <tr>
                       <Th>Product</Th>
                       <Th>Qty</Th>
-                      <Th>IMEIs</Th>
+                      <Th>IMEIs / supplier</Th>
                     </tr>
                   </THead>
                   <tbody>
@@ -659,6 +669,11 @@ export default async function InvoiceDetailPage({
                           <div className="text-xs text-slate-500 dark:text-slate-400">
                             {line.color} · {line.network} · {line.grade}
                           </div>
+                          {line.supplierNote ? (
+                            <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                              {line.supplierNote}
+                            </div>
+                          ) : null}
                         </Td>
                         <Td>{line.qty}</Td>
                         <Td>
@@ -668,12 +683,12 @@ export default async function InvoiceDetailPage({
                           >
                             <input type="hidden" name="id" value={invoice.id} />
                             <input type="hidden" name="lineId" value={line.id} />
-                            <Textarea
-                              name="imeis"
-                              className="min-h-16 sm:flex-1"
-                              placeholder="One 15-digit IMEI per line (optional)"
-                              defaultValue={line.imeis.join("\n")}
-                            />
+                            <div className="sm:flex-1">
+                              <InvoiceImeiEntriesField
+                                name="imeiEntries"
+                                initial={entriesFromLine(line.imeis, line.imeiNotes)}
+                              />
+                            </div>
                             <SubmitButton pendingText="Saving…" size="sm" variant="secondary">
                               Save IMEIs
                             </SubmitButton>

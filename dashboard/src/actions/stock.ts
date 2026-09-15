@@ -71,7 +71,9 @@ export async function getAvailableImeis(
 ) {
   const { apiToken } = await requireUser();
   const params = new URLSearchParams({ ...spec, limit: String(limit) });
-  return apiClient.get<string[]>(`/stock/available-imeis?${params}`, apiToken);
+  return apiClient.get<
+    { imei: string; supplierName: string | null; notes: string | null }[]
+  >(`/stock/available-imeis?${params}`, apiToken);
 }
 
 export async function updateStockUnitImei(formData: FormData) {

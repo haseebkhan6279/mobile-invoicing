@@ -31,6 +31,8 @@ import {
   UpdatePaymentDto,
 } from "./dto/invoice.dto";
 
+type ImeiNotesMap = Record<string, string>;
+
 type NormalizedInvoiceLine = {
   productName: string;
   color: string;
@@ -40,8 +42,56 @@ type NormalizedInvoiceLine = {
   unitPriceGbp: number;
   buyPriceGbp: number;
   imeis: string[];
+  imeiNotes: ImeiNotesMap;
+  supplierNote: string | null;
   sortOrder: number;
 };
+
+function asImeiNotes(value: unknown): ImeiNotesMap {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  const out: ImeiNotesMap = {};
+  for (const [key, note] of Object.entries(value as Record<string, unknown>)) {
+    const imei = key.trim();
+    const text = typeof note === "string" ? note.trim() : "";
+    if (imei && text) out[imei] = text;
+  }
+  return out;
+}
+
+function collectImeisAndNotes(line: {
+  imeis?: string[];
+  imeiEntries?: { imei?: string; notes?: string | null }[];
+}): { imeis: string[]; imeiNotes: ImeiNotesMap } {
+  const imeiNotes: ImeiNotesMap = {};
+  const fromEntries = (line.imeiEntries ?? [])
+    .map((entry) => {
+      const imei = (entry.imei ?? "").trim();
+      const notes = (entry.notes ?? "").trim();
+      if (imei && notes) imeiNotes[imei] = notes;
+      return imei;
+    })
+    .filter(Boolean);
+  const fromImeis = (line.imeis ?? []).map((imei) => imei.trim()).filter(Boolean);
+  const imeis = Array.from(new Set(fromEntries.length ? fromEntries : fromImeis));
+  for (const key of Object.keys(imeiNotes)) {
+    if (!imeis.includes(key)) delete imeiNotes[key];
+  }
+  return { imeis, imeiNotes };
+}
+
+function mergeImeiNotes(
+  imeis: string[],
+  incoming: ImeiNotesMap,
+  previous: ImeiNotesMap,
+  replaceNotes: boolean,
+): ImeiNotesMap {
+  const out: ImeiNotesMap = {};
+  for (const imei of imeis) {
+    const note = replaceNotes ? incoming[imei] : (incoming[imei] ?? previous[imei]);
+    if (note) out[imei] = note;
+  }
+  return out;
+}
 
 function normalizeLines(lines: CreateInvoiceDto["lines"]): NormalizedInvoiceLine[] {
   const normalized: NormalizedInvoiceLine[] = [];
@@ -49,7 +99,7 @@ function normalizeLines(lines: CreateInvoiceDto["lines"]): NormalizedInvoiceLine
     const productName = (line.productName ?? "").trim();
     const qty = Number(line.qty) || 0;
     if (!productName || qty <= 0) return;
-    const imeis = (line.imeis ?? []).map((imei) => imei.trim()).filter(Boolean);
+    const { imeis, imeiNotes } = collectImeisAndNotes(line);
     normalized.push({
       productName,
       color: (line.color ?? "").toString().trim() || "Black",
@@ -59,6 +109,8 @@ function normalizeLines(lines: CreateInvoiceDto["lines"]): NormalizedInvoiceLine
       unitPriceGbp: Number(line.unitPriceGbp) || 0,
       buyPriceGbp: Number(line.buyPriceGbp) || 0,
       imeis,
+      imeiNotes,
+      supplierNote: (line.supplierNote ?? "").toString().trim() || null,
       sortOrder: i,
     });
   });
@@ -162,6 +214,8 @@ export class InvoicesService {
               unitPriceGbp: line.unitPriceGbp,
               buyPriceGbp: line.buyPriceGbp,
               imeis: line.imeis,
+              imeiNotes: line.imeiNotes,
+              supplierNote: line.supplierNote,
               sortOrder: line.sortOrder,
             })),
           },
@@ -335,6 +389,8 @@ export class InvoicesService {
         unitPriceGbp: Number(dto.unitPriceGbp) || 0,
         buyPriceGbp: Number(dto.buyPriceGbp) || 0,
         imeis: [],
+        imeiNotes: {},
+        supplierNote: (dto.supplierNote ?? "").toString().trim() || null,
         sortOrder: (last._max.sortOrder ?? -1) + 1,
       },
     });
@@ -364,17 +420,69 @@ export class InvoicesService {
         qty,
         unitPriceGbp: Number(dto.unitPriceGbp) || 0,
         buyPriceGbp: Number(dto.buyPriceGbp) || 0,
+        supplierNote:
+          dto.supplierNote === undefined
+            ? undefined
+            : (dto.supplierNote ?? "").toString().trim() || null,
       },
     });
   }
 
-  async updateInvoiceLineImeis(invoiceId: string, lineId: string, imeis: string[]) {
+  async deleteInvoiceLine(invoiceId: string, lineId: string) {
+    const invoice = await this.prisma.invoice.findUnique({
+      where: { id: invoiceId },
+      include: { lines: true },
+    });
+    if (!invoice) throw new NotFoundException("Invoice not found");
+
+    const line = invoice.lines.find((candidate) => candidate.id === lineId);
+    if (!line) throw new NotFoundException("Invoice line not found");
+    if (invoice.lines.length <= 1) {
+      throw new BadRequestException("An invoice must have at least one line");
+    }
+
+    const units = await this.prisma.stockUnit.findMany({ where: { invoiceLineId: lineId } });
+
+    return this.prisma.$transaction(async (tx) => {
+      for (const unit of units) {
+        if (unit.status === "RMA" || unit.status === "FAULTY") {
+          await tx.stockUnit.update({
+            where: { id: unit.id },
+            data: { invoiceLineId: null },
+          });
+        } else {
+          await tx.stockUnit.update({
+            where: { id: unit.id },
+            data: { status: "IN_STOCK", invoiceId: null, invoiceLineId: null },
+          });
+        }
+      }
+      await tx.invoiceLine.delete({ where: { id: lineId } });
+      return { deleted: true };
+    });
+  }
+
+  async updateInvoiceLineImeis(
+    invoiceId: string,
+    lineId: string,
+    dto: { imeis: string[]; imeiEntries?: { imei?: string; notes?: string | null }[] },
+  ) {
     const invoice = await this.prisma.invoice.findUnique({ where: { id: invoiceId } });
     if (!invoice) throw new NotFoundException("Invoice not found");
     const line = await this.prisma.invoiceLine.findUnique({ where: { id: lineId } });
     if (!line || line.invoiceId !== invoiceId) throw new NotFoundException("Invoice line not found");
 
-    const cleaned = Array.from(new Set(imeis.map((imei) => imei.trim()).filter(Boolean)));
+    const collected = collectImeisAndNotes({
+      imeis: dto.imeis,
+      imeiEntries: dto.imeiEntries,
+    });
+    const cleaned = collected.imeis;
+    const imeiNotes = mergeImeiNotes(
+      cleaned,
+      collected.imeiNotes,
+      asImeiNotes(line.imeiNotes),
+      Boolean(dto.imeiEntries),
+    );
     if (cleaned.length > line.qty) {
       throw new BadRequestException(`Cannot list more IMEIs than the qty (${line.qty})`);
     }
@@ -388,7 +496,7 @@ export class InvoicesService {
 
       const updated = await tx.invoiceLine.update({
         where: { id: lineId },
-        data: { imeis: cleaned },
+        data: { imeis: cleaned, imeiNotes },
       });
 
       // Best effort link: only IMEIs matching a real, IN_STOCK unit get tied

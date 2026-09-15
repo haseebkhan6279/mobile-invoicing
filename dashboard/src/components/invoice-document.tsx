@@ -1,7 +1,9 @@
-import { updateInvoiceLine } from "@/actions/invoices";
+import { deleteInvoiceLine, updateInvoiceLine } from "@/actions/invoices";
 import { CompanyBrand } from "@/components/company-brand";
+import { ConfirmSubmitButton } from "@/components/ui/confirm-submit-button";
 import { addressLines, bankDetailLines, companyForCurrency } from "@/lib/company";
 import { invoiceProfit, invoiceTotals } from "@/lib/invoice";
+import { asImeiNotes } from "@/lib/imei-notes";
 import { DEFAULT_GBP_TO_EUR_RATE, formatMoney, type PrintCurrency } from "@/lib/money";
 import { INVOICE_INVALID_UNTIL_PAID_NOTICE, INVOICE_MARGIN_NOTICE, INVOICE_TERMS } from "@/lib/terms";
 import { formatDate } from "@/lib/utils";
@@ -41,6 +43,8 @@ export type InvoiceDoc = {
     unitPriceGbp: number;
     buyPriceGbp?: number;
     imeis?: string[];
+    supplierNote?: string | null;
+    imeiNotes?: unknown;
   }[];
   stockUnits: { imei: string; invoiceLineId: string | null }[];
 };
@@ -156,7 +160,7 @@ export function InvoiceDocument({
           <col className="w-16" />
           <col className={editable ? "w-32" : "w-20"} />
           <col className="w-24" />
-          {editable ? <col className="w-14" /> : null}
+          {editable ? <col className="w-24" /> : null}
         </colgroup>
         <thead>
           <tr className="border-y border-slate-300 text-xs uppercase tracking-wide text-slate-500">
@@ -171,8 +175,9 @@ export function InvoiceDocument({
           </tr>
         </thead>
         <tbody>
-          {invoice.lines.map((line) =>
-            editable ? (
+          {invoice.lines.map((line) => {
+            const imeiNotes = asImeiNotes(line.imeiNotes);
+            return editable ? (
               <tr key={line.id} className="border-b border-slate-100">
                 <td className="py-1 pr-2">
                   <input
@@ -191,6 +196,27 @@ export function InvoiceDocument({
                     defaultValue={line.productName}
                     className={editableCellClass}
                   />
+                  <input
+                    form={`line-${line.id}`}
+                    name="supplierNote"
+                    defaultValue={line.supplierNote ?? ""}
+                    placeholder="Notes / supplier"
+                    className={`no-print mt-0.5 text-xs text-slate-500 ${editableCellClass}`}
+                    title="Internal vendor or source note — never printed"
+                  />
+                  {line.imeis?.length ? (
+                    <ul className="no-print mt-1 space-y-0.5 text-[11px] text-slate-500">
+                      {line.imeis.map((imei) => {
+                        const note = imeiNotes[imei];
+                        return (
+                          <li key={imei} className="font-mono">
+                            {imei}
+                            {note ? <span className="font-sans"> · {note}</span> : null}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  ) : null}
                 </td>
                 <td className="py-1 pr-2">
                   <input
@@ -277,13 +303,31 @@ export function InvoiceDocument({
                   {money(line.qty * line.unitPriceGbp)}
                 </td>
                 <td className="no-print py-1 pl-2 text-right">
-                  <button
-                    form={`line-${line.id}`}
-                    type="submit"
-                    className="rounded-lg px-2 py-1 text-xs font-medium text-[#0b3a6e] hover:bg-slate-100 dark:text-sky-400"
-                  >
-                    Save
-                  </button>
+                  <div className="flex flex-col items-end gap-1">
+                    <button
+                      form={`line-${line.id}`}
+                      type="submit"
+                      className="rounded-lg px-2 py-1 text-xs font-medium text-[#0b3a6e] hover:bg-slate-100 dark:text-sky-400"
+                    >
+                      Save
+                    </button>
+                    {invoice.lines.length > 1 ? (
+                      <form action={deleteInvoiceLine}>
+                        <input type="hidden" name="id" value={invoice.id} />
+                        <input type="hidden" name="lineId" value={line.id} />
+                        <ConfirmSubmitButton
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 px-2 text-xs text-red-600 hover:bg-red-50 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-950/40"
+                          pendingText="Removing…"
+                          confirmTitle="Remove this line item?"
+                          confirmMessage="Linked stock is released back to inventory. Invoice totals update after it is removed."
+                        >
+                          Remove
+                        </ConfirmSubmitButton>
+                      </form>
+                    ) : null}
+                  </div>
                   <form
                     id={`line-${line.id}`}
                     action={updateInvoiceLine}
@@ -308,8 +352,8 @@ export function InvoiceDocument({
                   {money(line.qty * line.unitPriceGbp)}
                 </td>
               </tr>
-            ),
-          )}
+            );
+          })}
           {hasShipping ? (
             <tr className="border-b border-slate-100">
               <td className="py-2 pr-2">1</td>

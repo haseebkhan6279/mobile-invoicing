@@ -1,9 +1,11 @@
 "use client";
 
+import { Trash2 } from "lucide-react";
 import { useId, useRef, useState } from "react";
 import { getAvailableImeis } from "@/actions/stock";
 import { getAvailableRmaCredits, type AvailableRmaCredit } from "@/actions/rma";
 import { CustomerPicker, type CustomerHit } from "@/components/customer-picker";
+import { InvoiceImeiEntriesField } from "@/components/invoice-imei-entries";
 import { InvoiceLineProductField, type ProductHit } from "@/components/invoice-line-product-field";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,6 +15,7 @@ import { GoodsNotReceivedWarning } from "@/components/goods-not-received-warning
 import { Textarea } from "@/components/ui/textarea";
 import { DEFAULT_GBP_TO_EUR_RATE, formatGbp, type PrintCurrency } from "@/lib/money";
 import { rmaCreditSummary, rmaGoodsReceived } from "@/lib/rma";
+import type { ImeiEntry } from "@/lib/imei-notes";
 
 type Lookup = { id: string; name?: string; code?: string };
 
@@ -21,7 +24,8 @@ type LineSeed = {
   network: string;
   grade: string;
   buyPriceGbp: number;
-  imeis: string;
+  supplierNote: string;
+  imeiEntries: ImeiEntry[];
 };
 
 const emptySeed: LineSeed = {
@@ -29,25 +33,30 @@ const emptySeed: LineSeed = {
   network: "Unlocked",
   grade: "A",
   buyPriceGbp: 0,
-  imeis: "",
+  supplierNote: "",
+  imeiEntries: [{ imei: "", notes: "" }],
 };
 
 function InvoiceLine({
   grades,
   colors,
   networks,
+  canRemove,
   onRemove,
 }: {
   grades: Lookup[];
   colors: Lookup[];
   networks: Lookup[];
+  canRemove: boolean;
   onRemove: () => void;
 }) {
   const uid = useId();
   const [productName, setProductName] = useState("");
   const [seed, setSeed] = useState<LineSeed>(emptySeed);
   const [autofillKey, setAutofillKey] = useState(0);
-  const [availableImeis, setAvailableImeis] = useState<string[]>([]);
+  const [availableImeis, setAvailableImeis] = useState<
+    { imei: string; supplierName: string | null; notes: string | null }[]
+  >([]);
   const [supplierName, setSupplierName] = useState<string | null>(null);
   const qtyRef = useRef<HTMLInputElement>(null);
 
@@ -69,7 +78,11 @@ function InvoiceLine({
       network: hit.network,
       grade: hit.grade,
       buyPriceGbp: hit.costGbp,
-      imeis: imeiList.slice(0, qty).join("\n"),
+      supplierNote: hit.supplierName ?? "",
+      imeiEntries: imeiList.slice(0, qty).map((unit) => ({
+        imei: unit.imei,
+        notes: (unit.notes ?? "").trim() || unit.supplierName || "",
+      })),
     });
     setAutofillKey((k) => k + 1);
   };
@@ -83,12 +96,15 @@ function InvoiceLine({
           variant="ghost"
           size="sm"
           onClick={onRemove}
-          className="h-6 px-2 text-xs"
+          disabled={!canRemove}
+          className="h-8 px-2 text-xs text-red-600 hover:bg-red-50 hover:text-red-700 disabled:text-slate-300 dark:text-red-400 dark:hover:bg-red-950/40"
+          aria-label="Remove line item"
         >
-          Remove line
+          <Trash2 className="h-4 w-4" />
+          Remove
         </Button>
       </div>
-      <div className="grid grid-cols-2 gap-x-3 gap-y-2 sm:grid-cols-4 lg:grid-cols-[1.6fr_0.9fr_0.9fr_0.55fr_0.5fr_0.85fr_0.85fr_1.5fr] lg:gap-y-1.5">
+      <div className="grid grid-cols-2 gap-x-3 gap-y-2 sm:grid-cols-4 lg:grid-cols-[1.6fr_0.9fr_0.9fr_0.55fr_0.5fr_0.85fr_0.85fr] lg:gap-y-1.5">
         <div className="col-span-2 sm:col-span-4 lg:col-span-1">
           <Label className="mb-1">Product name</Label>
           <InvoiceLineProductField
@@ -160,23 +176,22 @@ function InvoiceLine({
           <Label className="mb-1">Sell £</Label>
           <Input key={`gbp-${autofillKey}`} name="linePriceGbp" type="number" step="0.01" defaultValue="" />
         </div>
-        <div className="col-span-2 sm:col-span-4 lg:col-span-1">
-          <Label className="mb-1">IMEIs (optional)</Label>
-          <Textarea
-            key={`imeis-${autofillKey}`}
-            name="lineImeis"
-            rows={1}
-            className="min-h-11 resize-y"
-            placeholder="One 15-digit IMEI per line"
-            defaultValue={seed.imeis}
+        <div className="col-span-2 sm:col-span-4">
+          <Label className="mb-1">Notes / supplier</Label>
+          <Input
+            key={`supplier-note-${autofillKey}`}
+            name="lineSupplierNote"
+            defaultValue={seed.supplierNote}
+            placeholder="Vendor, source, or other internal note"
           />
         </div>
       </div>
+      <InvoiceImeiEntriesField key={`imeis-${autofillKey}`} initial={seed.imeiEntries} />
       <p className="text-xs text-slate-400 dark:text-slate-500">
         {supplierName ? (
           <span className="font-medium text-slate-500 dark:text-slate-400">Purchased from {supplierName} (internal only, not printed on invoice). </span>
         ) : null}
-        Buying price is internal only and never appears on the printed invoice.
+        Buying price and supplier notes are internal only and never appear on the printed invoice.
         {availableImeis.length
           ? ` ${availableImeis.length} IMEIs available for this spec — pre-filled above, edit to swap, add, or clear.`
           : ""}
@@ -430,6 +445,7 @@ export function InvoiceForm({
             grades={grades}
             colors={colors}
             networks={networks}
+            canRemove={lineIds.length > 1}
             onRemove={() => setLineIds((current) => current.filter((id) => id !== lineId))}
           />
         ))}
