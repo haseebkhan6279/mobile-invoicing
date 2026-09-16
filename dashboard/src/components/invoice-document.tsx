@@ -1,5 +1,6 @@
 import { deleteInvoiceLine, updateInvoiceLine } from "@/actions/invoices";
 import { CompanyBrand } from "@/components/company-brand";
+import { ProductNameInput } from "@/components/product-name-input";
 import { ConfirmSubmitButton } from "@/components/ui/confirm-submit-button";
 import { addressLines, bankDetailLines, companyForCurrency } from "@/lib/company";
 import { invoiceProfit, invoiceTotals } from "@/lib/invoice";
@@ -190,11 +191,14 @@ export function InvoiceDocument({
                   />
                 </td>
                 <td className="py-1 pr-2">
-                  <input
+                  {/* Wraps and grows instead of scrolling sideways, so the full
+                      model name is readable without clicking into the cell. */}
+                  <ProductNameInput
                     form={`line-${line.id}`}
                     name="productName"
                     defaultValue={line.productName}
-                    className={editableCellClass}
+                    required
+                    className={`${editableCellClass} font-medium leading-snug text-slate-900`}
                   />
                   <input
                     form={`line-${line.id}`}

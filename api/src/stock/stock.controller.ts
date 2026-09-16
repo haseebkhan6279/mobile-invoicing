@@ -44,7 +44,14 @@ export class StockController {
     return this.stock.searchStockProducts(q);
   }
 
-  // Declared after the literal routes above (available-imeis, search-products)
+  // Product name typeahead for line editors: every name seen in stock,
+  // invoices and purchase orders, not only what is currently in stock.
+  @Get("product-names")
+  productNames(@Query("q") q = "") {
+    return this.stock.searchProductNames(q);
+  }
+
+  // Declared after the literal routes above (available-imeis, search-products, product-names)
   // so ":id" doesn't shadow them.
   @Get(":id")
   findOne(@Param("id") id: string) {

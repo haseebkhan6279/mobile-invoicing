@@ -21,10 +21,11 @@ import { InvoiceImeiEntriesField } from "@/components/invoice-imei-entries";
 import { GoodsNotReceivedWarning } from "@/components/goods-not-received-warning";
 import { Notice } from "@/components/notice";
 import { PageHeader } from "@/components/page-header";
+import { ProductNameInput } from "@/components/product-name-input";
 import { ConfirmSubmitButton } from "@/components/ui/confirm-submit-button";
 import { Tabs } from "@/components/ui/tabs";
 import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { Input, inputClass } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { SubmitButton } from "@/components/ui/submit-button";
@@ -493,7 +494,12 @@ export default async function InvoiceDetailPage({
                     <input type="hidden" name="id" value={invoice.id} />
                     <div className="col-span-2 sm:col-span-4 lg:col-span-1">
                       <Label>Product name</Label>
-                      <Input name="productName" required />
+                      <ProductNameInput
+                        name="productName"
+                        required
+                        placeholder="iPhone 14 128GB"
+                        className={inputClass}
+                      />
                     </div>
                     <div>
                       <Label>Color</Label>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { searchStockProducts } from "@/actions/stock";
+import { searchProductNames, searchStockProducts } from "@/actions/stock";
 import { Input } from "@/components/ui/input";
 
 export type ProductHit = {
@@ -24,6 +24,9 @@ export function InvoiceLineProductField({
   onSelect: (hit: ProductHit) => void;
 }) {
   const [hits, setHits] = useState<ProductHit[]>([]);
+  // Names used before (invoices, purchase orders, sold stock) with nothing in
+  // stock right now — picking one only fills the name.
+  const [pastNames, setPastNames] = useState<string[]>([]);
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -31,9 +34,14 @@ export function InvoiceLineProductField({
     if (term.length < 2) return;
     let cancelled = false;
     const handle = setTimeout(async () => {
-      const results = await searchStockProducts(term);
+      const [results, names] = await Promise.all([
+        searchStockProducts(term),
+        searchProductNames(term).catch(() => [] as string[]),
+      ]);
       if (!cancelled) {
+        const inStock = new Set(results.map((hit) => hit.productName.toLowerCase()));
         setHits(results);
+        setPastNames(names.filter((name) => !inStock.has(name.toLowerCase())));
         setOpen(true);
       }
     }, 200);
@@ -56,13 +64,14 @@ export function InvoiceLineProductField({
           onChange(next);
           if (next.trim().length < 2) {
             setHits([]);
+            setPastNames([]);
             setOpen(false);
           }
         }}
-        onFocus={() => hits.length && setOpen(true)}
+        onFocus={() => (hits.length || pastNames.length) && setOpen(true)}
         onBlur={() => setTimeout(() => setOpen(false), 150)}
       />
-      {open && hits.length > 0 ? (
+      {open && (hits.length > 0 || pastNames.length > 0) ? (
         <ul className="absolute z-20 mt-1 max-h-64 w-full overflow-auto rounded-lg border border-slate-200 bg-white shadow-lg dark:border-slate-800 dark:bg-slate-900">
           {hits.map((hit, i) => (
             <li key={i}>
@@ -80,6 +89,25 @@ export function InvoiceLineProductField({
                   {hit.color} · {hit.network} · {hit.grade} · {hit.count} in stock
                   {hit.supplierName ? ` · from ${hit.supplierName}` : ""}
                 </div>
+              </button>
+            </li>
+          ))}
+          {pastNames.length ? (
+            <li className="border-t border-slate-100 px-3 pt-2 pb-1 text-[11px] font-medium uppercase tracking-wide text-slate-400 first:border-0 dark:border-slate-800">
+              Previously used · not in stock
+            </li>
+          ) : null}
+          {pastNames.map((name) => (
+            <li key={name}>
+              <button
+                type="button"
+                className="w-full px-3 py-2 text-left text-sm hover:bg-slate-50 dark:hover:bg-slate-800"
+                onClick={() => {
+                  onChange(name);
+                  setOpen(false);
+                }}
+              >
+                {name}
               </button>
             </li>
           ))}

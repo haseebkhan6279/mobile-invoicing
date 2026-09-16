@@ -270,4 +270,35 @@ export class StockService {
       supplierName: g.supplierId ? (supplierNameById.get(g.supplierId) ?? null) : null,
     }));
   }
+
+  // Every product name used before — in stock (any status), on an invoice, or
+  // on a purchase order — so a name can be picked instead of retyped. Prefix
+  // matches come first, then the rest in natural order.
+  async searchProductNames(query: string) {
+    const q = query.trim();
+    if (!q) return [];
+    const args = {
+      where: { productName: { contains: q, mode: "insensitive" as const } },
+      select: { productName: true },
+      distinct: ["productName" as const],
+      take: 50,
+    };
+    const [stock, invoiceLines, poLines] = await Promise.all([
+      this.prisma.stockUnit.findMany(args),
+      this.prisma.invoiceLine.findMany(args),
+      this.prisma.purchaseOrderLine.findMany(args),
+    ]);
+
+    const byKey = new Map<string, string>();
+    for (const { productName } of [...stock, ...invoiceLines, ...poLines]) {
+      const name = productName.trim().replace(/\s+/g, " ");
+      const key = name.toLowerCase();
+      if (name && !byKey.has(key)) byKey.set(key, name);
+    }
+    const needle = q.toLowerCase();
+    const rank = (name: string) => (name.toLowerCase().startsWith(needle) ? 0 : 1);
+    return [...byKey.values()]
+      .sort((a, b) => rank(a) - rank(b) || a.localeCompare(b, undefined, { numeric: true }))
+      .slice(0, 15);
+  }
 }

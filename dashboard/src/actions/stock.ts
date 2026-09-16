@@ -139,6 +139,12 @@ export async function updateStockUnit(formData: FormData) {
   redirect(`/stock/${id}?ok=Saved`);
 }
 
+export async function searchProductNames(query: string) {
+  const { apiToken } = await requireUser();
+  const params = new URLSearchParams({ q: query });
+  return apiClient.get<string[]>(`/stock/product-names?${params}`, apiToken);
+}
+
 export async function searchStockProducts(query: string) {
   const { apiToken } = await requireUser();
   const params = new URLSearchParams({ q: query });
