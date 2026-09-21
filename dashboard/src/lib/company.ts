@@ -8,7 +8,7 @@ const REGISTRATION = {
   eoriNumber: "GB048681389000",
 } as const;
 
-/** Issues GBP invoices; paid into its own Tide account. */
+/** Issues GBP invoices; paid into its own Zempler account. */
 export const echoLogic = {
   legalName: "Echo Logic Tech LTD",
   tradingName: "Echo Logic Tech LTD",
@@ -27,7 +27,7 @@ export const echoLogic = {
   email: "echologicltd@gmail.com",
   tagline: "Wholesale operations",
   bank: {
-    bankName: "Tide",
+    bankName: "Zempler",
     accountName: "Echo Logic Tech LTD",
     sortCode: "08-71-99",
     accountNumber: "14800963",

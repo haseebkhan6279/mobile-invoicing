@@ -417,7 +417,7 @@ export function InvoiceForm({
         <p className="text-xs text-slate-500 dark:text-slate-400">
           {printCurrency === "EUR"
             ? "Prices below are still entered in GBP. The printed invoice is issued by Atlantic Devices Solutions LTD (Belfast), shows the Wise EUR account, and converts every amount at the rate above."
-            : "The printed invoice is issued by Echo Logic Tech LTD (51-B Deptford High Street, SE8 4AD) and shows its Tide account for payment."}
+            : "The printed invoice is issued by Echo Logic Tech LTD (51-B Deptford High Street, SE8 4AD) and shows its Zempler account for payment."}
         </p>
       </div>
 
