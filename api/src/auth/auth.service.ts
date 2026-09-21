@@ -2,6 +2,7 @@ import { Injectable, UnauthorizedException } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { compare } from "bcryptjs";
 import { UsersService } from "../users/users.service";
+import { ActivityLogsService } from "../activity-logs/activity-logs.service";
 import { LoginDto } from "./dto/login.dto";
 import { RefreshDto } from "./dto/refresh.dto";
 
@@ -12,6 +13,7 @@ export class AuthService {
   constructor(
     private users: UsersService,
     private jwt: JwtService,
+    private logs: ActivityLogsService,
   ) {}
 
   private async issueTokenPair(user: TokenUser) {
@@ -26,11 +28,47 @@ export class AuthService {
   async login(dto: LoginDto) {
     const email = dto.email.trim().toLowerCase();
     const user = await this.users.findByEmail(email);
-    if (!user) throw new UnauthorizedException("Invalid email or password");
+    if (!user) {
+      void this.logs.record(
+        {
+          type: "LOGIN",
+          path: "/auth/login",
+          title: "Failed login",
+          method: "POST",
+          status: 401,
+          message: `Unknown email: ${email}`,
+        },
+        { email },
+      );
+      throw new UnauthorizedException("Invalid email or password");
+    }
     const valid = await compare(dto.password, user.passwordHash);
-    if (!valid) throw new UnauthorizedException("Invalid email or password");
+    if (!valid) {
+      void this.logs.record(
+        {
+          type: "LOGIN",
+          path: "/auth/login",
+          title: "Failed login",
+          method: "POST",
+          status: 401,
+          message: "Wrong password",
+        },
+        { id: user.id, email: user.email, name: user.name },
+      );
+      throw new UnauthorizedException("Invalid email or password");
+    }
 
     const tokens = await this.issueTokenPair(user);
+    void this.logs.record(
+      {
+        type: "LOGIN",
+        path: "/auth/login",
+        title: "Signed in",
+        method: "POST",
+        status: 200,
+      },
+      { id: user.id, email: user.email, name: user.name },
+    );
     return { user: { id: user.id, email: user.email, name: user.name }, ...tokens };
   }
 

@@ -5,6 +5,7 @@ import { StatusBadge } from "@/components/status-badge";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { requireUser } from "@/lib/auth-guard";
+import { isLogAnalyticsQuery } from "@/lib/log-analytics";
 
 export default async function SearchPage({
   searchParams,
@@ -115,6 +116,17 @@ export default async function SearchPage({
         <p className="text-sm text-slate-500 dark:text-slate-400">Enter a search term to begin.</p>
       ) : (
         <div className="space-y-4">
+          {isLogAnalyticsQuery(q) ? (
+            <Card>
+              <h2 className="mb-3 font-medium">Internal</h2>
+              <Link className="text-brand-500 hover:underline dark:text-sky-400" href="/log-analytics">
+                Log analytics
+              </Link>
+              <div className="text-xs text-slate-500 dark:text-slate-400">
+                Who opened the dashboard, what they did, and any errors.
+              </div>
+            </Card>
+          ) : null}
           {sections.map((section) => (
             <Card key={section.title}>
               <h2 className="mb-3 font-medium">{section.title}</h2>

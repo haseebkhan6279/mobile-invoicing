@@ -17,6 +17,26 @@ model User {
   createdAt    DateTime @default(now())
 }
 
+model ActivityLog {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  userId    String?
+  userEmail String?
+  userName  String?
+  type      String
+  method    String?
+  path      String
+  title     String
+  status    Int?
+  message   String?
+  ip        String?
+  userAgent String?
+
+  @@index([createdAt])
+  @@index([type])
+  @@index([userId])
+}
+
 model NumberCounter {
   key   String @id
   value Int    @default(0)

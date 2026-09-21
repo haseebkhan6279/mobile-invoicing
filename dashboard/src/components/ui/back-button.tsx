@@ -13,6 +13,7 @@ const MAIN_ROUTES = new Set([
   "/returns",
   "/shipments",
   "/search",
+  "/log-analytics",
 ]);
 
 export function BackButton() {

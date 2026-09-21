@@ -21,6 +21,7 @@ import { logoutAction } from "@/actions/auth";
 import { company } from "@/lib/company";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { ActivityTracker } from "@/components/activity-tracker";
 
 const nav = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
@@ -67,6 +68,7 @@ export function AppShell({
 
   return (
     <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900">
+      <ActivityTracker />
       <aside className="no-print hidden w-[290px] shrink-0 flex-col border-r border-gray-200 bg-white lg:flex dark:border-gray-800 dark:bg-gray-900">
         <div className="flex items-center gap-3 px-6 py-6">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-500 text-sm font-bold text-white">

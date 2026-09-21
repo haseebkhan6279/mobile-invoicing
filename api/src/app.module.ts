@@ -12,6 +12,7 @@ import { SuppliersModule } from "./suppliers/suppliers.module";
 import { RmaModule } from "./rma/rma.module";
 import { ShipmentsModule } from "./shipments/shipments.module";
 import { SearchModule } from "./search/search.module";
+import { ActivityLogsModule } from "./activity-logs/activity-logs.module";
 import { HealthController } from "./health.controller";
 
 @Module({
@@ -29,6 +30,7 @@ import { HealthController } from "./health.controller";
     RmaModule,
     ShipmentsModule,
     SearchModule,
+    ActivityLogsModule,
   ],
   controllers: [HealthController],
 })
