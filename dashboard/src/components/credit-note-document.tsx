@@ -49,10 +49,21 @@ export type CreditNoteDoc = {
   }[];
 };
 
-export function CreditNoteDocument({ rma }: { rma: CreditNoteDoc }) {
-  // A credit note is issued by -- and priced like -- the invoice it returns against.
-  const currency: PrintCurrency = rma.invoice.printCurrency === "EUR" ? "EUR" : "GBP";
-  const rate = rma.invoice.fxRate && rma.invoice.fxRate > 0 ? rma.invoice.fxRate : DEFAULT_GBP_TO_EUR_RATE;
+export function CreditNoteDocument({
+  rma,
+  currency: currencyProp,
+  rate: rateProp,
+}: {
+  rma: CreditNoteDoc;
+  currency?: PrintCurrency;
+  rate?: number;
+}) {
+  // Issued like the original invoice; print-page props override GBP/EUR for reprinting.
+  const issuedCurrency: PrintCurrency = rma.invoice.printCurrency === "EUR" ? "EUR" : "GBP";
+  const currency: PrintCurrency = currencyProp ?? issuedCurrency;
+  const storedRate =
+    rma.invoice.fxRate && rma.invoice.fxRate > 0 ? rma.invoice.fxRate : DEFAULT_GBP_TO_EUR_RATE;
+  const rate = rateProp && rateProp > 0 ? rateProp : storedRate;
   const seller = companyForCurrency(currency);
   const credit = rmaCreditSummary(rma);
   const summary = groupRmaSummary(rma.items);
