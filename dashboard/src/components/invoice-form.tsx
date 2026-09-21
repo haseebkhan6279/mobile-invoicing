@@ -6,6 +6,7 @@ import { getAvailableImeis } from "@/actions/stock";
 import { getAvailableRmaCredits, type AvailableRmaCredit } from "@/actions/rma";
 import { CustomerPicker, type CustomerHit } from "@/components/customer-picker";
 import { InvoiceImeiEntriesField } from "@/components/invoice-imei-entries";
+import { InvoiceImeiScanner, type ScannedStockUnit } from "@/components/invoice-imei-scanner";
 import { InvoiceLineProductField, type ProductHit } from "@/components/invoice-line-product-field";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,76 +16,87 @@ import { GoodsNotReceivedWarning } from "@/components/goods-not-received-warning
 import { Textarea } from "@/components/ui/textarea";
 import { DEFAULT_GBP_TO_EUR_RATE, formatGbp, type PrintCurrency } from "@/lib/money";
 import { rmaCreditSummary, rmaGoodsReceived } from "@/lib/rma";
+import { labelStatus } from "@/lib/status";
 import type { ImeiEntry } from "@/lib/imei-notes";
 
 type Lookup = { id: string; name?: string; code?: string };
 
 type LineSeed = {
+  id: number;
+  productName: string;
   color: string;
   network: string;
   grade: string;
+  qty: number;
   buyPriceGbp: number;
+  sellPriceGbp: string;
   supplierNote: string;
   imeiEntries: ImeiEntry[];
+  supplierName: string | null;
 };
 
-const emptySeed: LineSeed = {
+const emptyLine = (id: number): LineSeed => ({
+  id,
+  productName: "",
   color: "Black",
   network: "Unlocked",
   grade: "A",
+  qty: 1,
   buyPriceGbp: 0,
+  sellPriceGbp: "",
   supplierNote: "",
   imeiEntries: [{ imei: "", notes: "" }],
-};
+  supplierName: null,
+});
+
+function lineSpec(line: Pick<LineSeed, "productName" | "color" | "network" | "grade">) {
+  return `${line.productName.trim().toLowerCase()}|${line.color}|${line.network}|${line.grade}`;
+}
+
+function realImeis(entries: ImeiEntry[]) {
+  return entries.map((entry) => entry.imei.trim()).filter(Boolean);
+}
 
 function InvoiceLine({
+  line,
   grades,
   colors,
   networks,
   canRemove,
+  onChange,
   onRemove,
 }: {
+  line: LineSeed;
   grades: Lookup[];
   colors: Lookup[];
   networks: Lookup[];
   canRemove: boolean;
+  onChange: (patch: Partial<LineSeed>) => void;
   onRemove: () => void;
 }) {
   const uid = useId();
-  const [productName, setProductName] = useState("");
-  const [seed, setSeed] = useState<LineSeed>(emptySeed);
-  const [autofillKey, setAutofillKey] = useState(0);
-  const [availableImeis, setAvailableImeis] = useState<
-    { imei: string; supplierName: string | null; notes: string | null }[]
-  >([]);
-  const [supplierName, setSupplierName] = useState<string | null>(null);
-  const qtyRef = useRef<HTMLInputElement>(null);
 
   const handleSelect = async (hit: ProductHit) => {
-    setProductName(hit.productName);
-    setSupplierName(hit.supplierName);
-    const qty = Math.max(1, Number(qtyRef.current?.value) || 1);
-    // Fetch by product spec only (no supplier filter) so every matching unit
-    // in stock is offered here, regardless of which supplier it came from.
+    const qty = Math.max(1, line.qty || 1);
     const imeiList = await getAvailableImeis({
       productName: hit.productName,
       color: hit.color,
       network: hit.network,
       grade: hit.grade,
     });
-    setAvailableImeis(imeiList);
-    setSeed({
+    onChange({
+      productName: hit.productName,
+      supplierName: hit.supplierName,
       color: hit.color,
       network: hit.network,
       grade: hit.grade,
       buyPriceGbp: hit.costGbp,
-      supplierNote: hit.supplierName ?? "",
+      supplierNote: hit.supplierName ?? line.supplierNote,
       imeiEntries: imeiList.slice(0, qty).map((unit) => ({
         imei: unit.imei,
         notes: (unit.notes ?? "").trim() || unit.supplierName || "",
       })),
     });
-    setAutofillKey((k) => k + 1);
   };
 
   return (
@@ -108,21 +120,18 @@ function InvoiceLine({
         <div className="col-span-2 sm:col-span-4 lg:col-span-1">
           <Label className="mb-1">Product name</Label>
           <InvoiceLineProductField
-            value={productName}
-            onChange={(next) => {
-              setProductName(next);
-              setSupplierName(null);
-            }}
+            value={line.productName}
+            onChange={(next) => onChange({ productName: next, supplierName: null })}
             onSelect={handleSelect}
           />
         </div>
         <div>
           <Label className="mb-1">Color</Label>
           <Input
-            key={`color-${autofillKey}`}
             name="lineColor"
             list={`${uid}-colors`}
-            defaultValue={seed.color}
+            value={line.color}
+            onChange={(event) => onChange({ color: event.target.value })}
           />
           <datalist id={`${uid}-colors`}>
             {colors.map((c) => (
@@ -133,10 +142,10 @@ function InvoiceLine({
         <div>
           <Label className="mb-1">Network</Label>
           <Input
-            key={`network-${autofillKey}`}
             name="lineNetwork"
             list={`${uid}-networks`}
-            defaultValue={seed.network}
+            value={line.network}
+            onChange={(event) => onChange({ network: event.target.value })}
           />
           <datalist id={`${uid}-networks`}>
             {networks.map((n) => (
@@ -147,10 +156,10 @@ function InvoiceLine({
         <div>
           <Label className="mb-1">Grade</Label>
           <Input
-            key={`grade-${autofillKey}`}
             name="lineGrade"
             list={`${uid}-grades`}
-            defaultValue={seed.grade}
+            value={line.grade}
+            onChange={(event) => onChange({ grade: event.target.value })}
           />
           <datalist id={`${uid}-grades`}>
             {grades.map((g) => (
@@ -160,41 +169,58 @@ function InvoiceLine({
         </div>
         <div>
           <Label className="mb-1">Qty</Label>
-          <Input ref={qtyRef} name="lineQty" type="number" min={1} defaultValue={1} />
+          <Input
+            name="lineQty"
+            type="number"
+            min={1}
+            value={line.qty}
+            onChange={(event) => onChange({ qty: Math.max(1, Number(event.target.value) || 1) })}
+          />
         </div>
         <div>
           <Label className="mb-1">Buy £</Label>
           <Input
-            key={`buy-gbp-${autofillKey}`}
             name="lineBuyPriceGbp"
             type="number"
             step="0.01"
-            defaultValue={seed.buyPriceGbp}
+            value={line.buyPriceGbp}
+            onChange={(event) => onChange({ buyPriceGbp: Number(event.target.value) || 0 })}
           />
         </div>
         <div>
           <Label className="mb-1">Sell £</Label>
-          <Input key={`gbp-${autofillKey}`} name="linePriceGbp" type="number" step="0.01" defaultValue="" />
+          <Input
+            name="linePriceGbp"
+            type="number"
+            step="0.01"
+            value={line.sellPriceGbp}
+            onChange={(event) => onChange({ sellPriceGbp: event.target.value })}
+          />
         </div>
         <div className="col-span-2 sm:col-span-4">
           <Label className="mb-1">Notes / supplier</Label>
           <Input
-            key={`supplier-note-${autofillKey}`}
             name="lineSupplierNote"
-            defaultValue={seed.supplierNote}
+            value={line.supplierNote}
+            onChange={(event) => onChange({ supplierNote: event.target.value })}
             placeholder="Vendor, source, or other internal note"
           />
         </div>
       </div>
-      <InvoiceImeiEntriesField key={`imeis-${autofillKey}`} initial={seed.imeiEntries} />
+      <InvoiceImeiEntriesField
+        value={line.imeiEntries}
+        onChange={(imeiEntries) => {
+          const count = realImeis(imeiEntries).length;
+          onChange({ imeiEntries, qty: Math.max(line.qty, count || 1) });
+        }}
+      />
       <p className="text-xs text-slate-400 dark:text-slate-500">
-        {supplierName ? (
-          <span className="font-medium text-slate-500 dark:text-slate-400">Purchased from {supplierName} (internal only, not printed on invoice). </span>
+        {line.supplierName ? (
+          <span className="font-medium text-slate-500 dark:text-slate-400">
+            Purchased from {line.supplierName} (internal only, not printed on invoice).{" "}
+          </span>
         ) : null}
         Buying price and supplier notes are internal only and never appear on the printed invoice.
-        {availableImeis.length
-          ? ` ${availableImeis.length} IMEIs available for this spec — pre-filled above, edit to swap, add, or clear.`
-          : ""}
       </p>
     </div>
   );
@@ -212,11 +238,81 @@ export function InvoiceForm({
   initialCustomer?: CustomerHit | null;
 }) {
   const nextLineId = useRef(1);
-  const [lineIds, setLineIds] = useState<number[]>([0]);
+  const [lines, setLines] = useState<LineSeed[]>([emptyLine(0)]);
   const [credits, setCredits] = useState<AvailableRmaCredit[]>([]);
   const [selectedCreditIds, setSelectedCreditIds] = useState<string[]>([]);
   const [installmentPlanEnabled, setInstallmentPlanEnabled] = useState(false);
   const [printCurrency, setPrintCurrency] = useState<PrintCurrency>("GBP");
+
+  const goodsTotal = lines.reduce(
+    (sum, line) => sum + line.qty * (Number(line.sellPriceGbp) || 0),
+    0,
+  );
+
+  const applyScan = (unit: ScannedStockUnit): string | null => {
+    const imei = (unit.imei ?? "").trim();
+    if (!imei) return "That stock unit has no IMEI yet.";
+    if (unit.status !== "IN_STOCK") {
+      const onInvoice = unit.invoiceNumber ? ` (invoice ${unit.invoiceNumber})` : "";
+      return `${imei} is ${labelStatus(unit.status).toLowerCase()}${onInvoice} — not available to add.`;
+    }
+    if (lines.some((line) => realImeis(line.imeiEntries).includes(imei))) {
+      return `${imei} is already on this invoice.`;
+    }
+
+    const note = (unit.notes ?? "").trim() || unit.supplierName || "";
+    const incoming = {
+      productName: unit.productName,
+      color: unit.color,
+      network: unit.network,
+      grade: unit.grade,
+    };
+    const spec = lineSpec(incoming);
+
+    setLines((current) => {
+      const duplicate = current.some((line) => realImeis(line.imeiEntries).includes(imei));
+      if (duplicate) return current;
+
+      const matchIndex = current.findIndex(
+        (line) => line.productName.trim() && lineSpec(line) === spec,
+      );
+      if (matchIndex >= 0) {
+        return current.map((line, index) => {
+          if (index !== matchIndex) return line;
+          const imeiEntries = [
+            ...line.imeiEntries.filter((entry) => entry.imei.trim()),
+            { imei, notes: note },
+          ];
+          return {
+            ...line,
+            imeiEntries,
+            qty: Math.max(line.qty, imeiEntries.length),
+          };
+        });
+      }
+
+      const blankIndex = current.findIndex(
+        (line) => !line.productName.trim() && realImeis(line.imeiEntries).length === 0,
+      );
+      const nextLine: LineSeed = {
+        ...(blankIndex >= 0 ? current[blankIndex] : emptyLine(nextLineId.current++)),
+        productName: unit.productName,
+        color: unit.color,
+        network: unit.network,
+        grade: unit.grade,
+        qty: 1,
+        buyPriceGbp: unit.costGbp,
+        supplierNote: unit.supplierName ?? "",
+        supplierName: unit.supplierName,
+        imeiEntries: [{ imei, notes: note }],
+      };
+      if (blankIndex >= 0) {
+        return current.map((line, index) => (index === blankIndex ? nextLine : line));
+      }
+      return [...current, nextLine];
+    });
+    return null;
+  };
 
   return (
     <div className="space-y-6">
@@ -438,15 +534,27 @@ export function InvoiceForm({
       </label>
 
       <div className="space-y-3">
-        <h2 className="font-medium">Invoice lines</h2>
-        {lineIds.map((lineId) => (
+        <div className="flex flex-wrap items-end justify-between gap-2">
+          <h2 className="font-medium">Invoice lines</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400">
+            Goods total {formatGbp(goodsTotal)}
+          </p>
+        </div>
+        <InvoiceImeiScanner onScan={applyScan} />
+        {lines.map((line) => (
           <InvoiceLine
-            key={lineId}
+            key={line.id}
+            line={line}
             grades={grades}
             colors={colors}
             networks={networks}
-            canRemove={lineIds.length > 1}
-            onRemove={() => setLineIds((current) => current.filter((id) => id !== lineId))}
+            canRemove={lines.length > 1}
+            onChange={(patch) =>
+              setLines((current) =>
+                current.map((row) => (row.id === line.id ? { ...row, ...patch } : row)),
+              )
+            }
+            onRemove={() => setLines((current) => current.filter((row) => row.id !== line.id))}
           />
         ))}
         <div className="flex justify-end">
@@ -454,7 +562,7 @@ export function InvoiceForm({
             type="button"
             variant="secondary"
             size="sm"
-            onClick={() => setLineIds((current) => [...current, nextLineId.current++])}
+            onClick={() => setLines((current) => [...current, emptyLine(nextLineId.current++)])}
           >
             Add line
           </Button>

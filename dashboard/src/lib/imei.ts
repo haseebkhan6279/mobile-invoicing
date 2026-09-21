@@ -1,3 +1,11 @@
+/** HID scanners often add spaces, dashes, or a prefix around the 15 digits. */
+export function normalizeScannedImei(raw: string) {
+  const trimmed = raw.trim();
+  const fifteen = trimmed.match(/\d{15}/);
+  if (fifteen) return fifteen[0];
+  return trimmed.replace(/[\s-]/g, "");
+}
+
 export function parseImeis(raw: string) {
   const values = raw
     .split(/[\s,;]+/)

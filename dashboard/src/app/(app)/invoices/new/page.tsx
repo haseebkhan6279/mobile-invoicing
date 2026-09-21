@@ -30,7 +30,7 @@ export default async function NewInvoicePage({
     <div>
       <PageHeader
         title="Create invoice"
-        description="Invoice number is assigned automatically. Type a customer name to fetch their details."
+        description="Scan IMEIs with a barcode scanner to fill lines from stock, or type them by hand. Invoice number is assigned automatically."
       />
       <Notice error={error} ok={newCustomer ? `Customer ${newCustomer.name} added` : undefined} />
       <Card>

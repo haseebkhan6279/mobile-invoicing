@@ -1,7 +1,7 @@
 import { BadRequestException, ConflictException, Injectable, NotFoundException } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
-import { isValidImei, validateImeiList } from "../common/imei";
+import { isValidImei, normalizeScannedImei, validateImeiList } from "../common/imei";
 import { roundMoney } from "../common/money";
 import { ReceiveStockDto, UpdateStockUnitDto } from "./dto/stock.dto";
 
@@ -159,6 +159,36 @@ export class StockService {
       const unitsAdded = batches.reduce((sum, batch) => sum + batch.imeis.length, 0);
       return { unitsAdded, purchaseOrderId };
     });
+  }
+
+  async lookupByImei(raw: string) {
+    const imei = normalizeScannedImei(raw);
+    if (!imei) throw new BadRequestException("Scan an IMEI first");
+
+    const unit = await this.prisma.stockUnit.findFirst({
+      where: { imei },
+      include: {
+        supplier: { select: { name: true } },
+        invoice: { select: { id: true, invoiceNumber: true } },
+      },
+    });
+    if (!unit) throw new NotFoundException(`IMEI ${imei} was not found in stock`);
+
+    return {
+      id: unit.id,
+      imei: unit.imei,
+      productName: unit.productName,
+      brand: unit.brand,
+      color: unit.color,
+      network: unit.network,
+      grade: unit.grade,
+      costGbp: unit.costGbp,
+      status: unit.status,
+      notes: unit.notes,
+      supplierName: unit.supplier?.name ?? null,
+      invoiceId: unit.invoice?.id ?? null,
+      invoiceNumber: unit.invoice?.invoiceNumber ?? null,
+    };
   }
 
   async getAvailableImeis(

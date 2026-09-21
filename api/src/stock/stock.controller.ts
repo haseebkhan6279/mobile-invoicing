@@ -23,6 +23,12 @@ export class StockController {
     return this.stock.updateStockUnitImei(id, dto.imei);
   }
 
+  // Used by the invoice barcode scanner (HID / ScanAvenger).
+  @Get("by-imei")
+  lookupByImei(@Query("imei") imei = "") {
+    return this.stock.lookupByImei(imei);
+  }
+
   // Used by the dashboard's invoice line builder (typeahead IMEI picker).
   @Get("available-imeis")
   availableImeis(

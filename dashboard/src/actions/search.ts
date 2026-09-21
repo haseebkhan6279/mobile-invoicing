@@ -4,8 +4,23 @@ import { requireUser } from "@/lib/auth-guard";
 import { apiClient } from "@/lib/api-client";
 
 export type SearchResults = {
-  stock: { imei: string; productName: string; grade: string; color: string; network: string; status: string }[];
-  invoices: { id: string; invoiceNumber: string; status: string; customer: { clientId: string; name: string } }[];
+  stock: {
+    id?: string | null;
+    imei: string | null;
+    productName: string;
+    grade: string;
+    color: string;
+    network: string;
+    status: string;
+    invoice?: { id: string; invoiceNumber: string } | null;
+  }[];
+  invoices: {
+    id: string;
+    invoiceNumber: string;
+    status: string;
+    customer: { clientId: string; name: string };
+    lines?: { imeis: string[] }[];
+  }[];
   customers: { id: string; clientId: string; name: string; phone: string | null; email: string | null; businessName: string | null }[];
   purchaseOrders: { id: string; poNumber: string; status: string; supplier: { name: string } }[];
   rmas: { id: string; rmaNumber: string; status: string; invoice: { invoiceNumber: string }; customer: { name: string } }[];

@@ -14,25 +14,46 @@ export default async function SearchPage({
   await requireUser();
   const { q = "" } = await searchParams;
   const results = await globalSearch(q);
+  const imeiNeedle = q.replace(/[\s-]/g, "").toLowerCase();
+
+  const matchingImei = (imeis: string[] | undefined) =>
+    imeis?.find((imei) => imei.toLowerCase().includes(imeiNeedle)) ?? null;
 
   const sections = [
     {
       title: "Stock / IMEI",
       items: results.stock.map((unit) => ({
-        href: "/stock",
-        label: `${unit.imei} · ${unit.productName}`,
-        meta: `${unit.grade} · ${unit.color} · ${unit.network}`,
+        href: unit.invoice?.id
+          ? `/invoices/${unit.invoice.id}`
+          : unit.id
+            ? `/stock/${unit.id}`
+            : "/stock",
+        label: `${unit.imei || "No IMEI"} · ${unit.productName}`,
+        meta: [
+          `${unit.grade} · ${unit.color} · ${unit.network}`,
+          unit.invoice?.invoiceNumber ? `Invoice ${unit.invoice.invoiceNumber}` : null,
+        ]
+          .filter(Boolean)
+          .join(" · "),
         status: unit.status,
       })),
     },
     {
       title: "Invoices",
-      items: results.invoices.map((invoice) => ({
-        href: `/invoices/${invoice.id}`,
-        label: invoice.invoiceNumber,
-        meta: `${invoice.customer.clientId} · ${invoice.customer.name}`,
-        status: invoice.status,
-      })),
+      items: results.invoices.map((invoice) => {
+        const imei = matchingImei(invoice.lines?.flatMap((line) => line.imeis) ?? []);
+        return {
+          href: `/invoices/${invoice.id}`,
+          label: invoice.invoiceNumber,
+          meta: [
+            `${invoice.customer.clientId} · ${invoice.customer.name}`,
+            imei ? `IMEI ${imei}` : null,
+          ]
+            .filter(Boolean)
+            .join(" · "),
+          status: invoice.status,
+        };
+      }),
     },
     {
       title: "Customers",

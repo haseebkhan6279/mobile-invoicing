@@ -12,13 +12,23 @@ const emptyEntry = (): ImeiEntry => ({ imei: "", notes: "" });
 export function InvoiceImeiEntriesField({
   name = "lineImeiEntries",
   initial,
+  value,
+  onChange,
 }: {
   name?: string;
   initial?: ImeiEntry[];
+  value?: ImeiEntry[];
+  onChange?: (entries: ImeiEntry[]) => void;
 }) {
-  const [entries, setEntries] = useState<ImeiEntry[]>(
+  const [uncontrolled, setUncontrolled] = useState<ImeiEntry[]>(
     initial?.length ? initial : [emptyEntry()],
   );
+  const entries = value ?? uncontrolled;
+  const setEntries = (next: ImeiEntry[] | ((current: ImeiEntry[]) => ImeiEntry[])) => {
+    const resolved = typeof next === "function" ? next(entries) : next;
+    onChange?.(resolved);
+    if (value === undefined) setUncontrolled(resolved);
+  };
 
   const payload = useMemo(
     () =>
