@@ -50,29 +50,56 @@ async function nextInvoiceNumberTx(tx: Prisma.TransactionClient, currency: strin
   });
   await tx.$queryRaw`SELECT "key" FROM "NumberCounter" WHERE "key" = ${key} FOR UPDATE`;
 
-  // invoiceNumber is unique across the whole table, not per currency. Older
-  // Atlantic (N####) rows may still be stored as GBP, so filtering by
-  // printCurrency made EUR try N0001 again and crash on the unique constraint.
-  const invoices = await tx.invoice.findMany({
-    select: { invoiceNumber: true },
-  });
-  const used = new Set<number>();
-  const usedExact = new Set<string>();
-  const pattern = isEur ? /^N(\d+)$/i : /^(\d+)$/;
-  for (const invoice of invoices) {
-    const raw = invoice.invoiceNumber.trim();
-    usedExact.add(raw.toUpperCase());
-    const match = raw.match(pattern);
-    if (match) used.add(Number(match[1]));
-  }
+  // Lowest unused integer in SQL so we do not pull every invoice row into Node.
+  // invoiceNumber is unique across the table, so both series scan all numbers
+  // (older Atlantic N#### rows may still be stored as GBP).
+  const rows = isEur
+    ? await tx.$queryRaw<{ n: bigint | number }[]>`
+        WITH nums AS (
+          SELECT UPPER(TRIM("invoiceNumber")) AS num FROM "Invoice"
+        ),
+        used AS (
+          SELECT CAST(substring(num FROM '^N([0-9]+)$') AS INTEGER) AS n
+          FROM nums
+          WHERE num ~ '^N[0-9]+$'
+        ),
+        bounds AS (
+          SELECT COALESCE(MAX(n), 0) AS max_n FROM used
+        )
+        SELECT s.n
+        FROM bounds
+        CROSS JOIN LATERAL generate_series(1, bounds.max_n + 1) AS s(n)
+        WHERE NOT EXISTS (SELECT 1 FROM used u WHERE u.n = s.n)
+          AND NOT EXISTS (
+            SELECT 1 FROM nums WHERE num = 'N' || LPAD(s.n::text, 4, '0')
+          )
+        ORDER BY s.n
+        LIMIT 1
+      `
+    : await tx.$queryRaw<{ n: bigint | number }[]>`
+        WITH nums AS (
+          SELECT UPPER(TRIM("invoiceNumber")) AS num FROM "Invoice"
+        ),
+        used AS (
+          SELECT CAST(num AS INTEGER) AS n
+          FROM nums
+          WHERE num ~ '^[0-9]+$'
+        ),
+        bounds AS (
+          SELECT COALESCE(MAX(n), 0) AS max_n FROM used
+        )
+        SELECT s.n
+        FROM bounds
+        CROSS JOIN LATERAL generate_series(1, bounds.max_n + 1) AS s(n)
+        WHERE NOT EXISTS (SELECT 1 FROM used u WHERE u.n = s.n)
+          AND NOT EXISTS (
+            SELECT 1 FROM nums WHERE num = LPAD(s.n::text, 4, '0')
+          )
+        ORDER BY s.n
+        LIMIT 1
+      `;
 
-  let next = 1;
-  while (true) {
-    const candidate = isEur ? `N${String(next).padStart(4, "0")}` : String(next).padStart(4, "0");
-    if (!used.has(next) && !usedExact.has(candidate.toUpperCase())) break;
-    next += 1;
-  }
-
+  const next = Number(rows[0]?.n ?? 1);
   await tx.numberCounter.update({ where: { key }, data: { value: next } });
 
   const padded = String(next).padStart(4, "0");

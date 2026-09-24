@@ -132,7 +132,18 @@ export class InvoicesService {
     if (currency === "GBP" || currency === "EUR") where.printCurrency = currency;
     return this.prisma.invoice.findMany({
       where,
-      include: { customer: true, lines: true },
+      select: {
+        id: true,
+        invoiceNumber: true,
+        status: true,
+        issuedAt: true,
+        createdAt: true,
+        shippingCostGbp: true,
+        paidAmountGbp: true,
+        printCurrency: true,
+        customer: { select: { id: true, clientId: true, name: true } },
+        lines: { select: { qty: true, unitPriceGbp: true } },
+      },
       orderBy: { createdAt: "desc" },
     });
   }
