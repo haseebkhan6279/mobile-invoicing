@@ -50,19 +50,28 @@ async function nextInvoiceNumberTx(tx: Prisma.TransactionClient, currency: strin
   });
   await tx.$queryRaw`SELECT "key" FROM "NumberCounter" WHERE "key" = ${key} FOR UPDATE`;
 
+  // invoiceNumber is unique across the whole table, not per currency. Older
+  // Atlantic (N####) rows may still be stored as GBP, so filtering by
+  // printCurrency made EUR try N0001 again and crash on the unique constraint.
   const invoices = await tx.invoice.findMany({
-    where: { printCurrency: isEur ? "EUR" : "GBP" },
     select: { invoiceNumber: true },
   });
   const used = new Set<number>();
+  const usedExact = new Set<string>();
   const pattern = isEur ? /^N(\d+)$/i : /^(\d+)$/;
   for (const invoice of invoices) {
-    const match = invoice.invoiceNumber.trim().match(pattern);
+    const raw = invoice.invoiceNumber.trim();
+    usedExact.add(raw.toUpperCase());
+    const match = raw.match(pattern);
     if (match) used.add(Number(match[1]));
   }
 
   let next = 1;
-  while (used.has(next)) next += 1;
+  while (true) {
+    const candidate = isEur ? `N${String(next).padStart(4, "0")}` : String(next).padStart(4, "0");
+    if (!used.has(next) && !usedExact.has(candidate.toUpperCase())) break;
+    next += 1;
+  }
 
   await tx.numberCounter.update({ where: { key }, data: { value: next } });
 
