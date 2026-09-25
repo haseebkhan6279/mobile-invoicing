@@ -2,7 +2,7 @@ import { deleteInvoiceLine, updateInvoiceLine } from "@/actions/invoices";
 import { CompanyBrand } from "@/components/company-brand";
 import { ProductNameInput } from "@/components/product-name-input";
 import { ConfirmSubmitButton } from "@/components/ui/confirm-submit-button";
-import { addressLines, bankDetailLines, companyForCurrency } from "@/lib/company";
+import { addressLines, bankDetailLinesForAccount, companyForEntity, resolveBankAccount, resolveIssuingEntity } from "@/lib/company";
 import { invoiceProfit, invoiceTotals } from "@/lib/invoice";
 import { asImeiNotes } from "@/lib/imei-notes";
 import { DEFAULT_GBP_TO_EUR_RATE, formatMoney, type PrintCurrency } from "@/lib/money";
@@ -22,6 +22,8 @@ export type InvoiceDoc = {
   marginVatScheme: boolean;
   printCurrency?: string;
   fxRate?: number;
+  issuingEntity?: string;
+  bankAccount?: string;
   paidAmountGbp: number;
   notes: string | null;
   customer: {
@@ -86,7 +88,10 @@ export function InvoiceDocument({
   const currency: PrintCurrency = currencyProp ?? (invoice.printCurrency === "EUR" ? "EUR" : "GBP");
   const storedRate = invoice.fxRate && invoice.fxRate > 0 ? invoice.fxRate : DEFAULT_GBP_TO_EUR_RATE;
   const rate = rateProp && rateProp > 0 ? rateProp : storedRate;
-  const seller = companyForCurrency(currency);
+  const seller = companyForEntity(resolveIssuingEntity(invoice.issuingEntity, invoice.printCurrency ?? currency));
+  const bankLines = bankDetailLinesForAccount(
+    resolveBankAccount(invoice.bankAccount, invoice.printCurrency ?? currency),
+  );
   const totals = invoiceTotals(invoice);
   const profit = invoiceProfit(invoice);
   const hasShipping = invoice.shippingCostGbp > 0;
@@ -380,7 +385,7 @@ export function InvoiceDocument({
       <div className="mt-6 flex flex-wrap justify-between gap-6">
         <div className="max-w-sm text-sm text-slate-600">
           <div className="text-xs uppercase tracking-wide text-slate-500">Bank details</div>
-          {bankDetailLines(seller).map((line) => (
+          {bankLines.map((line) => (
             <div key={line}>{line}</div>
           ))}
           <div className="mt-2">

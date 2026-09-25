@@ -1,5 +1,5 @@
 import { CompanyBrand } from "@/components/company-brand";
-import { addressLines, companyForCurrency } from "@/lib/company";
+import { addressLines, companyForEntity, resolveIssuingEntity } from "@/lib/company";
 import { DEFAULT_GBP_TO_EUR_RATE, formatMoney, type PrintCurrency } from "@/lib/money";
 import { groupRmaSummary, rmaCreditSummary } from "@/lib/rma";
 import { labelStatus } from "@/lib/status";
@@ -14,7 +14,7 @@ export type CreditNoteDoc = {
   paymentDate: Date | string | null;
   paymentAmountGbp: number;
   notes: string | null;
-  invoice: { invoiceNumber: string; printCurrency?: string; fxRate?: number };
+  invoice: { invoiceNumber: string; printCurrency?: string; fxRate?: number; issuingEntity?: string };
   appliedInvoice: { invoiceNumber: string } | null;
   payments: {
     id: string;
@@ -64,7 +64,9 @@ export function CreditNoteDocument({
   const storedRate =
     rma.invoice.fxRate && rma.invoice.fxRate > 0 ? rma.invoice.fxRate : DEFAULT_GBP_TO_EUR_RATE;
   const rate = rateProp && rateProp > 0 ? rateProp : storedRate;
-  const seller = companyForCurrency(currency);
+  const seller = companyForEntity(
+    resolveIssuingEntity(rma.invoice.issuingEntity, rma.invoice.printCurrency ?? currency),
+  );
   const credit = rmaCreditSummary(rma);
   const summary = groupRmaSummary(rma.items);
   const money = (gbp: number) => formatMoney(gbp, currency, rate);

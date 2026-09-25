@@ -171,10 +171,14 @@ model Invoice {
   paymentTerms    String?       @default("Immediate")
   warrantyTerms   String?       @default("3 months")
   marginVatScheme Boolean       @default(true)
-  // Amounts are always stored in GBP. These two pick which entity issues the
-  // document and, for EUR, the rate its printed amounts are converted at.
+  // Amounts are always stored in GBP. printCurrency is GBP/EUR on the PDF.
+  // issuingEntity is the letterhead (ATLANTIC | ECHO). bankAccount is which
+  // payment block to print (GBP Zempler | EUR Wise). They can differ so
+  // Atlantic can issue a GBP invoice paid into the GBP account.
   printCurrency   String        @default("GBP")
   fxRate          Float         @default(1.15)
+  issuingEntity   String        @default("ECHO")
+  bankAccount     String        @default("GBP")
   paidAmountGbp   Float         @default(0)
   notes           String?
   issuedAt        DateTime      @default(now())

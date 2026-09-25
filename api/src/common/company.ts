@@ -58,10 +58,36 @@ export const atlantic = {
 } as const;
 
 export type CompanyEntity = typeof echoLogic | typeof atlantic;
+export type IssuingEntityId = "ATLANTIC" | "ECHO";
+export type BankAccountId = "GBP" | "EUR";
 
-/** The entity that issues, and is paid for, a document printed in `currency`. */
+export function resolveIssuingEntity(
+  entity?: string | null,
+  printCurrency?: string,
+): IssuingEntityId {
+  if (entity === "ATLANTIC" || entity === "ECHO") return entity;
+  return printCurrency === "EUR" ? "ATLANTIC" : "ECHO";
+}
+
+export function resolveBankAccount(
+  account?: string | null,
+  printCurrency?: string,
+): BankAccountId {
+  if (account === "EUR" || account === "GBP") return account;
+  return printCurrency === "EUR" ? "EUR" : "GBP";
+}
+
+export function companyForEntity(entity: IssuingEntityId): CompanyEntity {
+  return entity === "ATLANTIC" ? atlantic : echoLogic;
+}
+
+/** Legacy: EUR documents defaulted to Atlantic, GBP to Echo. */
 export function companyForCurrency(currency: PrintCurrency = "GBP"): CompanyEntity {
-  return currency === "EUR" ? atlantic : echoLogic;
+  return companyForEntity(resolveIssuingEntity(null, currency));
+}
+
+export function bankDetailLinesForAccount(account: BankAccountId) {
+  return bankDetailLines(account === "EUR" ? atlantic : echoLogic);
 }
 
 export function companyAddressLines(entity: CompanyEntity) {

@@ -14,7 +14,8 @@ import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
 import { GoodsNotReceivedWarning } from "@/components/goods-not-received-warning";
 import { Textarea } from "@/components/ui/textarea";
-import { DEFAULT_GBP_TO_EUR_RATE, formatGbp, type PrintCurrency } from "@/lib/money";
+import { DEFAULT_GBP_TO_EUR_RATE, formatGbp, formatMoney, type PrintCurrency } from "@/lib/money";
+import type { BankAccountId, IssuingEntityId } from "@/lib/company";
 import { rmaCreditSummary, rmaGoodsReceived } from "@/lib/rma";
 import { labelStatus } from "@/lib/status";
 import type { ImeiEntry } from "@/lib/imei-notes";
@@ -242,7 +243,10 @@ export function InvoiceForm({
   const [credits, setCredits] = useState<AvailableRmaCredit[]>([]);
   const [selectedCreditIds, setSelectedCreditIds] = useState<string[]>([]);
   const [installmentPlanEnabled, setInstallmentPlanEnabled] = useState(false);
+  const [issuingEntity, setIssuingEntity] = useState<IssuingEntityId>("ECHO");
   const [printCurrency, setPrintCurrency] = useState<PrintCurrency>("GBP");
+  const [bankAccount, setBankAccount] = useState<BankAccountId>("GBP");
+  const [fxRate, setFxRate] = useState(DEFAULT_GBP_TO_EUR_RATE);
 
   const goodsTotal = lines.reduce(
     (sum, line) => sum + line.qty * (Number(line.sellPriceGbp) || 0),
@@ -386,18 +390,52 @@ export function InvoiceForm({
         </div>
       ) : null}
       <div className="space-y-3 rounded-xl border border-slate-200 p-4 dark:border-slate-800">
-        <h2 className="font-medium">Invoice currency</h2>
+        <h2 className="font-medium">Company, currency and bank</h2>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <div>
-            <Label htmlFor="printCurrency">Issue this invoice in</Label>
+            <Label htmlFor="issuingEntity">Issue as</Label>
+            <Select
+              id="issuingEntity"
+              name="issuingEntity"
+              value={issuingEntity}
+              onChange={(event) => {
+                const next = event.target.value as IssuingEntityId;
+                setIssuingEntity(next);
+                const currency: PrintCurrency = next === "ATLANTIC" ? "EUR" : "GBP";
+                setPrintCurrency(currency);
+                setBankAccount(currency);
+              }}
+            >
+              <option value="ECHO">Echo Logic Tech LTD</option>
+              <option value="ATLANTIC">Atlantic Devices Solutions LTD</option>
+            </Select>
+          </div>
+          <div>
+            <Label htmlFor="printCurrency">Invoice currency</Label>
             <Select
               id="printCurrency"
               name="printCurrency"
               value={printCurrency}
-              onChange={(event) => setPrintCurrency(event.target.value as PrintCurrency)}
+              onChange={(event) => {
+                const currency = event.target.value as PrintCurrency;
+                setPrintCurrency(currency);
+                setBankAccount(currency);
+              }}
             >
-              <option value="GBP">GBP — £ (Echo Logic Tech LTD)</option>
-              <option value="EUR">EUR — € (Atlantic Devices Solutions LTD)</option>
+              <option value="GBP">GBP — £ Pounds</option>
+              <option value="EUR">EUR — € Euros</option>
+            </Select>
+          </div>
+          <div>
+            <Label htmlFor="bankAccount">Bank details on invoice</Label>
+            <Select
+              id="bankAccount"
+              name="bankAccount"
+              value={bankAccount}
+              onChange={(event) => setBankAccount(event.target.value as BankAccountId)}
+            >
+              <option value="GBP">GBP — Zempler (Echo Logic)</option>
+              <option value="EUR">EUR — Wise (Atlantic)</option>
             </Select>
           </div>
           {printCurrency === "EUR" ? (
@@ -409,15 +447,25 @@ export function InvoiceForm({
                 type="number"
                 step="0.0001"
                 min={0.0001}
-                defaultValue={DEFAULT_GBP_TO_EUR_RATE}
+                value={fxRate}
+                onChange={(event) => setFxRate(Number(event.target.value) || DEFAULT_GBP_TO_EUR_RATE)}
               />
             </div>
           ) : null}
         </div>
         <p className="text-xs text-slate-500 dark:text-slate-400">
+          {issuingEntity === "ATLANTIC"
+            ? "Letterhead: Atlantic Devices Solutions LTD (Belfast)."
+            : "Letterhead: Echo Logic Tech LTD (Deptford)."}{" "}
           {printCurrency === "EUR"
-            ? "Prices below are still entered in GBP. The printed invoice is issued by Atlantic Devices Solutions LTD (Belfast), shows the Wise EUR account, and converts every amount at the rate above."
-            : "The printed invoice is issued by Echo Logic Tech LTD (51-B Deptford High Street, SE8 4AD) and shows its Zempler account for payment."}
+            ? `Printed amounts are Euros at ${fxRate} EUR per £1. Line prices below stay in GBP.`
+            : "Printed amounts are Pounds (£). Line prices below are entered in GBP."}{" "}
+          {bankAccount === "EUR"
+            ? "PDF bank block: Atlantic Wise (IBAN)."
+            : "PDF bank block: Echo Logic Zempler (sort code / account)."}
+        </p>
+        <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
+          Printed goods total: {formatMoney(goodsTotal, printCurrency, fxRate)}
         </p>
       </div>
 
@@ -537,7 +585,7 @@ export function InvoiceForm({
         <div className="flex flex-wrap items-end justify-between gap-2">
           <h2 className="font-medium">Invoice lines</h2>
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            Goods total {formatGbp(goodsTotal)}
+            Goods total {formatMoney(goodsTotal, printCurrency, fxRate)}
           </p>
         </div>
         <InvoiceImeiScanner onScan={applyScan} />

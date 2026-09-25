@@ -10,6 +10,7 @@ import { nextDocumentNumberTx } from "../common/numbers";
 import { rmaRemainingCredit } from "../common/rma";
 import { invoiceTotals, stockStatusForInvoice } from "../common/invoice";
 import { formatMoney, resolvePrintCurrency } from "../common/money";
+import { resolveBankAccount, resolveIssuingEntity } from "../common/company";
 import {
   buildEvenInstallments,
   deletePaymentTx,
@@ -141,6 +142,9 @@ export class InvoicesService {
         shippingCostGbp: true,
         paidAmountGbp: true,
         printCurrency: true,
+        fxRate: true,
+        issuingEntity: true,
+        bankAccount: true,
         customer: { select: { id: true, clientId: true, name: true } },
         lines: { select: { qty: true, unitPriceGbp: true } },
       },
@@ -171,9 +175,11 @@ export class InvoicesService {
     const customerId = input.customerId;
     const status = input.status ?? "PENDING";
     const lines = normalizeLines(input.lines ?? []);
-    // Locked in at creation: the invoice keeps issuing under the same entity
-    // and rate however long after it is reprinted.
+    // Locked in at creation: currency, letterhead and bank can each differ
+    // (Atlantic + GBP + Zempler, Echo + EUR + Wise, etc.).
     const { currency, rate } = resolvePrintCurrency(input.printCurrency, input.fxRate);
+    const issuingEntity = resolveIssuingEntity(input.issuingEntity, currency);
+    const bankAccount = resolveBankAccount(input.bankAccount, currency);
 
     if (!customerId) throw new BadRequestException("Select a customer");
     if (!lines.length) throw new BadRequestException("Add at least one line");
@@ -213,6 +219,8 @@ export class InvoicesService {
           marginVatScheme: input.marginVatScheme ?? true,
           printCurrency: currency,
           fxRate: rate,
+          issuingEntity,
+          bankAccount,
           notes: input.notes ?? null,
           paidAt: status === "PAID" ? new Date() : null,
           lines: {

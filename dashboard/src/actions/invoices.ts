@@ -74,6 +74,8 @@ export async function createInvoice(formData: FormData) {
         marginVatScheme: formData.get("marginVatScheme") === "on",
         printCurrency: formData.get("printCurrency") === "EUR" ? "EUR" : "GBP",
         fxRate: toOptionalNumber(formData.get("fxRate")),
+        issuingEntity: formData.get("issuingEntity") === "ATLANTIC" ? "ATLANTIC" : "ECHO",
+        bankAccount: formData.get("bankAccount") === "EUR" ? "EUR" : "GBP",
         appliedRmaCredits,
         initialPaymentGbp: toOptionalNumber(formData.get("initialPaymentGbp")),
         installmentCount:

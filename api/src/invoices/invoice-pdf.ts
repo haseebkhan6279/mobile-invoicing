@@ -1,5 +1,5 @@
 import PDFDocument from "pdfkit";
-import { bankDetailLines, companyForCurrency, companyAddressLines } from "../common/company";
+import { bankDetailLinesForAccount, companyAddressLines, companyForEntity, resolveBankAccount, resolveIssuingEntity } from "../common/company";
 import { DEFAULT_GBP_TO_EUR_RATE, formatMoney, type PrintCurrency } from "../common/money";
 import { formatDate, labelStatus } from "../common/status";
 import { invoiceTotals } from "../common/invoice";
@@ -16,7 +16,10 @@ export type InvoiceForPdf = {
   warrantyTerms: string | null;
   marginVatScheme: boolean;
   paidAmountGbp: number;
-  notes: string | null;
+  printCurrency?: string;
+  fxRate?: number;
+  issuingEntity?: string;
+  bankAccount?: string;
   customer: {
     clientId: string;
     name: string;
@@ -55,7 +58,10 @@ export function buildInvoicePdf(
 ): Promise<Buffer> {
   const currency = options.currency ?? "GBP";
   const rate = options.rate && options.rate > 0 ? options.rate : DEFAULT_GBP_TO_EUR_RATE;
-  const seller = companyForCurrency(currency);
+  const seller = companyForEntity(resolveIssuingEntity(invoice.issuingEntity, invoice.printCurrency ?? currency));
+  const bankLines = bankDetailLinesForAccount(
+    resolveBankAccount(invoice.bankAccount, invoice.printCurrency ?? currency),
+  );
   const money = (gbp: number) => formatMoney(gbp, currency, rate);
   const doc = new PDFDocument({ size: "A4", margin: MARGIN });
   const chunks: Buffer[] = [];
@@ -254,7 +260,7 @@ export function buildInvoicePdf(
     .fontSize(9)
     .text(
       [
-        ...bankDetailLines(seller),
+        ...bankLines,
         "",
         `Payment Reference: ${invoice.invoiceNumber}`,
         `You must enter ${invoice.invoiceNumber} as your payment reference.`,

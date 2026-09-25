@@ -8,7 +8,7 @@ import { ClickableRow } from "@/components/ui/clickable-row";
 import { requireUser } from "@/lib/auth-guard";
 import { invoiceTotals } from "@/lib/invoice";
 import { apiClient } from "@/lib/api-client";
-import { formatGbp } from "@/lib/money";
+import { DEFAULT_GBP_TO_EUR_RATE, formatMoney, type PrintCurrency } from "@/lib/money";
 import { formatDate } from "@/lib/utils";
 
 type InvoiceRow = {
@@ -18,6 +18,8 @@ type InvoiceRow = {
   issuedAt: string;
   shippingCostGbp: number;
   paidAmountGbp: number;
+  printCurrency?: string;
+  fxRate?: number;
   customer: { clientId: string; name: string };
   lines: { qty: number; unitPriceGbp: number }[];
 };
@@ -77,6 +79,8 @@ export default async function InvoicesPage({
           <tbody>
             {invoices.map((invoice) => {
               const totals = invoiceTotals(invoice);
+              const currency: PrintCurrency = invoice.printCurrency === "EUR" ? "EUR" : "GBP";
+              const rate = invoice.fxRate && invoice.fxRate > 0 ? invoice.fxRate : DEFAULT_GBP_TO_EUR_RATE;
               return (
                 <ClickableRow key={invoice.id} href={`/invoices/${invoice.id}`}>
                   <Td className="font-medium text-brand-500 dark:text-sky-400">{invoice.invoiceNumber}</Td>
@@ -85,7 +89,7 @@ export default async function InvoicesPage({
                   <Td>
                     <StatusBadge status={invoice.status} />
                   </Td>
-                  <Td>{formatGbp(totals.totalGbp)}</Td>
+                  <Td>{formatMoney(totals.totalGbp, currency, rate)}</Td>
                   <Td>{formatDate(invoice.issuedAt)}</Td>
                   <Td>
                     <EditLink
@@ -102,6 +106,8 @@ export default async function InvoicesPage({
       <div className="divide-y divide-slate-100 overflow-hidden rounded-xl border border-slate-200 bg-white lg:hidden dark:divide-slate-800 dark:border-slate-800 dark:bg-slate-900">
         {invoices.map((invoice) => {
           const totals = invoiceTotals(invoice);
+          const currency: PrintCurrency = invoice.printCurrency === "EUR" ? "EUR" : "GBP";
+          const rate = invoice.fxRate && invoice.fxRate > 0 ? invoice.fxRate : DEFAULT_GBP_TO_EUR_RATE;
           return (
             <MobileListRow
               key={invoice.id}
@@ -109,7 +115,7 @@ export default async function InvoicesPage({
               title={invoice.invoiceNumber}
               subtitle={invoice.customer.name}
               trailing={<StatusBadge status={invoice.status} />}
-              meta={formatGbp(totals.totalGbp)}
+              meta={formatMoney(totals.totalGbp, currency, rate)}
             />
           );
         })}

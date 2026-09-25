@@ -109,7 +109,7 @@ export class CreateInvoiceDto {
   @IsBoolean()
   marginVatScheme?: boolean;
 
-  /** Currency the invoice is issued in; picks the letterhead and bank block. */
+  /** Currency printed on the invoice (GBP or EUR). Independent of letterhead. */
   @IsOptional()
   @IsIn(["GBP", "EUR"])
   printCurrency?: "GBP" | "EUR";
@@ -119,6 +119,16 @@ export class CreateInvoiceDto {
   @IsNumber()
   @Min(0.0001)
   fxRate?: number;
+
+  /** Letterhead: Atlantic Devices or Echo Logic. Independent of currency. */
+  @IsOptional()
+  @IsIn(["ATLANTIC", "ECHO"])
+  issuingEntity?: "ATLANTIC" | "ECHO";
+
+  /** Bank block on the PDF: GBP Zempler or EUR Wise. */
+  @IsOptional()
+  @IsIn(["GBP", "EUR"])
+  bankAccount?: "GBP" | "EUR";
 
   @IsOptional()
   @IsArray()
