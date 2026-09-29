@@ -20,6 +20,8 @@ import {
   UpdateInvoiceLineDto,
   UpdateInvoiceLineImeisDto,
   UpdateInvoiceMarginVatDto,
+  UpdateInvoiceCustomerDto,
+  UpdateInvoiceIssueDto,
   UpdateInvoiceNotesDto,
   UpdateInvoiceShippingDto,
   UpdateInvoiceStatusDto,
@@ -64,6 +66,16 @@ export class InvoicesController {
   @Patch(":id/notes")
   updateNotes(@Param("id") id: string, @Body() dto: UpdateInvoiceNotesDto) {
     return this.invoices.updateInvoiceNotes(id, dto);
+  }
+
+  @Patch(":id/issue")
+  updateIssue(@Param("id") id: string, @Body() dto: UpdateInvoiceIssueDto) {
+    return this.invoices.updateInvoiceIssue(id, dto);
+  }
+
+  @Patch(":id/customer")
+  updateCustomer(@Param("id") id: string, @Body() dto: UpdateInvoiceCustomerDto) {
+    return this.invoices.updateInvoiceCustomer(id, dto);
   }
 
   @Post(":id/lines")

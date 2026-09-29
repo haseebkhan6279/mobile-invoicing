@@ -187,6 +187,65 @@ export async function updateInvoiceNotes(formData: FormData) {
   redirect(`/invoices/${id}?ok=Internal notes saved`);
 }
 
+export async function updateInvoiceIssue(formData: FormData) {
+  const { apiToken } = await requireUser();
+  const id = String(formData.get("id") ?? "");
+  const printCurrency = formData.get("printCurrency") === "EUR" ? "EUR" : "GBP";
+
+  try {
+    await apiClient.patch(
+      `/invoices/${id}/issue`,
+      {
+        printCurrency,
+        fxRate: toOptionalNumber(formData.get("fxRate")),
+        issuingEntity: formData.get("issuingEntity") === "ATLANTIC" ? "ATLANTIC" : "ECHO",
+        bankAccount: formData.get("bankAccount") === "EUR" ? "EUR" : "GBP",
+      },
+      apiToken,
+    );
+  } catch (err) {
+    if (err instanceof ApiError) {
+      redirect(`/invoices/${id}?error=${encodeURIComponent(err.message)}`);
+    }
+    throw err;
+  }
+
+  revalidatePath(`/invoices/${id}`);
+  revalidatePath(`/invoices/${id}/print`);
+  redirect(`/invoices/${id}?ok=Invoice header updated`);
+}
+
+export async function updateInvoiceCustomer(formData: FormData) {
+  const { apiToken } = await requireUser();
+  const id = String(formData.get("id") ?? "");
+
+  try {
+    await apiClient.patch(
+      `/invoices/${id}/customer`,
+      {
+        name: String(formData.get("name") ?? "").trim(),
+        businessName: toOptionalString(formData.get("businessName")),
+        phone: toOptionalString(formData.get("phone")),
+        email: toOptionalString(formData.get("email")),
+        vatNumber: toOptionalString(formData.get("vatNumber")),
+        address: toOptionalString(formData.get("address")),
+        shippingAddress: toOptionalString(formData.get("shippingAddress")),
+      },
+      apiToken,
+    );
+  } catch (err) {
+    if (err instanceof ApiError) {
+      redirect(`/invoices/${id}?error=${encodeURIComponent(err.message)}`);
+    }
+    throw err;
+  }
+
+  revalidatePath(`/invoices/${id}`);
+  revalidatePath(`/invoices/${id}/print`);
+  revalidatePath("/customers");
+  redirect(`/invoices/${id}?ok=Customer details saved`);
+}
+
 export async function updateInvoiceLine(formData: FormData) {
   const { apiToken } = await requireUser();
   const id = String(formData.get("id") ?? "");

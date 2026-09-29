@@ -195,6 +195,56 @@ export class UpdateInvoiceNotesDto {
   notes?: string | null;
 }
 
+/** Letterhead, print currency and bank on an existing invoice. Number is unchanged. */
+export class UpdateInvoiceIssueDto {
+  @IsOptional()
+  @IsIn(["GBP", "EUR"])
+  printCurrency?: "GBP" | "EUR";
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0.0001)
+  fxRate?: number;
+
+  @IsOptional()
+  @IsIn(["ATLANTIC", "ECHO"])
+  issuingEntity?: "ATLANTIC" | "ECHO";
+
+  @IsOptional()
+  @IsIn(["GBP", "EUR"])
+  bankAccount?: "GBP" | "EUR";
+}
+
+/** Customer file fields shown on this invoice. Does not change invoiceNumber. */
+export class UpdateInvoiceCustomerDto {
+  @IsString()
+  name: string;
+
+  @IsOptional()
+  @IsString()
+  businessName?: string | null;
+
+  @IsOptional()
+  @IsString()
+  phone?: string | null;
+
+  @IsOptional()
+  @IsString()
+  email?: string | null;
+
+  @IsOptional()
+  @IsString()
+  vatNumber?: string | null;
+
+  @IsOptional()
+  @IsString()
+  address?: string | null;
+
+  @IsOptional()
+  @IsString()
+  shippingAddress?: string | null;
+}
+
 export class UpdateInvoiceLineImeisDto {
   @IsArray()
   @IsString({ each: true })

@@ -25,6 +25,8 @@ import {
   PayInstallmentDto,
   RecordPaymentDto,
   SendInvoiceEmailDto,
+  UpdateInvoiceCustomerDto,
+  UpdateInvoiceIssueDto,
   UpdateInvoiceLineDto,
   UpdateInvoiceMarginVatDto,
   UpdateInvoiceNotesDto,
@@ -381,6 +383,57 @@ export class InvoicesService {
       where: { id },
       data: { notes: dto.notes?.toString().trim() || null },
     });
+  }
+
+  async updateInvoiceIssue(id: string, dto: UpdateInvoiceIssueDto) {
+    const invoice = await this.prisma.invoice.findUnique({ where: { id } });
+    if (!invoice) throw new NotFoundException("Invoice not found");
+
+    const { currency, rate } = resolvePrintCurrency(
+      dto.printCurrency ?? invoice.printCurrency,
+      dto.fxRate ?? invoice.fxRate,
+    );
+    const issuingEntity = resolveIssuingEntity(
+      dto.issuingEntity ?? invoice.issuingEntity,
+      currency,
+    );
+    const bankAccount = resolveBankAccount(
+      dto.bankAccount ?? (dto.printCurrency ? currency : invoice.bankAccount),
+      currency,
+    );
+
+    return this.prisma.invoice.update({
+      where: { id },
+      data: {
+        printCurrency: currency,
+        fxRate: rate,
+        issuingEntity,
+        bankAccount,
+      },
+    });
+  }
+
+  async updateInvoiceCustomer(id: string, dto: UpdateInvoiceCustomerDto) {
+    const invoice = await this.prisma.invoice.findUnique({ where: { id } });
+    if (!invoice) throw new NotFoundException("Invoice not found");
+
+    const name = (dto.name ?? "").trim();
+    if (!name) throw new BadRequestException("Name is required");
+
+    await this.prisma.customer.update({
+      where: { id: invoice.customerId },
+      data: {
+        name,
+        businessName: (dto.businessName ?? "").toString().trim() || null,
+        phone: (dto.phone ?? "").toString().trim() || null,
+        email: (dto.email ?? "").toString().trim() || null,
+        vatNumber: (dto.vatNumber ?? "").toString().trim() || null,
+        address: (dto.address ?? "").toString().trim() || null,
+        shippingAddress: (dto.shippingAddress ?? "").toString().trim() || null,
+      },
+    });
+
+    return this.getInvoice(id);
   }
 
   async addInvoiceLine(invoiceId: string, dto: UpdateInvoiceLineDto) {

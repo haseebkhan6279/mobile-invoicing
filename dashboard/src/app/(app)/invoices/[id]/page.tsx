@@ -7,6 +7,8 @@ import {
   deleteInvoicePayment,
   payInstallment,
   recordInvoicePayment,
+  updateInvoiceCustomer,
+  updateInvoiceIssue,
   updateInvoiceLineImeis,
   updateInvoiceMarginVat,
   updateInvoiceNotes,
@@ -17,6 +19,7 @@ import {
 import { applyRmaCreditToInvoice, getAvailableRmaCredits } from "@/actions/rma";
 import { EmailInvoiceForm } from "@/components/email-invoice-form";
 import { InvoiceDocument } from "@/components/invoice-document";
+import { InvoiceIssueForm } from "@/components/invoice-issue-form";
 import { InvoiceImeiEntriesField } from "@/components/invoice-imei-entries";
 import { GoodsNotReceivedWarning } from "@/components/goods-not-received-warning";
 import { Notice } from "@/components/notice";
@@ -53,6 +56,10 @@ type InvoiceDetail = {
   paymentTerms: string | null;
   warrantyTerms: string | null;
   marginVatScheme: boolean;
+  printCurrency?: string;
+  fxRate?: number;
+  issuingEntity?: string;
+  bankAccount?: string;
   paidAmountGbp: number;
   notes: string | null;
   customer: {
@@ -160,6 +167,69 @@ export default async function InvoiceDetailPage({
           returnTo={`/invoices/${invoice.id}`}
         />
       </div>
+      <Card className="no-print">
+        <h2 className="mb-3 font-medium">Company, currency and bank</h2>
+        <InvoiceIssueForm
+          invoiceId={invoice.id}
+          issuingEntity={invoice.issuingEntity}
+          printCurrency={invoice.printCurrency}
+          bankAccount={invoice.bankAccount}
+          fxRate={invoice.fxRate}
+        />
+      </Card>
+      <Card className="no-print">
+        <h2 className="mb-1 font-medium">Customer on this invoice</h2>
+        <p className="mb-3 text-xs text-slate-500 dark:text-slate-400">
+          Saves to the customer file. Invoice number {invoice.invoiceNumber} stays the same.
+          Client ID {invoice.customer.clientId} is not changed.
+        </p>
+        <form action={updateInvoiceCustomer} className="space-y-4">
+          <input type="hidden" name="id" value={invoice.id} />
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <Label htmlFor="customer-name">Name</Label>
+              <Input id="customer-name" name="name" defaultValue={invoice.customer.name} required />
+            </div>
+            <div>
+              <Label htmlFor="customer-business">Business name</Label>
+              <Input
+                id="customer-business"
+                name="businessName"
+                defaultValue={invoice.customer.businessName ?? ""}
+              />
+            </div>
+            <div>
+              <Label htmlFor="customer-phone">Phone</Label>
+              <Input id="customer-phone" name="phone" defaultValue={invoice.customer.phone ?? ""} />
+            </div>
+            <div>
+              <Label htmlFor="customer-email">Email</Label>
+              <Input id="customer-email" name="email" defaultValue={invoice.customer.email ?? ""} />
+            </div>
+          </div>
+          <div>
+            <Label htmlFor="customer-vat">VAT / Tax ID</Label>
+            <Input id="customer-vat" name="vatNumber" defaultValue={invoice.customer.vatNumber ?? ""} />
+          </div>
+          <div>
+            <Label htmlFor="customer-address">Billing address</Label>
+            <Textarea
+              id="customer-address"
+              name="address"
+              defaultValue={invoice.customer.address ?? ""}
+            />
+          </div>
+          <div>
+            <Label htmlFor="customer-shipping">Shipping address (if different)</Label>
+            <Textarea
+              id="customer-shipping"
+              name="shippingAddress"
+              defaultValue={invoice.customer.shippingAddress ?? ""}
+            />
+          </div>
+          <SubmitButton pendingText="Saving…">Save customer details</SubmitButton>
+        </form>
+      </Card>
       <Tabs
         storageKey="invoice-detail"
         tabs={[
