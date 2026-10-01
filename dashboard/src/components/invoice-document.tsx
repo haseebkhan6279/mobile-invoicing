@@ -1,4 +1,4 @@
-import { deleteInvoiceLine, updateInvoiceLine } from "@/actions/invoices";
+import { deleteInvoiceLine, updateInvoiceCustomer, updateInvoiceLine } from "@/actions/invoices";
 import { CompanyBrand } from "@/components/company-brand";
 import { ProductNameInput } from "@/components/product-name-input";
 import { ConfirmSubmitButton } from "@/components/ui/confirm-submit-button";
@@ -9,6 +9,7 @@ import { DEFAULT_GBP_TO_EUR_RATE, formatMoney, type PrintCurrency } from "@/lib/
 import { INVOICE_INVALID_UNTIL_PAID_NOTICE, INVOICE_MARGIN_NOTICE, INVOICE_TERMS } from "@/lib/terms";
 import { formatDate } from "@/lib/utils";
 import { labelStatus } from "@/lib/status";
+import { SubmitButton } from "@/components/ui/submit-button";
 
 export type InvoiceDoc = {
   id: string;
@@ -127,33 +128,110 @@ export function InvoiceDocument({
       ) : null}
 
       <div className="mt-6 grid gap-6 sm:grid-cols-3">
-        <div>
-          <div className="text-xs uppercase tracking-wide text-slate-500">Billing details</div>
-          <div className="mt-1 font-medium">{invoice.customer.name}</div>
-          {invoice.customer.businessName ? (
-            <div>{invoice.customer.businessName}</div>
-          ) : null}
-          <div className="text-sm text-slate-600">
-            {invoice.customer.address ? <div>{invoice.customer.address}</div> : null}
-            {invoice.customer.phone ? <div>{invoice.customer.phone}</div> : null}
-            {invoice.customer.email ? <div>{invoice.customer.email}</div> : null}
-            {invoice.customer.vatNumber ? <div>VAT Number: {invoice.customer.vatNumber}</div> : null}
+        {editable ? (
+          <form action={updateInvoiceCustomer} className="no-print sm:col-span-3 space-y-3 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-3">
+            <input type="hidden" name="id" value={invoice.id} />
+            <div className="text-xs font-medium uppercase tracking-wide text-slate-500">
+              Edit customer on this invoice — number {invoice.invoiceNumber} stays the same
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="block text-xs text-slate-500">
+                Name
+                <input
+                  name="name"
+                  required
+                  defaultValue={invoice.customer.name}
+                  className={`mt-0.5 font-medium text-slate-900 ${editableCellClass}`}
+                />
+              </label>
+              <label className="block text-xs text-slate-500">
+                Business name
+                <input
+                  name="businessName"
+                  defaultValue={invoice.customer.businessName ?? ""}
+                  className={`mt-0.5 text-slate-900 ${editableCellClass}`}
+                />
+              </label>
+              <label className="block text-xs text-slate-500">
+                Phone
+                <input
+                  name="phone"
+                  defaultValue={invoice.customer.phone ?? ""}
+                  className={`mt-0.5 text-slate-900 ${editableCellClass}`}
+                />
+              </label>
+              <label className="block text-xs text-slate-500">
+                Email
+                <input
+                  name="email"
+                  defaultValue={invoice.customer.email ?? ""}
+                  className={`mt-0.5 text-slate-900 ${editableCellClass}`}
+                />
+              </label>
+              <label className="block text-xs text-slate-500 sm:col-span-2">
+                VAT / Tax ID
+                <input
+                  name="vatNumber"
+                  defaultValue={invoice.customer.vatNumber ?? ""}
+                  className={`mt-0.5 text-slate-900 ${editableCellClass}`}
+                />
+              </label>
+              <label className="block text-xs text-slate-500">
+                Billing address
+                <textarea
+                  name="address"
+                  rows={3}
+                  defaultValue={invoice.customer.address ?? ""}
+                  className={`mt-0.5 text-slate-900 ${editableCellClass}`}
+                />
+              </label>
+              <label className="block text-xs text-slate-500">
+                Shipping address (if different)
+                <textarea
+                  name="shippingAddress"
+                  rows={3}
+                  defaultValue={invoice.customer.shippingAddress ?? ""}
+                  className={`mt-0.5 text-slate-900 ${editableCellClass}`}
+                />
+              </label>
+            </div>
+            <SubmitButton pendingText="Saving…" size="sm">
+              Save customer details
+            </SubmitButton>
+          </form>
+        ) : (
+          <>
+            <div>
+              <div className="text-xs uppercase tracking-wide text-slate-500">Billing details</div>
+              <div className="mt-1 font-medium">{invoice.customer.name}</div>
+              {invoice.customer.businessName ? <div>{invoice.customer.businessName}</div> : null}
+              <div className="text-sm text-slate-600">
+                {invoice.customer.address ? <div>{invoice.customer.address}</div> : null}
+                {invoice.customer.phone ? <div>{invoice.customer.phone}</div> : null}
+                {invoice.customer.email ? <div>{invoice.customer.email}</div> : null}
+                {invoice.customer.vatNumber ? <div>VAT Number: {invoice.customer.vatNumber}</div> : null}
+              </div>
+            </div>
+            <div>
+              <div className="text-xs uppercase tracking-wide text-slate-500">Shipping details</div>
+              <div className="mt-1 font-medium">{invoice.customer.name}</div>
+              {invoice.customer.businessName ? <div>{invoice.customer.businessName}</div> : null}
+              <div className="text-sm text-slate-600">
+                {invoice.customer.shippingAddress || invoice.customer.address || "—"}
+              </div>
+            </div>
+            <div className="text-sm text-slate-600">
+              <div>Payment Terms: {invoice.paymentTerms || "Immediate"}</div>
+              <div>Warranty Terms: {invoice.warrantyTerms || "3 months"}</div>
+            </div>
+          </>
+        )}
+        {editable ? (
+          <div className="text-sm text-slate-600 sm:col-span-3">
+            <div>Payment Terms: {invoice.paymentTerms || "Immediate"}</div>
+            <div>Warranty Terms: {invoice.warrantyTerms || "3 months"}</div>
           </div>
-        </div>
-        <div>
-          <div className="text-xs uppercase tracking-wide text-slate-500">Shipping details</div>
-          <div className="mt-1 font-medium">{invoice.customer.name}</div>
-          {invoice.customer.businessName ? (
-            <div>{invoice.customer.businessName}</div>
-          ) : null}
-          <div className="text-sm text-slate-600">
-            {invoice.customer.shippingAddress || invoice.customer.address || "—"}
-          </div>
-        </div>
-        <div className="text-sm text-slate-600">
-          <div>Payment Terms: {invoice.paymentTerms || "Immediate"}</div>
-          <div>Warranty Terms: {invoice.warrantyTerms || "3 months"}</div>
-        </div>
+        ) : null}
       </div>
 
       <div className="mt-8 overflow-x-auto">
