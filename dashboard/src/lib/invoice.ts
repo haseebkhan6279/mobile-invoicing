@@ -19,6 +19,51 @@ export function invoiceTotals(invoice: {
   };
 }
 
+export type InvoiceVisualTone = "paid" | "unpaid" | "overdue" | "cancelled";
+
+export function invoiceDueDate(invoice: {
+  issuedAt: Date | string;
+  installments?: { dueDate: Date | string; status: string }[];
+}) {
+  const pending = (invoice.installments ?? [])
+    .filter((row) => row.status !== "PAID")
+    .map((row) => new Date(row.dueDate))
+    .sort((a, b) => a.getTime() - b.getTime());
+  if (pending[0]) return pending[0];
+  return typeof invoice.issuedAt === "string" ? new Date(invoice.issuedAt) : invoice.issuedAt;
+}
+
+export function invoiceVisualTone(
+  status: string,
+  dueGbp: number,
+  dueDate: Date,
+): InvoiceVisualTone {
+  if (status === "CANCELLED") return "cancelled";
+  if (status === "PAID" || dueGbp <= 0) return "paid";
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const due = new Date(dueDate);
+  due.setHours(0, 0, 0, 0);
+  if (due < today) return "overdue";
+  return "unpaid";
+}
+
+export const INVOICE_TONE_CLASSES: Record<InvoiceVisualTone, string> = {
+  unpaid: "bg-red-100 text-red-800 print:bg-red-100 print:text-red-800",
+  overdue: "bg-red-200 text-red-950 ring-1 ring-red-600 print:bg-red-200 print:text-red-950",
+  paid: "bg-emerald-100 text-emerald-800 print:bg-emerald-100 print:text-emerald-800",
+  cancelled: "bg-slate-200 text-slate-700 print:bg-slate-200 print:text-slate-700",
+};
+
+export function invoiceToneLabel(tone: InvoiceVisualTone, status: string) {
+  if (tone === "unpaid") {
+    return status === "AWAITING_PAYMENT" ? "Awaiting payment" : "Unpaid";
+  }
+  if (tone === "overdue") return "Overdue";
+  if (tone === "paid") return "Paid";
+  return "Cancelled";
+}
+
 /**
  * What the invoice actually earned. Shipping is deliberately left out of both
  * sides: what the customer is charged for it has no buying price to net off

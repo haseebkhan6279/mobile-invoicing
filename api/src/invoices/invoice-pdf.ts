@@ -1,8 +1,8 @@
 import PDFDocument from "pdfkit";
 import { bankDetailLinesForAccount, companyAddressLines, companyForEntity, resolveBankAccount, resolveIssuingEntity } from "../common/company";
 import { DEFAULT_GBP_TO_EUR_RATE, formatMoney, type PrintCurrency } from "../common/money";
-import { formatDate, labelStatus } from "../common/status";
-import { invoiceTotals } from "../common/invoice";
+import { formatDate } from "../common/status";
+import { invoiceDueDate, invoiceToneLabel, invoiceTotals, invoiceVisualTone, INVOICE_TONE_COLORS } from "../common/invoice";
 import { INVOICE_INVALID_UNTIL_PAID_NOTICE, INVOICE_MARGIN_NOTICE, INVOICE_TERMS } from "../common/invoice-terms";
 
 export type InvoiceForPdf = {
@@ -40,6 +40,7 @@ export type InvoiceForPdf = {
     imeis?: string[];
   }[];
   stockUnits: { imei: string | null }[];
+  installments?: { dueDate: Date | string; status: string }[];
 };
 
 const MARGIN = 40;
@@ -73,36 +74,72 @@ export function buildInvoicePdf(
 
   const contentWidth = PAGE_WIDTH - MARGIN * 2;
   const totals = invoiceTotals(invoice);
+  const dueDate = invoiceDueDate(invoice);
+  const tone = invoiceVisualTone(invoice.status, totals.dueGbp, dueDate);
+  const statusColors = INVOICE_TONE_COLORS[tone];
+  const statusLabel = invoiceToneLabel(tone, invoice.status);
 
-  doc.font("Helvetica-Bold").fontSize(16).text(seller.tradingName, MARGIN, MARGIN);
+  doc.font("Helvetica-Bold").fontSize(16).fillColor("#0f172a").text(seller.tradingName, MARGIN, MARGIN);
   doc
     .font("Helvetica")
     .fontSize(9)
+    .fillColor("#475569")
     .text(
       `${companyAddressLines(seller).join(", ")}\nTelephone: ${seller.phoneDisplay} · Whatsapp: ${seller.whatsappDisplay}`,
-      { width: contentWidth * 0.6 },
+      { width: contentWidth * 0.55 },
     );
 
+  const metaX = MARGIN + contentWidth * 0.52;
+  const metaWidth = contentWidth * 0.48;
   doc
     .font("Helvetica-Bold")
     .fontSize(20)
-    .text("INVOICE", MARGIN, MARGIN, { width: contentWidth, align: "right" });
+    .fillColor("#0f172a")
+    .text("INVOICE", metaX, MARGIN, { width: metaWidth, align: "right" });
+
   doc
     .font("Helvetica")
-    .fontSize(9)
-    .text(
-      [
-        `Invoice No. ${invoice.invoiceNumber}`,
-        `Invoice Date ${formatDate(invoice.issuedAt)}`,
-        `Invoice Status: ${labelStatus(invoice.status)}`,
-        `Client ID: ${invoice.customer.clientId}`,
-      ].join("\n"),
-      MARGIN,
-      doc.y + 4,
-      { width: contentWidth, align: "right" },
-    );
+    .fontSize(8)
+    .fillColor("#64748b")
+    .text("INVOICE NUMBER · PAYMENT REFERENCE", metaX, MARGIN + 28, {
+      width: metaWidth,
+      align: "right",
+    });
+  doc
+    .font("Helvetica-Bold")
+    .fontSize(18)
+    .fillColor("#B91C1C")
+    .text(invoice.invoiceNumber, metaX, MARGIN + 40, { width: metaWidth, align: "right" });
 
-  doc.moveDown(1.5);
+  const badgeLabel = statusLabel.toUpperCase();
+  doc.font("Helvetica-Bold").fontSize(8);
+  const badgeWidth = Math.max(72, doc.widthOfString(badgeLabel) + 16);
+  const badgeX = PAGE_WIDTH - MARGIN - badgeWidth;
+  const badgeY = MARGIN + 64;
+  doc.roundedRect(badgeX, badgeY, badgeWidth, 16, 8).fill(statusColors.bg);
+  doc.fillColor(statusColors.fg).text(badgeLabel, badgeX, badgeY + 4, {
+    width: badgeWidth,
+    align: "center",
+  });
+
+  doc.fillColor("#64748b").font("Helvetica").fontSize(8);
+  const metaTop = badgeY + 24;
+  const metaLine = (label: string, value: string, y: number) => {
+    doc.fillColor("#64748b").font("Helvetica").fontSize(8).text(label, metaX, y, {
+      width: metaWidth * 0.45,
+      align: "left",
+    });
+    doc.fillColor("#0f172a").font("Helvetica-Bold").fontSize(9).text(value, metaX + metaWidth * 0.45, y, {
+      width: metaWidth * 0.55,
+      align: "right",
+    });
+  };
+  metaLine("Invoice date", formatDate(invoice.issuedAt), metaTop);
+  metaLine("Due date", formatDate(dueDate), metaTop + 14);
+  metaLine("Client ID", invoice.customer.clientId, metaTop + 28);
+
+  doc.y = Math.max(doc.y, metaTop + 50);
+  doc.fillColor("black");
   doc
     .moveTo(MARGIN, doc.y)
     .lineTo(PAGE_WIDTH - MARGIN, doc.y)
@@ -256,19 +293,25 @@ export function buildInvoicePdf(
     .fillColor("#64748b")
     .text("BANK DETAILS", MARGIN, summaryTop);
   doc
-    .fillColor("black")
+    .fillColor("#0f172a")
     .fontSize(9)
-    .text(
-      [
-        ...bankLines,
-        "",
-        `Payment Reference: ${invoice.invoiceNumber}`,
-        `You must enter ${invoice.invoiceNumber} as your payment reference.`,
-      ].join("\n"),
-      MARGIN,
-      summaryTop + 12,
-      { width: contentWidth * 0.55 },
-    );
+    .text(bankLines.join("\n"), MARGIN, summaryTop + 12, {
+      width: contentWidth * 0.55,
+    });
+  doc
+    .font("Helvetica-Bold")
+    .fontSize(9)
+    .fillColor("#B91C1C")
+    .text(`Payment reference: ${invoice.invoiceNumber}`, MARGIN, doc.y + 8, {
+      width: contentWidth * 0.55,
+    });
+  doc
+    .font("Helvetica")
+    .fontSize(8)
+    .fillColor("#475569")
+    .text(`You must enter ${invoice.invoiceNumber} as your payment reference.`, {
+      width: contentWidth * 0.55,
+    });
 
   const summaryColX = MARGIN + contentWidth * 0.6;
   const summaryColWidth = contentWidth * 0.4;
@@ -291,7 +334,22 @@ export function buildInvoicePdf(
     .stroke();
   sy += 6;
   summaryRow("Grand Total", money(totals.totalGbp), true);
-  summaryRow("Payment Due", money(totals.dueGbp));
+  const dueBoxY = sy + 4;
+  const dueBoxH = 28;
+  const dueFill = tone === "paid" ? "#ECFDF5" : "#FEF2F2";
+  const dueFg = tone === "paid" ? "#166534" : "#991B1B";
+  doc.roundedRect(summaryColX, dueBoxY, summaryColWidth, dueBoxH, 4).fill(dueFill);
+  doc
+    .fillColor(dueFg)
+    .font("Helvetica-Bold")
+    .fontSize(10)
+    .text("Amount due", summaryColX + 8, dueBoxY + 8, { width: summaryColWidth * 0.45 });
+  doc.text(money(totals.dueGbp), summaryColX + summaryColWidth * 0.45, dueBoxY + 8, {
+    width: summaryColWidth * 0.55 - 8,
+    align: "right",
+  });
+  sy = dueBoxY + dueBoxH;
+  doc.fillColor("black");
 
   doc.y = Math.max(doc.y, sy) + 10;
 

@@ -3,12 +3,11 @@ import { CompanyBrand } from "@/components/company-brand";
 import { ProductNameInput } from "@/components/product-name-input";
 import { ConfirmSubmitButton } from "@/components/ui/confirm-submit-button";
 import { addressLines, bankDetailLinesForAccount, companyForEntity, resolveBankAccount, resolveIssuingEntity } from "@/lib/company";
-import { invoiceProfit, invoiceTotals } from "@/lib/invoice";
+import { invoiceDueDate, invoiceProfit, invoiceToneLabel, invoiceTotals, invoiceVisualTone, INVOICE_TONE_CLASSES } from "@/lib/invoice";
 import { asImeiNotes } from "@/lib/imei-notes";
 import { DEFAULT_GBP_TO_EUR_RATE, formatMoney, type PrintCurrency } from "@/lib/money";
 import { INVOICE_INVALID_UNTIL_PAID_NOTICE, INVOICE_MARGIN_NOTICE, INVOICE_TERMS } from "@/lib/terms";
 import { formatDate } from "@/lib/utils";
-import { labelStatus } from "@/lib/status";
 import { SubmitButton } from "@/components/ui/submit-button";
 
 export type InvoiceDoc = {
@@ -51,6 +50,7 @@ export type InvoiceDoc = {
     imeiNotes?: unknown;
   }[];
   stockUnits: { imei: string; invoiceLineId: string | null }[];
+  installments?: { dueDate: Date | string; status: string }[];
 };
 
 const editableCellClass =
@@ -95,12 +95,15 @@ export function InvoiceDocument({
   );
   const totals = invoiceTotals(invoice);
   const profit = invoiceProfit(invoice);
+  const dueDate = invoiceDueDate(invoice);
+  const tone = invoiceVisualTone(invoice.status, totals.dueGbp, dueDate);
+  const statusLabel = invoiceToneLabel(tone, invoice.status);
   const hasShipping = invoice.shippingCostGbp > 0;
   // Amounts are stored in GBP; EUR is a print-time conversion at the entered rate.
   const money = (gbp: number) => formatMoney(gbp, currency, rate);
 
   return (
-    <div className="mx-auto max-w-[210mm] bg-white p-8 text-slate-900 print:p-0">
+    <div className="mx-auto max-w-[210mm] bg-white p-8 text-slate-900 print:p-0 [print-color-adjust:exact] [-webkit-print-color-adjust:exact]">
       <div className="flex flex-col gap-6 border-b border-slate-200 pb-6 sm:flex-row sm:justify-between">
         <div>
           <CompanyBrand company={seller} />
@@ -111,13 +114,36 @@ export function InvoiceDocument({
           </p>
         </div>
         <div className="text-right">
-          <div className="text-3xl font-semibold">INVOICE</div>
-          <div className="mt-2 font-mono text-lg">Invoice No. {invoice.invoiceNumber}</div>
-          <div className="text-sm text-slate-600">Order No. {invoice.invoiceNumber}</div>
-          <div className="text-sm text-slate-600">Invoice Date {formatDate(invoice.issuedAt)}</div>
-          <div className="text-sm text-slate-600">Order Date {formatDate(invoice.issuedAt)}</div>
-          <div className="mt-2 text-sm font-medium">Invoice Status: {labelStatus(invoice.status)}</div>
-          <div className="text-sm text-slate-600">Client ID: {invoice.customer.clientId}</div>
+          <div className="text-3xl font-semibold tracking-tight text-slate-900">INVOICE</div>
+          <div className="mt-3">
+            <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+              Invoice number · payment reference
+            </div>
+            <div className="mt-0.5 font-mono text-3xl font-bold leading-none text-red-700 print:text-red-700">
+              {invoice.invoiceNumber}
+            </div>
+          </div>
+          <div className="mt-3 flex justify-end">
+            <span
+              className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wide ${INVOICE_TONE_CLASSES[tone]}`}
+            >
+              {statusLabel}
+            </span>
+          </div>
+          <dl className="mt-4 space-y-1.5 text-sm">
+            <div className="flex justify-end gap-3">
+              <dt className="text-slate-500">Invoice date</dt>
+              <dd className="font-semibold tabular-nums text-slate-900">{formatDate(invoice.issuedAt)}</dd>
+            </div>
+            <div className="flex justify-end gap-3">
+              <dt className="text-slate-500">Due date</dt>
+              <dd className="font-semibold tabular-nums text-slate-900">{formatDate(dueDate)}</dd>
+            </div>
+            <div className="flex justify-end gap-3">
+              <dt className="text-slate-500">Client ID</dt>
+              <dd className="font-semibold tabular-nums text-slate-900">{invoice.customer.clientId}</dd>
+            </div>
+          </dl>
         </div>
       </div>
 
@@ -466,10 +492,15 @@ export function InvoiceDocument({
           {bankLines.map((line) => (
             <div key={line}>{line}</div>
           ))}
-          <div className="mt-2">
-            Payment Reference: {invoice.invoiceNumber}
+          <div className="mt-2 font-medium text-slate-800">
+            Payment reference:{" "}
+            <span className="font-mono text-base font-bold text-red-700 print:text-red-700">
+              {invoice.invoiceNumber}
+            </span>
             <br />
-            You must enter {invoice.invoiceNumber} as your payment reference.
+            <span className="font-normal text-slate-600">
+              You must enter {invoice.invoiceNumber} as your payment reference.
+            </span>
           </div>
         </div>
         <div className="ml-auto w-full max-w-sm text-sm">
@@ -483,11 +514,17 @@ export function InvoiceDocument({
           </div>
           <div className="flex justify-between border-t border-slate-300 py-2 text-base font-semibold">
             <span>Grand Total</span>
-            <span>{money(totals.totalGbp)}</span>
+            <span className="tabular-nums">{money(totals.totalGbp)}</span>
           </div>
-          <div className="flex justify-between py-1">
-            <span>Payment Due</span>
-            <span>{money(totals.dueGbp)}</span>
+          <div
+            className={`mt-1 flex justify-between rounded-md px-2 py-2 text-base font-bold ${
+              tone === "paid"
+                ? "bg-emerald-50 text-emerald-800 print:bg-emerald-50 print:text-emerald-800"
+                : "bg-red-50 text-red-800 print:bg-red-50 print:text-red-800"
+            }`}
+          >
+            <span>Amount due</span>
+            <span className="tabular-nums">{money(totals.dueGbp)}</span>
           </div>
           {editable ? (
             <div className="no-print mt-3 rounded-lg border border-dashed border-slate-300 bg-slate-50 px-3 py-2">
