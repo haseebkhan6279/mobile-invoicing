@@ -48,6 +48,14 @@ export function invoiceVisualTone(
   return "unpaid";
 }
 
+/** Customer-facing invoice number: navy so it stands out without looking like a warning. */
+export const INVOICE_NUMBER_COLOR = "#0B3A6E";
+export const INVOICE_NUMBER_BG = "#E6F0FA";
+export const INVOICE_NUMBER_CLASSES =
+  "inline-block rounded-md bg-[#E6F0FA] px-2.5 py-1 font-mono text-3xl font-bold leading-none tracking-wide text-[#0B3A6E] print:bg-[#E6F0FA] print:text-[#0B3A6E]";
+export const INVOICE_NUMBER_INLINE_CLASSES =
+  "rounded-sm bg-[#E6F0FA] px-1.5 py-0.5 font-mono font-bold text-[#0B3A6E] print:bg-[#E6F0FA] print:text-[#0B3A6E]";
+
 export const INVOICE_TONE_CLASSES: Record<InvoiceVisualTone, string> = {
   unpaid: "bg-red-100 text-red-800 print:bg-red-100 print:text-red-800",
   overdue: "bg-red-200 text-red-950 ring-1 ring-red-600 print:bg-red-200 print:text-red-950",

@@ -3,7 +3,16 @@ import { CompanyBrand } from "@/components/company-brand";
 import { ProductNameInput } from "@/components/product-name-input";
 import { ConfirmSubmitButton } from "@/components/ui/confirm-submit-button";
 import { addressLines, bankDetailLinesForAccount, companyForEntity, resolveBankAccount, resolveIssuingEntity } from "@/lib/company";
-import { invoiceDueDate, invoiceProfit, invoiceToneLabel, invoiceTotals, invoiceVisualTone, INVOICE_TONE_CLASSES } from "@/lib/invoice";
+import {
+  invoiceDueDate,
+  invoiceProfit,
+  invoiceToneLabel,
+  invoiceTotals,
+  invoiceVisualTone,
+  INVOICE_NUMBER_CLASSES,
+  INVOICE_NUMBER_INLINE_CLASSES,
+  INVOICE_TONE_CLASSES,
+} from "@/lib/invoice";
 import { asImeiNotes } from "@/lib/imei-notes";
 import { DEFAULT_GBP_TO_EUR_RATE, formatMoney, type PrintCurrency } from "@/lib/money";
 import { INVOICE_INVALID_UNTIL_PAID_NOTICE, INVOICE_MARGIN_NOTICE, INVOICE_TERMS } from "@/lib/terms";
@@ -119,7 +128,7 @@ export function InvoiceDocument({
             <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
               Invoice number · payment reference
             </div>
-            <div className="mt-0.5 font-mono text-3xl font-bold leading-none text-red-700 print:text-red-700">
+            <div className={`mt-1 ${INVOICE_NUMBER_CLASSES}`}>
               {invoice.invoiceNumber}
             </div>
           </div>
@@ -494,7 +503,7 @@ export function InvoiceDocument({
           ))}
           <div className="mt-2 font-medium text-slate-800">
             Payment reference:{" "}
-            <span className="font-mono text-base font-bold text-red-700 print:text-red-700">
+            <span className={`text-base ${INVOICE_NUMBER_INLINE_CLASSES}`}>
               {invoice.invoiceNumber}
             </span>
             <br />

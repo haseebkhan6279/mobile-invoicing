@@ -53,6 +53,10 @@ export function invoiceVisualTone(
   return "unpaid";
 }
 
+/** Customer-facing invoice number: navy so it stands out without looking like a warning. */
+export const INVOICE_NUMBER_COLOR = "#0B3A6E";
+export const INVOICE_NUMBER_BG = "#E6F0FA";
+
 export const INVOICE_TONE_COLORS: Record<
   InvoiceVisualTone,
   { bg: string; fg: string; label: string }

@@ -2,7 +2,7 @@ import PDFDocument from "pdfkit";
 import { bankDetailLinesForAccount, companyAddressLines, companyForEntity, resolveBankAccount, resolveIssuingEntity } from "../common/company";
 import { DEFAULT_GBP_TO_EUR_RATE, formatMoney, type PrintCurrency } from "../common/money";
 import { formatDate } from "../common/status";
-import { invoiceDueDate, invoiceToneLabel, invoiceTotals, invoiceVisualTone, INVOICE_TONE_COLORS } from "../common/invoice";
+import { invoiceDueDate, invoiceToneLabel, invoiceTotals, invoiceVisualTone, INVOICE_NUMBER_BG, INVOICE_NUMBER_COLOR, INVOICE_TONE_COLORS } from "../common/invoice";
 import { INVOICE_INVALID_UNTIL_PAID_NOTICE, INVOICE_MARGIN_NOTICE, INVOICE_TERMS } from "../common/invoice-terms";
 
 export type InvoiceForPdf = {
@@ -105,11 +105,16 @@ export function buildInvoicePdf(
       width: metaWidth,
       align: "right",
     });
-  doc
-    .font("Helvetica-Bold")
-    .fontSize(18)
-    .fillColor("#B91C1C")
-    .text(invoice.invoiceNumber, metaX, MARGIN + 40, { width: metaWidth, align: "right" });
+  doc.font("Helvetica-Bold").fontSize(18);
+  const numberLabel = invoice.invoiceNumber;
+  const numberWidth = Math.min(metaWidth, doc.widthOfString(numberLabel) + 14);
+  const numberX = PAGE_WIDTH - MARGIN - numberWidth;
+  const numberY = MARGIN + 38;
+  doc.roundedRect(numberX, numberY, numberWidth, 24, 4).fill(INVOICE_NUMBER_BG);
+  doc.fillColor(INVOICE_NUMBER_COLOR).text(numberLabel, numberX, numberY + 5, {
+    width: numberWidth,
+    align: "center",
+  });
 
   const badgeLabel = statusLabel.toUpperCase();
   doc.font("Helvetica-Bold").fontSize(8);
@@ -301,7 +306,7 @@ export function buildInvoicePdf(
   doc
     .font("Helvetica-Bold")
     .fontSize(9)
-    .fillColor("#B91C1C")
+    .fillColor(INVOICE_NUMBER_COLOR)
     .text(`Payment reference: ${invoice.invoiceNumber}`, MARGIN, doc.y + 8, {
       width: contentWidth * 0.55,
     });
