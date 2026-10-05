@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev -p 5173",
-    "build": "next build && node scripts/flatten-standalone.mjs",
+    "build": "next build --webpack && node scripts/flatten-standalone.mjs",
     "start": "next start -p ${PORT:-5173}",
     "lint": "eslint"
   },
