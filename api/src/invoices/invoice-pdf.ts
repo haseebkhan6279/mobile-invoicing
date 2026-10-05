@@ -2,7 +2,7 @@ import PDFDocument from "pdfkit";
 import { bankDetailLinesForAccount, companyAddressLines, companyForEntity, resolveBankAccount, resolveIssuingEntity } from "../common/company";
 import { DEFAULT_GBP_TO_EUR_RATE, formatMoney, type PrintCurrency } from "../common/money";
 import { formatDate } from "../common/status";
-import { invoiceDueDate, invoiceToneLabel, invoiceTotals, invoiceVisualTone, INVOICE_NUMBER_BG, INVOICE_NUMBER_COLOR, INVOICE_TONE_COLORS } from "../common/invoice";
+import { invoiceDueDate, invoiceToneLabel, invoiceTotals, invoiceVisualTone, INVOICE_NUMBER_BG, INVOICE_NUMBER_FG, INVOICE_TONE_COLORS } from "../common/invoice";
 import { INVOICE_INVALID_UNTIL_PAID_NOTICE, INVOICE_MARGIN_NOTICE, INVOICE_TERMS } from "../common/invoice-terms";
 
 export type InvoiceForPdf = {
@@ -111,7 +111,7 @@ export function buildInvoicePdf(
   const numberX = PAGE_WIDTH - MARGIN - numberWidth;
   const numberY = MARGIN + 38;
   doc.roundedRect(numberX, numberY, numberWidth, 24, 4).fill(INVOICE_NUMBER_BG);
-  doc.fillColor(INVOICE_NUMBER_COLOR).text(numberLabel, numberX, numberY + 5, {
+  doc.fillColor(INVOICE_NUMBER_FG).text(numberLabel, numberX, numberY + 5, {
     width: numberWidth,
     align: "center",
   });
@@ -286,7 +286,20 @@ export function buildInvoicePdf(
   doc
     .moveTo(MARGIN, doc.y)
     .lineTo(MARGIN + tableWidth, doc.y)
-    .strokeColor("#e2e8f0")
+    .strokeColor("#94a3b8")
+    .stroke();
+  doc.moveDown(0.4);
+  ensureSpace(20);
+  const qtyY = doc.y;
+  doc.font("Helvetica-Bold").fontSize(9).fillColor("#0f172a");
+  doc.text(String(totals.totalQty), cols.qty, qtyY, { width: 25 });
+  doc.text("Total quantity", cols.product, qtyY, { width: 175 });
+  doc.fillColor("black");
+  doc.moveDown(0.6);
+  doc
+    .moveTo(MARGIN, doc.y)
+    .lineTo(MARGIN + tableWidth, doc.y)
+    .strokeColor("#94a3b8")
     .stroke();
   doc.moveDown(0.6);
 
@@ -306,7 +319,7 @@ export function buildInvoicePdf(
   doc
     .font("Helvetica-Bold")
     .fontSize(9)
-    .fillColor(INVOICE_NUMBER_COLOR)
+    .fillColor(INVOICE_NUMBER_BG)
     .text(`Payment reference: ${invoice.invoiceNumber}`, MARGIN, doc.y + 8, {
       width: contentWidth * 0.55,
     });
@@ -331,7 +344,9 @@ export function buildInvoicePdf(
     sy += bold ? 20 : 16;
   };
   summaryRow("Subtotal", money(totals.subGbp));
-  summaryRow("Shipping", money(totals.shippingGbp));
+  summaryRow("Total quantity", String(totals.totalQty));
+  // Only charged shipping is worth a line; a £0.00 row just crowds the totals.
+  if (totals.shippingGbp > 0) summaryRow("Shipping", money(totals.shippingGbp));
   doc
     .moveTo(summaryColX, sy)
     .lineTo(summaryColX + summaryColWidth, sy)

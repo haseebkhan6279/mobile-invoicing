@@ -14,9 +14,12 @@ export function invoiceTotals(invoice: {
     invoice.lines.reduce((sum, line) => sum + line.qty * line.unitPriceGbp, 0),
   );
   const totalGbp = roundMoney(subGbp + invoice.shippingCostGbp);
+  // Devices on the invoice; the shipping charge is not a unit.
+  const totalQty = invoice.lines.reduce((sum, line) => sum + line.qty, 0);
   const paidGbp = roundMoney(invoice.paidAmountGbp ?? 0);
   return {
     subGbp,
+    totalQty,
     shippingGbp: invoice.shippingCostGbp,
     totalGbp,
     paidGbp,
@@ -53,9 +56,13 @@ export function invoiceVisualTone(
   return "unpaid";
 }
 
-/** Customer-facing invoice number: navy so it stands out without looking like a warning. */
-export const INVOICE_NUMBER_COLOR = "#0B3A6E";
-export const INVOICE_NUMBER_BG = "#E6F0FA";
+/**
+ * Customer-facing invoice number: white on a solid navy chip. Navy text on a
+ * pale tint printed almost the same as the black body text, so the fill is
+ * what makes it stand out on paper without looking like a warning.
+ */
+export const INVOICE_NUMBER_FG = "#FFFFFF";
+export const INVOICE_NUMBER_BG = "#0B3A6E";
 
 export const INVOICE_TONE_COLORS: Record<
   InvoiceVisualTone,

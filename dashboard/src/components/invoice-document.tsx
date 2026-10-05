@@ -492,6 +492,14 @@ export function InvoiceDocument({
             </tr>
           ) : null}
         </tbody>
+        <tfoot>
+          <tr className="border-b border-slate-300 font-semibold text-slate-900">
+            <td className="py-2 pr-2 tabular-nums">{totals.totalQty}</td>
+            <td className="py-2 pr-2" colSpan={editable ? 7 : 6}>
+              Total quantity
+            </td>
+          </tr>
+        </tfoot>
       </table>
       </div>
 
@@ -518,9 +526,16 @@ export function InvoiceDocument({
             <span>{money(totals.subGbp)}</span>
           </div>
           <div className="flex justify-between py-1">
-            <span>Shipping</span>
-            <span>{money(totals.shippingGbp)}</span>
+            <span>Total quantity</span>
+            <span className="tabular-nums">{totals.totalQty}</span>
           </div>
+          {/* Only charged shipping is worth a line; a £0.00 row just crowds the totals. */}
+          {hasShipping ? (
+            <div className="flex justify-between py-1">
+              <span>Shipping</span>
+              <span>{money(totals.shippingGbp)}</span>
+            </div>
+          ) : null}
           <div className="flex justify-between border-t border-slate-300 py-2 text-base font-semibold">
             <span>Grand Total</span>
             <span className="tabular-nums">{money(totals.totalGbp)}</span>

@@ -9,9 +9,12 @@ export function invoiceTotals(invoice: {
     invoice.lines.reduce((sum, line) => sum + line.qty * line.unitPriceGbp, 0),
   );
   const totalGbp = roundMoney(subGbp + invoice.shippingCostGbp);
+  // Devices on the invoice; the shipping charge is not a unit.
+  const totalQty = invoice.lines.reduce((sum, line) => sum + line.qty, 0);
   const paidGbp = roundMoney(invoice.paidAmountGbp ?? 0);
   return {
     subGbp,
+    totalQty,
     shippingGbp: invoice.shippingCostGbp,
     totalGbp,
     paidGbp,
@@ -48,13 +51,17 @@ export function invoiceVisualTone(
   return "unpaid";
 }
 
-/** Customer-facing invoice number: navy so it stands out without looking like a warning. */
-export const INVOICE_NUMBER_COLOR = "#0B3A6E";
-export const INVOICE_NUMBER_BG = "#E6F0FA";
+/**
+ * Customer-facing invoice number: white on a solid navy chip. Navy text on a
+ * pale tint printed almost the same as the black body text, so the fill is
+ * what makes it stand out on paper without looking like a warning.
+ */
+export const INVOICE_NUMBER_FG = "#FFFFFF";
+export const INVOICE_NUMBER_BG = "#0B3A6E";
 export const INVOICE_NUMBER_CLASSES =
-  "inline-block rounded-md bg-[#E6F0FA] px-2.5 py-1 font-mono text-3xl font-bold leading-none tracking-wide text-[#0B3A6E] print:bg-[#E6F0FA] print:text-[#0B3A6E]";
+  "inline-block rounded-md bg-[#0B3A6E] px-3 py-1.5 font-mono text-3xl font-bold leading-none tracking-wide text-white print:bg-[#0B3A6E] print:text-white";
 export const INVOICE_NUMBER_INLINE_CLASSES =
-  "rounded-sm bg-[#E6F0FA] px-1.5 py-0.5 font-mono font-bold text-[#0B3A6E] print:bg-[#E6F0FA] print:text-[#0B3A6E]";
+  "rounded-sm bg-[#0B3A6E] px-1.5 py-0.5 font-mono font-bold text-white print:bg-[#0B3A6E] print:text-white";
 
 export const INVOICE_TONE_CLASSES: Record<InvoiceVisualTone, string> = {
   unpaid: "bg-red-100 text-red-800 print:bg-red-100 print:text-red-800",
