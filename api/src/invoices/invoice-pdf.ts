@@ -270,19 +270,6 @@ export function buildInvoicePdf(
     });
     doc.moveDown(0.9);
   }
-  if (invoice.shippingCostGbp > 0) {
-    ensureSpace(20);
-    const y = doc.y;
-    doc.text("1", cols.qty, y, { width: 25 });
-    doc.text(invoice.shippingLabel || "Shipping", cols.product, y, { width: 175 });
-    doc.text(money(invoice.shippingCostGbp), cols.price, y, { width: 65, align: "right" });
-    doc.text(money(invoice.shippingCostGbp), cols.total, y, {
-      width: PAGE_WIDTH - MARGIN - cols.total,
-      align: "right",
-    });
-    doc.moveDown(0.9);
-  }
-
   doc
     .moveTo(MARGIN, doc.y)
     .lineTo(MARGIN + tableWidth, doc.y)
@@ -345,8 +332,11 @@ export function buildInvoicePdf(
   };
   summaryRow("Subtotal", money(totals.subGbp));
   summaryRow("Total quantity", String(totals.totalQty));
-  // Only charged shipping is worth a line; a £0.00 row just crowds the totals.
-  if (totals.shippingGbp > 0) summaryRow("Shipping", money(totals.shippingGbp));
+  // Shipping is not a device, so it stays out of the item list and only shows
+  // here when charged; a £0.00 row just crowds the totals.
+  if (totals.shippingGbp > 0) {
+    summaryRow(invoice.shippingLabel || "Shipping", money(totals.shippingGbp));
+  }
   doc
     .moveTo(summaryColX, sy)
     .lineTo(summaryColX + summaryColWidth, sy)

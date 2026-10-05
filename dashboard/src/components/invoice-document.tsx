@@ -476,21 +476,6 @@ export function InvoiceDocument({
               </tr>
             );
           })}
-          {hasShipping ? (
-            <tr className="border-b border-slate-100">
-              <td className="py-2 pr-2">1</td>
-              <td className="py-2 pr-2" colSpan={4}>
-                {invoice.shippingLabel || "Shipping"}
-              </td>
-              <td className="py-2 pr-2 text-right tabular-nums">
-                {money(invoice.shippingCostGbp)}
-              </td>
-              <td className="py-2 text-right tabular-nums">
-                {money(invoice.shippingCostGbp)}
-              </td>
-              {editable ? <td className="no-print" /> : null}
-            </tr>
-          ) : null}
         </tbody>
         <tfoot>
           <tr className="border-b border-slate-300 font-semibold text-slate-900">
@@ -529,10 +514,11 @@ export function InvoiceDocument({
             <span>Total quantity</span>
             <span className="tabular-nums">{totals.totalQty}</span>
           </div>
-          {/* Only charged shipping is worth a line; a £0.00 row just crowds the totals. */}
+          {/* Shipping is not a device, so it stays out of the item list and only
+              shows here when charged; a £0.00 row just crowds the totals. */}
           {hasShipping ? (
             <div className="flex justify-between py-1">
-              <span>Shipping</span>
+              <span>{invoice.shippingLabel || "Shipping"}</span>
               <span>{money(totals.shippingGbp)}</span>
             </div>
           ) : null}
