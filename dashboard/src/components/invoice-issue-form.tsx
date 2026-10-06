@@ -6,7 +6,12 @@ import { SubmitButton } from "@/components/ui/submit-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
-import type { BankAccountId, IssuingEntityId } from "@/lib/company";
+import {
+  defaultBankAccount,
+  resolveBankAccount,
+  type BankAccountId,
+  type IssuingEntityId,
+} from "@/lib/company";
 import { DEFAULT_GBP_TO_EUR_RATE, type PrintCurrency } from "@/lib/money";
 
 export function InvoiceIssueForm({
@@ -29,7 +34,7 @@ export function InvoiceIssueForm({
     initialCurrency === "EUR" ? "EUR" : "GBP",
   );
   const [bankAccount, setBankAccount] = useState<BankAccountId>(
-    initialBank === "EUR" ? "EUR" : "GBP",
+    resolveBankAccount(initialBank),
   );
   const [fxRate, setFxRate] = useState(
     initialRate && initialRate > 0 ? initialRate : DEFAULT_GBP_TO_EUR_RATE,
@@ -60,7 +65,7 @@ export function InvoiceIssueForm({
             onChange={(event) => {
               const currency = event.target.value as PrintCurrency;
               setPrintCurrency(currency);
-              setBankAccount(currency);
+              setBankAccount(defaultBankAccount(issuingEntity, currency));
             }}
           >
             <option value="GBP">GBP — £ Pounds</option>
@@ -77,6 +82,7 @@ export function InvoiceIssueForm({
           >
             <option value="GBP">GBP — Zempler (Echo Logic)</option>
             <option value="EUR">EUR — Wise (Atlantic)</option>
+            <option value="TIDE">GBP — Tide (Atlantic)</option>
           </Select>
         </div>
         {printCurrency === "EUR" ? (

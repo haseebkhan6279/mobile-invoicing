@@ -15,7 +15,7 @@ import { Select } from "@/components/ui/select";
 import { GoodsNotReceivedWarning } from "@/components/goods-not-received-warning";
 import { Textarea } from "@/components/ui/textarea";
 import { DEFAULT_GBP_TO_EUR_RATE, formatGbp, formatMoney, type PrintCurrency } from "@/lib/money";
-import type { BankAccountId, IssuingEntityId } from "@/lib/company";
+import { defaultBankAccount, type BankAccountId, type IssuingEntityId } from "@/lib/company";
 import { rmaCreditSummary, rmaGoodsReceived } from "@/lib/rma";
 import { labelStatus } from "@/lib/status";
 import type { ImeiEntry } from "@/lib/imei-notes";
@@ -403,7 +403,7 @@ export function InvoiceForm({
                 setIssuingEntity(next);
                 const currency: PrintCurrency = next === "ATLANTIC" ? "EUR" : "GBP";
                 setPrintCurrency(currency);
-                setBankAccount(currency);
+                setBankAccount(defaultBankAccount(next, currency));
               }}
             >
               <option value="ECHO">Echo Logic Tech LTD</option>
@@ -419,7 +419,7 @@ export function InvoiceForm({
               onChange={(event) => {
                 const currency = event.target.value as PrintCurrency;
                 setPrintCurrency(currency);
-                setBankAccount(currency);
+                setBankAccount(defaultBankAccount(issuingEntity, currency));
               }}
             >
               <option value="GBP">GBP — £ Pounds</option>
@@ -436,6 +436,7 @@ export function InvoiceForm({
             >
               <option value="GBP">GBP — Zempler (Echo Logic)</option>
               <option value="EUR">EUR — Wise (Atlantic)</option>
+              <option value="TIDE">GBP — Tide (Atlantic)</option>
             </Select>
           </div>
           {printCurrency === "EUR" ? (
@@ -462,7 +463,9 @@ export function InvoiceForm({
             : "Printed amounts are Pounds (£). Line prices below are entered in GBP."}{" "}
           {bankAccount === "EUR"
             ? "PDF bank block: Atlantic Wise (IBAN)."
-            : "PDF bank block: Echo Logic Zempler (sort code / account)."}
+            : bankAccount === "TIDE"
+              ? "PDF bank block: Atlantic Tide (sort code / account)."
+              : "PDF bank block: Echo Logic Zempler (sort code / account)."}
         </p>
         <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
           Printed goods total: {formatMoney(goodsTotal, printCurrency, fxRate)}

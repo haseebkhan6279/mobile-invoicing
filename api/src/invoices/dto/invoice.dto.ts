@@ -125,10 +125,10 @@ export class CreateInvoiceDto {
   @IsIn(["ATLANTIC", "ECHO"])
   issuingEntity?: "ATLANTIC" | "ECHO";
 
-  /** Bank block on the PDF: GBP Zempler or EUR Wise. */
+  /** Bank block on the PDF: GBP Zempler, EUR Wise, or TIDE (Atlantic GBP). */
   @IsOptional()
-  @IsIn(["GBP", "EUR"])
-  bankAccount?: "GBP" | "EUR";
+  @IsIn(["GBP", "EUR", "TIDE"])
+  bankAccount?: "GBP" | "EUR" | "TIDE";
 
   @IsOptional()
   @IsArray()
@@ -211,8 +211,8 @@ export class UpdateInvoiceIssueDto {
   issuingEntity?: "ATLANTIC" | "ECHO";
 
   @IsOptional()
-  @IsIn(["GBP", "EUR"])
-  bankAccount?: "GBP" | "EUR";
+  @IsIn(["GBP", "EUR", "TIDE"])
+  bankAccount?: "GBP" | "EUR" | "TIDE";
 }
 
 /** Customer file fields shown on this invoice. Does not change invoiceNumber. */

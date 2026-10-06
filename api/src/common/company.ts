@@ -57,9 +57,18 @@ export const atlantic = {
   },
 } as const;
 
+/** Atlantic's GBP account, for Atlantic invoices paid in pounds. */
+const atlanticTide = {
+  bankName: "Tide",
+  accountName: "Atlantic Devices Solutions LTD",
+  sortCode: "04-06-05",
+  accountNumber: "32778387",
+} as const;
+
 export type CompanyEntity = typeof echoLogic | typeof atlantic;
 export type IssuingEntityId = "ATLANTIC" | "ECHO";
-export type BankAccountId = "GBP" | "EUR";
+/** GBP = Echo Zempler, EUR = Atlantic Wise, TIDE = Atlantic Tide (GBP). */
+export type BankAccountId = "GBP" | "EUR" | "TIDE";
 
 export function resolveIssuingEntity(
   entity?: string | null,
@@ -73,7 +82,7 @@ export function resolveBankAccount(
   account?: string | null,
   printCurrency?: string,
 ): BankAccountId {
-  if (account === "EUR" || account === "GBP") return account;
+  if (account === "EUR" || account === "GBP" || account === "TIDE") return account;
   return printCurrency === "EUR" ? "EUR" : "GBP";
 }
 
@@ -87,6 +96,7 @@ export function companyForCurrency(currency: PrintCurrency = "GBP"): CompanyEnti
 }
 
 export function bankDetailLinesForAccount(account: BankAccountId) {
+  if (account === "TIDE") return bankLines(atlanticTide);
   return bankDetailLines(account === "EUR" ? atlantic : echoLogic);
 }
 
@@ -97,7 +107,10 @@ export function companyAddressLines(entity: CompanyEntity) {
 
 /** Bank block for the entity issuing the document. */
 export function bankDetailLines(entity: CompanyEntity) {
-  const bank = entity.bank;
+  return bankLines(entity.bank);
+}
+
+function bankLines(bank: CompanyEntity["bank"] | typeof atlanticTide) {
   if ("iban" in bank) {
     return [
       `Bank Name: ${bank.bankName}`,

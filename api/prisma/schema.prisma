@@ -173,7 +173,7 @@ model Invoice {
   marginVatScheme Boolean       @default(true)
   // Amounts are always stored in GBP. printCurrency is GBP/EUR on the PDF.
   // issuingEntity is the letterhead (ATLANTIC | ECHO). bankAccount is which
-  // payment block to print (GBP Zempler | EUR Wise). They can differ so
+  // payment block to print (GBP Zempler | EUR Wise | TIDE Atlantic GBP). They can differ so
   // Atlantic can issue a GBP invoice paid into the GBP account.
   printCurrency   String        @default("GBP")
   fxRate          Float         @default(1.15)

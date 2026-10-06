@@ -7,6 +7,7 @@ import { parseImeis } from "@/lib/imei";
 import { parseImeiEntriesJson } from "@/lib/imei-notes";
 import { toNumber, toOptionalNumber, toOptionalString } from "@/lib/lookups";
 import { apiClient, ApiError } from "@/lib/api-client";
+import { resolveBankAccount } from "@/lib/company";
 import type { InvoiceDoc } from "@/components/invoice-document";
 
 export async function getInvoicePreview(id: string) {
@@ -75,7 +76,7 @@ export async function createInvoice(formData: FormData) {
         printCurrency: formData.get("printCurrency") === "EUR" ? "EUR" : "GBP",
         fxRate: toOptionalNumber(formData.get("fxRate")),
         issuingEntity: formData.get("issuingEntity") === "ATLANTIC" ? "ATLANTIC" : "ECHO",
-        bankAccount: formData.get("bankAccount") === "EUR" ? "EUR" : "GBP",
+        bankAccount: resolveBankAccount(toOptionalString(formData.get("bankAccount"))),
         appliedRmaCredits,
         initialPaymentGbp: toOptionalNumber(formData.get("initialPaymentGbp")),
         installmentCount:
@@ -199,7 +200,7 @@ export async function updateInvoiceIssue(formData: FormData) {
         printCurrency,
         fxRate: toOptionalNumber(formData.get("fxRate")),
         issuingEntity: formData.get("issuingEntity") === "ATLANTIC" ? "ATLANTIC" : "ECHO",
-        bankAccount: formData.get("bankAccount") === "EUR" ? "EUR" : "GBP",
+        bankAccount: resolveBankAccount(toOptionalString(formData.get("bankAccount"))),
       },
       apiToken,
     );
