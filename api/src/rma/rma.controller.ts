@@ -13,7 +13,14 @@ import {
 } from "@nestjs/common";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import { RmaService } from "./rma.service";
-import { ApplyRmaCreditDto, CreateRmaDto, ProcessRmaDto } from "./dto/rma.dto";
+import {
+  AddRmaItemsDto,
+  ApplyRmaCreditDto,
+  CreateRmaDto,
+  ProcessRmaDto,
+  UpdateRmaDto,
+  UpdateRmaItemDto,
+} from "./dto/rma.dto";
 
 @Controller("rma")
 @UseGuards(JwtAuthGuard)
@@ -38,6 +45,30 @@ export class RmaController {
   @Patch(":id")
   process(@Param("id") id: string, @Body() dto: ProcessRmaDto) {
     return this.rma.processRma(id, dto.status);
+  }
+
+  @Patch(":id/details")
+  update(@Param("id") id: string, @Body() dto: UpdateRmaDto) {
+    return this.rma.updateRma(id, dto);
+  }
+
+  @Post(":id/items")
+  addItems(@Param("id") id: string, @Body() dto: AddRmaItemsDto) {
+    return this.rma.addRmaItems(id, dto);
+  }
+
+  @Patch(":id/items/:itemId")
+  updateItem(
+    @Param("id") id: string,
+    @Param("itemId") itemId: string,
+    @Body() dto: UpdateRmaItemDto,
+  ) {
+    return this.rma.updateRmaItem(id, itemId, dto);
+  }
+
+  @Delete(":id/items/:itemId")
+  removeItem(@Param("id") id: string, @Param("itemId") itemId: string) {
+    return this.rma.removeRmaItem(id, itemId);
   }
 
   @Delete(":id")

@@ -94,3 +94,63 @@ export class ApplyRmaCreditDto {
   @IsString()
   paymentDate?: string | null;
 }
+
+export class UpdateRmaDto {
+  @IsOptional()
+  @IsString()
+  reason?: string | null;
+
+  @IsOptional()
+  @IsString()
+  notes?: string | null;
+}
+
+export class AddRmaItemsDto {
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => RmaItemDto)
+  items?: RmaItemDto[];
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => RmaManualItemDto)
+  manualItems?: RmaManualItemDto[];
+}
+
+// Product, IMEI, colour and grade only apply to manual items — a tracked unit's
+// details come from its stock record and are ignored here.
+export class UpdateRmaItemDto {
+  @IsOptional()
+  @IsString()
+  invoiceNumber?: string | null;
+
+  @IsOptional()
+  @IsString()
+  productName?: string;
+
+  @IsOptional()
+  @IsString()
+  imei?: string | null;
+
+  @IsOptional()
+  @IsString()
+  color?: string | null;
+
+  @IsOptional()
+  @IsString()
+  grade?: string | null;
+
+  @IsOptional()
+  @IsIn(RMA_ACTIONS)
+  action?: string;
+
+  @IsOptional()
+  @IsNumber()
+  unitPriceGbp?: number;
+
+  @IsOptional()
+  @IsString()
+  reason?: string | null;
+}
