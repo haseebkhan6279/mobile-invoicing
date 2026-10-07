@@ -176,9 +176,10 @@ export default async function InvoiceDetailPage({
             content: (
               <div className="space-y-4">
                 <Card className="no-print">
-                  <h2 className="mb-3 font-medium">Company, currency and bank</h2>
+                  <h2 className="mb-3 font-medium">Date, company, currency and bank</h2>
                   <InvoiceIssueForm
                     invoiceId={invoice.id}
+                    issuedAt={invoice.issuedAt}
                     issuingEntity={invoice.issuingEntity}
                     printCurrency={invoice.printCurrency}
                     bankAccount={invoice.bankAccount}

@@ -10,6 +10,7 @@ import { nextDocumentNumberTx } from "../common/numbers";
 import { rmaRemainingCredit } from "../common/rma";
 import { invoiceTotals, stockStatusForInvoice } from "../common/invoice";
 import { formatMoney, resolvePrintCurrency } from "../common/money";
+import { parseDocumentDate } from "../common/status";
 import { resolveBankAccount, resolveIssuingEntity } from "../common/company";
 import {
   buildEvenInstallments,
@@ -223,6 +224,7 @@ export class InvoicesService {
           fxRate: rate,
           issuingEntity,
           bankAccount,
+          issuedAt: parseDocumentDate(input.issuedAt, new Date()),
           notes: input.notes ?? null,
           paidAt: status === "PAID" ? new Date() : null,
           lines: {
@@ -409,6 +411,7 @@ export class InvoicesService {
         fxRate: rate,
         issuingEntity,
         bankAccount,
+        issuedAt: parseDocumentDate(dto.issuedAt, invoice.issuedAt),
       },
     });
   }

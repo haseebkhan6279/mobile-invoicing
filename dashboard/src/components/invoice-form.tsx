@@ -500,6 +500,17 @@ export function InvoiceForm({
           />
         </div>
         <div>
+          <Label htmlFor="issuedAt">Invoice date</Label>
+          <Input
+            id="issuedAt"
+            name="issuedAt"
+            type="date"
+            required
+            defaultValue={new Date().toLocaleDateString("en-CA")}
+            suppressHydrationWarning
+          />
+        </div>
+        <div>
           <Label htmlFor="paymentTerms">Payment terms</Label>
           <Input id="paymentTerms" name="paymentTerms" defaultValue="Immediate" />
         </div>

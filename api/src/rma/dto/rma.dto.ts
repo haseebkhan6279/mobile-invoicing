@@ -1,5 +1,5 @@
 import { Type } from "class-transformer";
-import { IsArray, IsIn, IsNumber, IsOptional, IsString, ValidateNested } from "class-validator";
+import { IsArray, IsDateString, IsIn, IsNumber, IsOptional, IsString, ValidateNested } from "class-validator";
 import { RMA_ACTIONS, RMA_PAYMENT_TYPES, RMA_STATUSES } from "../../common/status";
 
 class RmaItemDto {
@@ -96,6 +96,11 @@ export class ApplyRmaCreditDto {
 }
 
 export class UpdateRmaDto {
+  /** RMA date (YYYY-MM-DD) shown on the credit note. */
+  @IsOptional()
+  @IsDateString()
+  createdAt?: string;
+
   @IsOptional()
   @IsString()
   reason?: string | null;

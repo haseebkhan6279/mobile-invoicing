@@ -69,6 +69,7 @@ export async function createInvoice(formData: FormData) {
         status: String(formData.get("status") ?? "PENDING"),
         shippingCostGbp: toNumber(formData.get("shippingCostGbp")),
         shippingLabel: toOptionalString(formData.get("shippingLabel")),
+        issuedAt: toOptionalString(formData.get("issuedAt")),
         paymentTerms: toOptionalString(formData.get("paymentTerms")),
         warrantyTerms: toOptionalString(formData.get("warrantyTerms")),
         notes: toOptionalString(formData.get("notes")),
@@ -197,6 +198,7 @@ export async function updateInvoiceIssue(formData: FormData) {
     await apiClient.patch(
       `/invoices/${id}/issue`,
       {
+        issuedAt: toOptionalString(formData.get("issuedAt")),
         printCurrency,
         fxRate: toOptionalNumber(formData.get("fxRate")),
         issuingEntity: formData.get("issuingEntity") === "ATLANTIC" ? "ATLANTIC" : "ECHO",

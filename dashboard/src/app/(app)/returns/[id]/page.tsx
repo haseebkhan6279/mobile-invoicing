@@ -37,6 +37,7 @@ type RmaDetail = {
   status: string;
   reason: string | null;
   notes: string | null;
+  createdAt: string;
   invoiceId: string;
   paymentType: string;
   paymentAmountGbp: number;
@@ -179,10 +180,20 @@ export default async function RmaDetailPage({
         </dl>
         <details className="no-print mt-4">
           <summary className="cursor-pointer text-sm font-medium text-brand-500 dark:text-sky-400">
-            Edit reason &amp; notes
+            Edit date, reason &amp; notes
           </summary>
           <form action={updateRmaDetails} className="mt-3 space-y-3">
             <input type="hidden" name="id" value={rma.id} />
+            <div className="max-w-xs">
+              <Label htmlFor="createdAt">RMA date</Label>
+              <Input
+                id="createdAt"
+                name="createdAt"
+                type="date"
+                required
+                defaultValue={rma.createdAt.slice(0, 10)}
+              />
+            </div>
             <div>
               <Label htmlFor="reason">Reason</Label>
               <Textarea id="reason" name="reason" defaultValue={rma.reason ?? ""} />

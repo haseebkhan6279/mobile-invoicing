@@ -11,6 +11,7 @@ import { nextDocumentNumberTx } from "../common/numbers";
 import { stockStatusForInvoice } from "../common/invoice";
 import { roundMoney } from "../common/money";
 import { rmaTotals } from "../common/rma";
+import { parseDocumentDate } from "../common/status";
 import {
   AddRmaItemsDto,
   ApplyRmaCreditDto,
@@ -180,6 +181,7 @@ export class RmaService {
       data: {
         reason: input.reason !== undefined ? input.reason || null : rma.reason,
         notes: input.notes !== undefined ? input.notes || null : rma.notes,
+        createdAt: parseDocumentDate(input.createdAt, rma.createdAt),
       },
     });
   }

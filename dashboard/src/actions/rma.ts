@@ -197,6 +197,7 @@ export async function updateRmaDetails(formData: FormData) {
     await apiClient.patch(
       `/rma/${id}/details`,
       {
+        createdAt: toOptionalString(formData.get("createdAt")),
         reason: toOptionalString(formData.get("reason")) ?? null,
         notes: toOptionalString(formData.get("notes")) ?? null,
       },

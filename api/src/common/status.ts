@@ -32,3 +32,16 @@ export function formatDate(value: Date | string) {
     year: "numeric",
   }).format(date);
 }
+
+/**
+ * A YYYY-MM-DD picked in the UI, as the stored document date. Same day as
+ * `current` keeps its exact timestamp (so ordering within the day survives);
+ * a new day is stored at noon UTC so it prints as that day in UK/EU time.
+ */
+export function parseDocumentDate(value: string | null | undefined, current: Date): Date {
+  const day = value?.trim().slice(0, 10);
+  if (!day || !/^\d{4}-\d{2}-\d{2}$/.test(day)) return current;
+  if (current.toISOString().slice(0, 10) === day) return current;
+  const date = new Date(`${day}T12:00:00.000Z`);
+  return Number.isNaN(date.getTime()) ? current : date;
+}

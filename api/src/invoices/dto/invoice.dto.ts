@@ -130,6 +130,11 @@ export class CreateInvoiceDto {
   @IsIn(["GBP", "EUR", "TIDE"])
   bankAccount?: "GBP" | "EUR" | "TIDE";
 
+  /** Invoice date (YYYY-MM-DD). Defaults to today. */
+  @IsOptional()
+  @IsDateString()
+  issuedAt?: string;
+
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
@@ -195,8 +200,12 @@ export class UpdateInvoiceNotesDto {
   notes?: string | null;
 }
 
-/** Letterhead, print currency and bank on an existing invoice. Number is unchanged. */
+/** Letterhead, print currency, bank and date on an existing invoice. Number is unchanged. */
 export class UpdateInvoiceIssueDto {
+  @IsOptional()
+  @IsDateString()
+  issuedAt?: string;
+
   @IsOptional()
   @IsIn(["GBP", "EUR"])
   printCurrency?: "GBP" | "EUR";

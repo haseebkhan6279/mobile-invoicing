@@ -20,8 +20,10 @@ export function InvoiceIssueForm({
   printCurrency: initialCurrency,
   bankAccount: initialBank,
   fxRate: initialRate,
+  issuedAt,
 }: {
   invoiceId: string;
+  issuedAt: string;
   issuingEntity?: string | null;
   printCurrency?: string | null;
   bankAccount?: string | null;
@@ -43,7 +45,17 @@ export function InvoiceIssueForm({
   return (
     <form action={updateInvoiceIssue} className="space-y-4">
       <input type="hidden" name="id" value={invoiceId} />
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div>
+          <Label htmlFor="issuedAt">Invoice date</Label>
+          <Input
+            id="issuedAt"
+            name="issuedAt"
+            type="date"
+            required
+            defaultValue={issuedAt.slice(0, 10)}
+          />
+        </div>
         <div>
           <Label htmlFor="issuingEntity">Issuer / company</Label>
           <Select
