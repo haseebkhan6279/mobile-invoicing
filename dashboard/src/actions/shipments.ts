@@ -51,3 +51,23 @@ export async function updateShipment(formData: FormData) {
   revalidatePath(`/shipments/${id}`);
   redirect(`/shipments/${id}?ok=Updated`);
 }
+
+export async function deleteShipment(formData: FormData) {
+  const { apiToken } = await requireUser();
+  const id = String(formData.get("id") ?? "");
+
+  let result: { invoiceId: string };
+  try {
+    result = await apiClient.delete<{ invoiceId: string }>(`/shipments/${id}`, apiToken);
+  } catch (err) {
+    if (err instanceof ApiError) {
+      if (err.status === 404) redirect("/shipments");
+      redirect(`/shipments/${id}?error=${encodeURIComponent(err.message)}`);
+    }
+    throw err;
+  }
+
+  revalidatePath("/shipments");
+  revalidatePath(`/invoices/${result.invoiceId}`);
+  redirect(`/invoices/${result.invoiceId}?ok=Shipment deleted`);
+}

@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { updateShipment } from "@/actions/shipments";
+import { deleteShipment, updateShipment } from "@/actions/shipments";
 import { Notice } from "@/components/notice";
 import { PageHeader } from "@/components/page-header";
 import { Card } from "@/components/ui/card";
+import { ConfirmSubmitButton } from "@/components/ui/confirm-submit-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select } from "@/components/ui/select";
@@ -32,11 +33,11 @@ export default async function ShipmentDetailPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ ok?: string }>;
+  searchParams: Promise<{ ok?: string; error?: string }>;
 }) {
   const { apiToken } = await requireUser();
   const { id } = await params;
-  const { ok } = await searchParams;
+  const { ok, error } = await searchParams;
   let shipment: ShipmentDetail;
   try {
     shipment = await apiClient.get<ShipmentDetail>(`/shipments/${id}`, apiToken);
@@ -51,7 +52,7 @@ export default async function ShipmentDetailPage({
         title={shipment.shipmentNumber}
         description={`${shipment.invoice.invoiceNumber} · ${shipment.invoice.customer.name}`}
       />
-      <Notice ok={ok} />
+      <Notice ok={ok} error={error} />
       <Card>
         <div className="mb-4 grid gap-3 sm:grid-cols-2 text-sm">
           <div>
@@ -102,6 +103,24 @@ export default async function ShipmentDetailPage({
             <Textarea name="notes" defaultValue={shipment.notes ?? ""} />
           </div>
           <SubmitButton pendingText="Saving…">Save tracking</SubmitButton>
+        </form>
+      </Card>
+      <Card className="border-red-100 dark:border-red-900/40">
+        <h2 className="mb-1 font-medium text-red-700 dark:text-red-400">Delete shipment</h2>
+        <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">
+          Removes this shipment&apos;s tracking from {shipment.invoice.invoiceNumber}. The invoice
+          itself is not changed.
+        </p>
+        <form action={deleteShipment}>
+          <input type="hidden" name="id" value={shipment.id} />
+          <ConfirmSubmitButton
+            variant="danger"
+            pendingText="Deleting…"
+            confirmTitle={`Delete shipment ${shipment.shipmentNumber}?`}
+            confirmMessage="This cannot be undone."
+          >
+            Delete shipment
+          </ConfirmSubmitButton>
         </form>
       </Card>
     </div>

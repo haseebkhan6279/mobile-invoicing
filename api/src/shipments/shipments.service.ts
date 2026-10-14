@@ -68,4 +68,13 @@ export class ShipmentsService {
       },
     });
   }
+
+  async deleteShipment(id: string) {
+    const shipment = await this.prisma.shipment.findUnique({ where: { id } });
+    if (!shipment) throw new NotFoundException("Shipment not found");
+    // A shipment is only tracking info on top of its invoice; nothing else
+    // points at it, so it can go on its own.
+    await this.prisma.shipment.delete({ where: { id } });
+    return { deleted: true, invoiceId: shipment.invoiceId };
+  }
 }

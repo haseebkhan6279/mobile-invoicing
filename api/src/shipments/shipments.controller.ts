@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, UseGuards } from "@nestjs/common";
+import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from "@nestjs/common";
 import { JwtAuthGuard } from "../auth/jwt-auth.guard";
 import { ShipmentsService } from "./shipments.service";
 import { CreateShipmentDto, UpdateShipmentDto } from "./dto/shipment.dto";
@@ -26,5 +26,10 @@ export class ShipmentsController {
   @Patch(":id")
   update(@Param("id") id: string, @Body() dto: UpdateShipmentDto) {
     return this.shipments.updateShipment(id, dto);
+  }
+
+  @Delete(":id")
+  remove(@Param("id") id: string) {
+    return this.shipments.deleteShipment(id);
   }
 }

@@ -737,7 +737,14 @@ export class InvoicesService {
       throw new ConflictException("Delete this invoice's RMAs before deleting the invoice");
     }
     if (invoice._count.shipments > 0) {
-      throw new ConflictException("Delete this invoice's shipments before deleting the invoice");
+      const shipments = await this.prisma.shipment.findMany({
+        where: { invoiceId: id },
+        select: { shipmentNumber: true },
+      });
+      const numbers = shipments.map((s) => s.shipmentNumber).join(", ");
+      throw new ConflictException(
+        `Delete this invoice's shipments (${numbers}) from the Shipments page before deleting the invoice`,
+      );
     }
     if (invoice._count.appliedCredits > 0) {
       throw new ConflictException("An RMA credit is applied to this invoice — undo it first");
