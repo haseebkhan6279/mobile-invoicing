@@ -6,6 +6,7 @@ import {
 } from "@nestjs/common";
 import type { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
+import { ATTACHMENT_SUMMARY } from "../attachments/attachments.service";
 import { recordPaymentTx } from "../common/payments";
 import { nextDocumentNumberTx } from "../common/numbers";
 import { stockStatusForInvoice } from "../common/invoice";
@@ -68,6 +69,7 @@ export class RmaService {
         appliedInvoice: true,
         items: { include: { stockUnit: true } },
         payments: { include: { invoice: { select: { id: true, invoiceNumber: true } } } },
+        attachments: { select: ATTACHMENT_SUMMARY, orderBy: { createdAt: "asc" } },
       },
     });
     if (!rma) throw new NotFoundException("RMA not found");

@@ -1,4 +1,5 @@
 import { createRma } from "@/actions/rma";
+import { AttachmentsField } from "@/components/attachments-field";
 import { Notice } from "@/components/notice";
 import { PageHeader } from "@/components/page-header";
 import { Card } from "@/components/ui/card";
@@ -121,6 +122,7 @@ export default async function NewRmaPage({
               <Label htmlFor="notes">Notes</Label>
               <Textarea id="notes" name="notes" />
             </div>
+            <AttachmentsField />
             <SubmitButton pendingText="Creating…">Create RMA</SubmitButton>
           </ActionForm>
         </Card>

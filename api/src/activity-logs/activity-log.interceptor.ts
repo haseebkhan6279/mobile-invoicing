@@ -44,6 +44,8 @@ function actionTitle(method: string, path: string) {
     [/^POST \/rma$/, "Created RMA"],
     [/^POST \/shipments$/, "Created shipment"],
     [/^POST \/suppliers$/, "Created supplier"],
+    [/^POST \/attachments$/, "Attached file"],
+    [/^DELETE \/attachments\/[^/]+$/, "Removed attachment"],
   ];
   const key = `${method} ${p}`;
   for (const [pattern, title] of map) {

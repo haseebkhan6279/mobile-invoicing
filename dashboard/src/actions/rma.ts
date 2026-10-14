@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth-guard";
 import { toNumber, toOptionalString } from "@/lib/lookups";
 import { apiClient, ApiError } from "@/lib/api-client";
+import { uploadAttachments } from "@/lib/attachments";
 import { rmaRemainingCredit } from "@/lib/rma";
 
 export type AvailableRmaCredit = {
@@ -82,6 +83,14 @@ export async function createRma(formData: FormData) {
 
   revalidatePath("/returns");
   revalidatePath("/stock");
+  try {
+    await uploadAttachments({ rmaId: rma.id }, formData, apiToken);
+  } catch (err) {
+    const message = err instanceof ApiError ? err.message : "Attachment upload failed";
+    redirect(
+      `/returns/${rma.id}?error=${encodeURIComponent(`RMA created, but the attachment failed: ${message}`)}`,
+    );
+  }
   redirect(`/returns/${rma.id}?ok=RMA created`);
 }
 

@@ -192,6 +192,7 @@ model Invoice {
   appliedCredits  Rma[]         @relation("RmaAppliedInvoice")
   payments        Payment[]
   installments    Installment[]
+  attachments     Attachment[]
 }
 
 model InvoiceLine {
@@ -233,6 +234,26 @@ model Rma {
   updatedAt        DateTime  @updatedAt
   items            RmaItem[]
   payments         Payment[]
+  attachments      Attachment[]
+}
+
+// Files kept with an invoice or RMA (supplier invoice, photos, proof of
+// delivery). Separate from Invoice/Rma so the bytes are only read when a file
+// is actually opened, not on every query that includes an invoice.
+model Attachment {
+  id        String   @id @default(cuid())
+  invoiceId String?
+  invoice   Invoice? @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  rmaId     String?
+  rma       Rma?     @relation(fields: [rmaId], references: [id], onDelete: Cascade)
+  filename  String
+  mimeType  String
+  size      Int
+  data      Bytes
+  createdAt DateTime @default(now())
+
+  @@index([invoiceId])
+  @@index([rmaId])
 }
 
 model RmaItem {

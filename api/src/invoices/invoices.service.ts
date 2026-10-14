@@ -6,6 +6,7 @@ import {
 } from "@nestjs/common";
 import type { Prisma } from "@prisma/client";
 import { PrismaService } from "../prisma/prisma.service";
+import { ATTACHMENT_SUMMARY } from "../attachments/attachments.service";
 import { nextDocumentNumberTx } from "../common/numbers";
 import { rmaRemainingCredit } from "../common/rma";
 import { invoiceTotals, stockStatusForInvoice } from "../common/invoice";
@@ -168,6 +169,7 @@ export class InvoicesService {
           include: { rma: { select: { id: true, rmaNumber: true } } },
         },
         installments: { orderBy: { sortOrder: "asc" } },
+        attachments: { select: ATTACHMENT_SUMMARY, orderBy: { createdAt: "asc" } },
       },
     });
     if (!invoice) throw new NotFoundException("Invoice not found");

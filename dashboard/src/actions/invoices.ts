@@ -7,6 +7,7 @@ import { parseImeis } from "@/lib/imei";
 import { parseImeiEntriesJson } from "@/lib/imei-notes";
 import { toNumber, toOptionalNumber, toOptionalString } from "@/lib/lookups";
 import { apiClient, ApiError } from "@/lib/api-client";
+import { uploadAttachments } from "@/lib/attachments";
 import { resolveBankAccount } from "@/lib/company";
 import type { InvoiceDoc } from "@/components/invoice-document";
 
@@ -99,6 +100,14 @@ export async function createInvoice(formData: FormData) {
 
   revalidatePath("/invoices");
   revalidatePath("/stock");
+  try {
+    await uploadAttachments({ invoiceId: invoice.id }, formData, apiToken);
+  } catch (err) {
+    const message = err instanceof ApiError ? err.message : "Attachment upload failed";
+    redirect(
+      `/invoices/${invoice.id}?error=${encodeURIComponent(`Invoice created, but the attachment failed: ${message}`)}`,
+    );
+  }
   redirect(`/invoices/${invoice.id}?ok=Invoice created`);
 }
 

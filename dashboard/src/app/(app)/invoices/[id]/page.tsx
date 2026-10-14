@@ -16,6 +16,7 @@ import {
   updateInvoiceStatus,
 } from "@/actions/invoices";
 import { applyRmaCreditToInvoice, getAvailableRmaCredits } from "@/actions/rma";
+import { AttachmentsCard } from "@/components/attachments-card";
 import { EmailInvoiceForm } from "@/components/email-invoice-form";
 import { InvoiceDocument } from "@/components/invoice-document";
 import { InvoiceIssueForm } from "@/components/invoice-issue-form";
@@ -35,6 +36,7 @@ import { Table, THead, Th, Td } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { requireUser } from "@/lib/auth-guard";
 import { apiClient, ApiError } from "@/lib/api-client";
+import type { AttachmentSummary } from "@/lib/attachments";
 import { getLookups } from "@/lib/lookups";
 import { invoiceTotals } from "@/lib/invoice";
 import { formatGbp } from "@/lib/money";
@@ -100,6 +102,7 @@ type InvoiceDetail = {
     amountGbp: number;
     status: string;
   }[];
+  attachments: AttachmentSummary[];
 };
 
 export default async function InvoiceDetailPage({
@@ -726,12 +729,21 @@ export default async function InvoiceDetailPage({
               </Card>
             ),
           },
+          {
+            id: "attachments",
+            label: invoice.attachments.length
+              ? `Attachments (${invoice.attachments.length})`
+              : "Attachments",
+            content: (
+              <AttachmentsCard owner={{ invoiceId: invoice.id }} attachments={invoice.attachments} />
+            ),
+          },
         ]}
       />
       <Card className="no-print border-red-100 dark:border-red-900/40">
         <h2 className="mb-1 font-medium text-red-700 dark:text-red-400">Delete invoice</h2>
         <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">
-          Removes the invoice with its lines, payments and installments, and releases any
+          Removes the invoice with its lines, payments, installments and attachments, and releases any
           stock on it back to inventory. Only possible once its RMAs and shipments are gone.
         </p>
         <form action={deleteInvoice}>

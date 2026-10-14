@@ -4,6 +4,7 @@ import { Trash2 } from "lucide-react";
 import { useId, useRef, useState } from "react";
 import { getAvailableImeis } from "@/actions/stock";
 import { getAvailableRmaCredits, type AvailableRmaCredit } from "@/actions/rma";
+import { AttachmentsField } from "@/components/attachments-field";
 import { CustomerPicker, type CustomerHit } from "@/components/customer-picker";
 import { InvoiceImeiEntriesField } from "@/components/invoice-imei-entries";
 import { InvoiceImeiScanner, type ScannedStockUnit } from "@/components/invoice-imei-scanner";
@@ -646,6 +647,7 @@ export function InvoiceForm({
           placeholder="Chased twice on WhatsApp / collecting in person Friday…"
         />
       </div>
+      <AttachmentsField />
     </div>
   );
 }

@@ -12,6 +12,7 @@ import {
   updateRmaItems,
 } from "@/actions/rma";
 import { GoodsNotReceivedWarning } from "@/components/goods-not-received-warning";
+import { AttachmentsCard } from "@/components/attachments-card";
 import { Notice } from "@/components/notice";
 import { PageHeader } from "@/components/page-header";
 import { RmaManualItems } from "@/components/rma-manual-items";
@@ -28,6 +29,7 @@ import { requireUser } from "@/lib/auth-guard";
 import { formatGbp } from "@/lib/money";
 import { formatDate } from "@/lib/utils";
 import { apiClient, ApiError } from "@/lib/api-client";
+import type { AttachmentSummary } from "@/lib/attachments";
 import { rmaCreditSummary, rmaGoodsReceived } from "@/lib/rma";
 import { labelStatus, RMA_ACTIONS, RMA_PAYMENT_TYPES, RMA_STATUSES } from "@/lib/status";
 
@@ -71,6 +73,7 @@ type RmaDetail = {
       status: string;
     } | null;
   }[];
+  attachments: AttachmentSummary[];
 };
 type InvoiceOption = { id: string; invoiceNumber: string; customer: { name: string } };
 type SourceInvoice = {
@@ -554,6 +557,7 @@ export default async function RmaDetailPage({
           </div>
         ) : null}
       </Card>
+      <AttachmentsCard owner={{ rmaId: rma.id }} attachments={rma.attachments} />
       <Card className="no-print border-red-100 dark:border-red-900/40">
         <h2 className="mb-1 font-medium text-red-700 dark:text-red-400">Delete RMA</h2>
         <p className="mb-4 text-sm text-slate-500 dark:text-slate-400">

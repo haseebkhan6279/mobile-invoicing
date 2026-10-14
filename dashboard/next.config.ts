@@ -10,6 +10,13 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  // File uploads (PO, invoice and RMA attachments) go through server actions,
+  // whose default 1MB body cap is below the API's 4MB-per-file limit.
+  experimental: {
+    serverActions: {
+      bodySizeLimit: "20mb",
+    },
+  },
 };
 
 export default nextConfig;
