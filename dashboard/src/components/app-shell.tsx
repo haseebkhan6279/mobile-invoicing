@@ -166,7 +166,7 @@ export function AppShell({
             </form>
           </div>
         </header>
-        <main className="flex-1 p-4 pb-24 md:p-6 lg:pb-6">{children}</main>
+        <main className="flex-1 p-4 pb-24 md:p-6 lg:pb-6 print:p-0">{children}</main>
       </div>
 
       <nav className="no-print fixed inset-x-0 bottom-0 z-40 flex border-t border-gray-200 bg-white pb-[env(safe-area-inset-bottom)] lg:hidden dark:border-gray-800 dark:bg-gray-900">

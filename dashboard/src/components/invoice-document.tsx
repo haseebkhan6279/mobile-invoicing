@@ -113,7 +113,7 @@ export function InvoiceDocument({
 
   return (
     <div className="mx-auto max-w-[210mm] bg-white p-8 text-slate-900 print:p-0 [print-color-adjust:exact] [-webkit-print-color-adjust:exact]">
-      <div className="flex flex-col gap-6 border-b border-slate-200 pb-6 sm:flex-row sm:justify-between">
+      <div className="flex flex-col gap-6 border-b border-slate-200 pb-6 sm:flex-row sm:justify-between print:pb-3">
         <div>
           <CompanyBrand company={seller} />
           <p className="mt-2 text-sm text-slate-600">
@@ -139,7 +139,7 @@ export function InvoiceDocument({
               {statusLabel}
             </span>
           </div>
-          <dl className="mt-4 space-y-1.5 text-sm">
+          <dl className="mt-4 space-y-1.5 text-sm print:mt-2 print:space-y-0.5">
             <div className="flex justify-end gap-3">
               <dt className="text-slate-500">Invoice date</dt>
               <dd className="font-semibold tabular-nums text-slate-900">{formatDate(invoice.issuedAt)}</dd>
@@ -157,12 +157,12 @@ export function InvoiceDocument({
       </div>
 
       {invoice.marginVatScheme ? (
-        <div className="mt-4 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900">
+        <div className="mt-4 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-900 print:mt-3 print:py-2">
           {INVOICE_MARGIN_NOTICE}
         </div>
       ) : null}
 
-      <div className="mt-6 grid gap-6 sm:grid-cols-3">
+      <div className="mt-6 grid gap-6 sm:grid-cols-3 print:mt-3 print:gap-4">
         {editable ? (
           <form action={updateInvoiceCustomer} className="no-print sm:col-span-3 space-y-3 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-3">
             <input type="hidden" name="id" value={invoice.id} />
@@ -269,7 +269,7 @@ export function InvoiceDocument({
         ) : null}
       </div>
 
-      <div className="mt-8 overflow-x-auto">
+      <div className="mt-8 overflow-x-auto print:mt-4">
       <table className="w-full table-fixed text-left text-sm">
         <colgroup>
           <col className="w-12" />
@@ -488,8 +488,8 @@ export function InvoiceDocument({
       </table>
       </div>
 
-      <div className="mt-6 flex flex-wrap justify-between gap-6">
-        <div className="max-w-sm text-sm text-slate-600">
+      <div className="mt-6 flex flex-col gap-6 sm:flex-row sm:justify-between print:mt-4">
+        <div className="min-w-0 text-sm text-slate-600 sm:max-w-sm sm:flex-1">
           <div className="text-xs uppercase tracking-wide text-slate-500">Bank details</div>
           {bankLines.map((line) => (
             <div key={line}>{line}</div>
@@ -505,7 +505,7 @@ export function InvoiceDocument({
             </span>
           </div>
         </div>
-        <div className="ml-auto w-full max-w-sm text-sm">
+        <div className="w-full text-sm sm:ml-auto sm:max-w-xs sm:flex-1">
           <div className="flex justify-between py-1">
             <span>Subtotal</span>
             <span>{money(totals.subGbp)}</span>
@@ -588,7 +588,7 @@ export function InvoiceDocument({
         </div>
       ) : null}
 
-      <p className="mt-6 text-xs text-slate-500">{INVOICE_INVALID_UNTIL_PAID_NOTICE}</p>
+      <p className="mt-6 text-xs text-slate-500 print:mt-4">{INVOICE_INVALID_UNTIL_PAID_NOTICE}</p>
 
       <div className="print-page-break mt-8 border-t border-slate-200 pt-8 text-xs text-slate-600">
         <h2 className="text-sm font-semibold text-slate-900">Invoice Notes</h2>
