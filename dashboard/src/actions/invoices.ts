@@ -353,12 +353,15 @@ export async function sendInvoiceEmail(formData: FormData) {
   const returnTo = String(formData.get("returnTo") ?? `/invoices/${id}`);
   const currency = formData.get("currency") === "EUR" ? "EUR" : "GBP";
   const rate = Number(formData.get("rate"));
+  const attachmentIds = formData.getAll("attachmentIds").map(String).filter(Boolean);
 
   let result: { sentTo: string };
   try {
     result = await apiClient.post<{ sentTo: string }>(
       `/invoices/${id}/send-email`,
-      currency === "EUR" && rate > 0 ? { email, currency, rate } : { email },
+      currency === "EUR" && rate > 0
+        ? { email, currency, rate, attachmentIds }
+        : { email, attachmentIds },
       apiToken,
     );
   } catch (err) {

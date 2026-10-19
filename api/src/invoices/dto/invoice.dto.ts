@@ -317,6 +317,12 @@ export class SendInvoiceEmailDto {
   @IsNumber()
   @Min(0.0001)
   rate?: number;
+
+  /** Ids of this invoice's attachments to send along with the PDF. */
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  attachmentIds?: string[];
 }
 
 export class RecordPaymentDto {

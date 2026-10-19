@@ -167,6 +167,7 @@ export default async function InvoiceDetailPage({
           invoiceId={invoice.id}
           customerEmail={invoice.customer.email}
           returnTo={`/invoices/${invoice.id}`}
+          attachments={invoice.attachments}
         />
       </div>
       <Tabs

@@ -624,6 +624,14 @@ export class InvoicesService {
       <p>Thank you for your business.</p>
     `.trim();
 
+    // Only files on this invoice: an id from another invoice is silently skipped.
+    const files = dto.attachmentIds?.length
+      ? await this.prisma.attachment.findMany({
+          where: { id: { in: dto.attachmentIds }, invoiceId: id },
+          orderBy: { createdAt: "asc" },
+        })
+      : [];
+
     await this.mail.sendMail({
       to,
       subject: `Invoice ${invoice.invoiceNumber}`,
@@ -634,6 +642,11 @@ export class InvoicesService {
           content: pdf,
           contentType: "application/pdf",
         },
+        ...files.map((file) => ({
+          filename: file.filename,
+          content: Buffer.from(file.data),
+          contentType: file.mimeType,
+        })),
       ],
     });
 

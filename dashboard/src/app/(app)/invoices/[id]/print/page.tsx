@@ -4,9 +4,12 @@ import { EmailInvoiceForm } from "@/components/email-invoice-form";
 import { InvoiceDocument, type InvoiceDoc } from "@/components/invoice-document";
 import { Notice } from "@/components/notice";
 import { PrintButton } from "@/components/print-button";
+import type { AttachmentSummary } from "@/lib/attachments";
 import { requireUser } from "@/lib/auth-guard";
 import { apiClient, ApiError } from "@/lib/api-client";
 import { DEFAULT_GBP_TO_EUR_RATE, type PrintCurrency } from "@/lib/money";
+
+type PrintInvoice = InvoiceDoc & { attachments?: AttachmentSummary[] };
 
 export default async function InvoicePrintPage({
   params,
@@ -19,9 +22,9 @@ export default async function InvoicePrintPage({
   const { id } = await params;
   const { ok, error, currency: currencyParam, rate: rateParam } = await searchParams;
   const printPath = `/invoices/${id}/print`;
-  let invoice: InvoiceDoc;
+  let invoice: PrintInvoice;
   try {
-    invoice = await apiClient.get<InvoiceDoc>(`/invoices/${id}`, apiToken);
+    invoice = await apiClient.get<PrintInvoice>(`/invoices/${id}`, apiToken);
   } catch (err) {
     if (err instanceof ApiError && err.status === 404) notFound();
     throw err;
@@ -54,6 +57,7 @@ export default async function InvoicePrintPage({
             returnTo={returnTo}
             currency={currency}
             rate={rate}
+            attachments={invoice.attachments}
           />
         </div>
       </div>
