@@ -17,8 +17,19 @@ export default async function SearchPage({
   const results = await globalSearch(q);
   const imeiNeedle = q.replace(/[\s-]/g, "").toLowerCase();
 
+  const words = q.toLowerCase().split(/\s+/).filter(Boolean);
+
   const matchingImei = (imeis: string[] | undefined) =>
     imeis?.find((imei) => imei.toLowerCase().includes(imeiNeedle)) ?? null;
+
+  // The invoice line whose product name holds every typed word, e.g. "S23 Ultra 256GB".
+  const matchingProduct = (lines: { productName?: string; qty?: number }[] | undefined) => {
+    const line = lines?.find((l) => {
+      const name = l.productName?.toLowerCase() ?? "";
+      return words.length > 0 && words.every((word) => name.includes(word));
+    });
+    return line ? `${line.qty ?? 1} × ${line.productName}` : null;
+  };
 
   const sections = [
     {
@@ -43,12 +54,14 @@ export default async function SearchPage({
       title: "Invoices",
       items: results.invoices.map((invoice) => {
         const imei = matchingImei(invoice.lines?.flatMap((line) => line.imeis) ?? []);
+        const product = imei ? null : matchingProduct(invoice.lines);
         return {
           href: `/invoices/${invoice.id}`,
           label: invoice.invoiceNumber,
           meta: [
             `${invoice.customer.clientId} · ${invoice.customer.name}`,
             imei ? `IMEI ${imei}` : null,
+            product,
           ]
             .filter(Boolean)
             .join(" · "),

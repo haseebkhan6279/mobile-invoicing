@@ -12,6 +12,17 @@ type InvoiceImeiHit = {
   imei: string;
 };
 
+// Postgres `contains` is case-sensitive by default, but people type "s23 ultra".
+const ci = (value: string) => ({ contains: value, mode: "insensitive" as const });
+
+// Every typed word must appear in one of the fields, in any order, so
+// "S23 Ultra 256GB" finds "Samsung Galaxy S23 Ultra 256GB".
+const allWordsIn = (words: string[], fields: string[]) => ({
+  AND: words.map((word) => ({ OR: fields.map((field) => ({ [field]: ci(word) })) })),
+});
+
+const LINE_FIELDS = ["productName", "color", "network", "grade"];
+
 @Injectable()
 export class SearchService {
   constructor(private prisma: PrismaService) {}
@@ -33,6 +44,7 @@ export class SearchService {
     // IMEIs are often pasted with spaces or dashes; keep the raw term for names
     // and numbers, and a stripped form for serial lookup.
     const imeiNeedle = q.replace(/[\s-]/g, "");
+    const words = q.split(/\s+/).filter(Boolean);
     const invoiceImeiHits = await this.findInvoiceImeiHits(imeiNeedle || q);
 
     const [stock, invoices, customers, purchaseOrders, rmas, shipments, suppliers] =
@@ -40,11 +52,9 @@ export class SearchService {
         this.prisma.stockUnit.findMany({
           where: {
             OR: [
-              { imei: { contains: q } },
-              ...(imeiNeedle !== q ? [{ imei: { contains: imeiNeedle } }] : []),
-              { productName: { contains: q } },
-              { color: { contains: q } },
-              { grade: { contains: q } },
+              { imei: ci(q) },
+              ...(imeiNeedle !== q ? [{ imei: ci(imeiNeedle) }] : []),
+              allWordsIn(words, [...LINE_FIELDS, "brand"]),
             ],
           },
           include: { invoice: { select: { id: true, invoiceNumber: true } } },
@@ -54,34 +64,45 @@ export class SearchService {
         this.prisma.invoice.findMany({
           where: {
             OR: [
-              { invoiceNumber: { contains: q } },
-              { customer: { name: { contains: q } } },
-              { customer: { clientId: { contains: q } } },
-              { stockUnits: { some: { imei: { contains: imeiNeedle || q } } } },
+              { invoiceNumber: ci(q) },
+              { customer: { name: ci(q) } },
+              { customer: { clientId: ci(q) } },
+              { stockUnits: { some: { imei: ci(imeiNeedle || q) } } },
+              { lines: { some: allWordsIn(words, LINE_FIELDS) } },
               ...(invoiceImeiHits.length
                 ? [{ id: { in: [...new Set(invoiceImeiHits.map((hit) => hit.invoiceId))] } }]
                 : []),
             ],
           },
-          include: { customer: true, lines: { select: { imeis: true } } },
-          take: 10,
+          include: {
+            customer: true,
+            lines: {
+              select: { imeis: true, productName: true, qty: true },
+              orderBy: { sortOrder: "asc" },
+            },
+          },
+          take: 25,
           orderBy: { createdAt: "desc" },
         }),
         this.prisma.customer.findMany({
           where: {
             OR: [
-              { name: { contains: q } },
-              { clientId: { contains: q } },
-              { businessName: { contains: q } },
-              { phone: { contains: q } },
-              { email: { contains: q } },
+              { name: ci(q) },
+              { clientId: ci(q) },
+              { businessName: ci(q) },
+              { phone: ci(q) },
+              { email: ci(q) },
             ],
           },
           take: 10,
         }),
         this.prisma.purchaseOrder.findMany({
           where: {
-            OR: [{ poNumber: { contains: q } }, { supplier: { name: { contains: q } } }],
+            OR: [
+              { poNumber: ci(q) },
+              { supplier: { name: ci(q) } },
+              { lines: { some: allWordsIn(words, LINE_FIELDS) } },
+            ],
           },
           include: { supplier: true },
           take: 10,
@@ -90,9 +111,9 @@ export class SearchService {
         this.prisma.rma.findMany({
           where: {
             OR: [
-              { rmaNumber: { contains: q } },
-              { customer: { name: { contains: q } } },
-              { items: { some: { imei: { contains: imeiNeedle || q } } } },
+              { rmaNumber: ci(q) },
+              { customer: { name: ci(q) } },
+              { items: { some: { imei: ci(imeiNeedle || q) } } },
             ],
           },
           include: { customer: true, invoice: true },
@@ -101,16 +122,16 @@ export class SearchService {
         this.prisma.shipment.findMany({
           where: {
             OR: [
-              { shipmentNumber: { contains: q } },
-              { trackingNumber: { contains: q } },
-              { carrier: { contains: q } },
+              { shipmentNumber: ci(q) },
+              { trackingNumber: ci(q) },
+              { carrier: ci(q) },
             ],
           },
           include: { invoice: true },
           take: 10,
         }),
         this.prisma.supplier.findMany({
-          where: { OR: [{ name: { contains: q } }, { phone: { contains: q } }] },
+          where: { OR: [{ name: ci(q) }, { phone: ci(q) }] },
           take: 10,
         }),
       ]);

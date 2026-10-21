@@ -19,7 +19,7 @@ export type SearchResults = {
     invoiceNumber: string;
     status: string;
     customer: { clientId: string; name: string };
-    lines?: { imeis: string[] }[];
+    lines?: { imeis: string[]; productName?: string; qty?: number }[];
   }[];
   customers: { id: string; clientId: string; name: string; phone: string | null; email: string | null; businessName: string | null }[];
   purchaseOrders: { id: string; poNumber: string; status: string; supplier: { name: string } }[];
