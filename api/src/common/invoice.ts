@@ -80,3 +80,28 @@ export function invoiceToneLabel(tone: InvoiceVisualTone, status: string) {
   }
   return INVOICE_TONE_COLORS[tone].label;
 }
+
+/**
+ * What has come off the grand total, split so the invoice can show each credit
+ * note on its own line. A credit note is spent as a Payment row with an RMA on
+ * it; anything else paid is grouped as "payments received". The rest of
+ * paidGbp (not matched to a payment row) also counts as received, so the lines
+ * always add up to the balance shown.
+ */
+export function invoiceDeductions(invoice: {
+  paidAmountGbp?: number;
+  payments?: { amountGbp: number; rma?: { rmaNumber: string } | null }[];
+}) {
+  const byCreditNote = new Map<string, number>();
+  for (const payment of invoice.payments ?? []) {
+    if (!payment.rma) continue;
+    const key = payment.rma.rmaNumber;
+    byCreditNote.set(key, (byCreditNote.get(key) ?? 0) + payment.amountGbp);
+  }
+  const credits = [...byCreditNote]
+    .map(([rmaNumber, amountGbp]) => ({ rmaNumber, amountGbp: roundMoney(amountGbp) }))
+    .filter((row) => row.amountGbp > 0);
+  const creditGbp = roundMoney(credits.reduce((sum, row) => sum + row.amountGbp, 0));
+  const receivedGbp = Math.max(0, roundMoney((invoice.paidAmountGbp ?? 0) - creditGbp));
+  return { credits, creditGbp, receivedGbp };
+}

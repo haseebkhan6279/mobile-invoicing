@@ -4,6 +4,7 @@ import { ProductNameInput } from "@/components/product-name-input";
 import { ConfirmSubmitButton } from "@/components/ui/confirm-submit-button";
 import { addressLines, bankDetailLinesForAccount, companyForEntity, resolveBankAccount, resolveIssuingEntity } from "@/lib/company";
 import {
+  invoiceDeductions,
   invoiceDueDate,
   invoiceProfit,
   invoiceToneLabel,
@@ -60,6 +61,8 @@ export type InvoiceDoc = {
   }[];
   stockUnits: { imei: string; invoiceLineId: string | null }[];
   installments?: { dueDate: Date | string; status: string }[];
+  /** Payments made against the invoice; one with an RMA is a credit note spent on it. */
+  payments?: { amountGbp: number; rma?: { rmaNumber: string } | null }[];
 };
 
 const editableCellClass =
@@ -103,6 +106,7 @@ export function InvoiceDocument({
     resolveBankAccount(invoice.bankAccount, invoice.printCurrency ?? currency),
   );
   const totals = invoiceTotals(invoice);
+  const deductions = invoiceDeductions(invoice);
   const profit = invoiceProfit(invoice);
   const dueDate = invoiceDueDate(invoice);
   const tone = invoiceVisualTone(invoice.status, totals.dueGbp, dueDate);
@@ -526,6 +530,20 @@ export function InvoiceDocument({
             <span>Grand Total</span>
             <span className="tabular-nums">{money(totals.totalGbp)}</span>
           </div>
+          {/* What has come off the total, so the balance below reads as a sum
+              rather than an unexplained number. */}
+          {deductions.credits.map((credit) => (
+            <div key={credit.rmaNumber} className="flex justify-between py-1">
+              <span>Credit note {credit.rmaNumber} applied</span>
+              <span className="tabular-nums">−{money(credit.amountGbp)}</span>
+            </div>
+          ))}
+          {deductions.receivedGbp > 0 ? (
+            <div className="flex justify-between py-1">
+              <span>Payments received</span>
+              <span className="tabular-nums">−{money(deductions.receivedGbp)}</span>
+            </div>
+          ) : null}
           <div
             className={`mt-1 flex justify-between rounded-md px-2 py-2 text-base font-bold ${
               tone === "paid"
@@ -533,7 +551,7 @@ export function InvoiceDocument({
                 : "bg-red-50 text-red-800 print:bg-red-50 print:text-red-800"
             }`}
           >
-            <span>Amount due</span>
+            <span>Balance due</span>
             <span className="tabular-nums">{money(totals.dueGbp)}</span>
           </div>
           {editable ? (

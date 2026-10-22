@@ -2,7 +2,7 @@ import PDFDocument from "pdfkit";
 import { bankDetailLinesForAccount, companyAddressLines, companyForEntity, resolveBankAccount, resolveIssuingEntity } from "../common/company";
 import { DEFAULT_GBP_TO_EUR_RATE, formatMoney, type PrintCurrency } from "../common/money";
 import { formatDate } from "../common/status";
-import { invoiceDueDate, invoiceToneLabel, invoiceTotals, invoiceVisualTone, INVOICE_NUMBER_BG, INVOICE_NUMBER_FG, INVOICE_TONE_COLORS } from "../common/invoice";
+import { invoiceDeductions, invoiceDueDate, invoiceToneLabel, invoiceTotals, invoiceVisualTone, INVOICE_NUMBER_BG, INVOICE_NUMBER_FG, INVOICE_TONE_COLORS } from "../common/invoice";
 import { INVOICE_INVALID_UNTIL_PAID_NOTICE, INVOICE_MARGIN_NOTICE, INVOICE_TERMS } from "../common/invoice-terms";
 
 export type InvoiceForPdf = {
@@ -41,6 +41,8 @@ export type InvoiceForPdf = {
   }[];
   stockUnits: { imei: string | null }[];
   installments?: { dueDate: Date | string; status: string }[];
+  /** Payments made against the invoice; one with an RMA is a credit note spent on it. */
+  payments?: { amountGbp: number; rma?: { rmaNumber: string } | null }[];
 };
 
 const MARGIN = 40;
@@ -290,7 +292,10 @@ export function buildInvoicePdf(
     .stroke();
   doc.moveDown(0.6);
 
-  ensureSpace(140);
+  // What has come off the total gets a row each, so reserve room for them too.
+  const deductions = invoiceDeductions(invoice);
+  const deductionRows = deductions.credits.length + (deductions.receivedGbp > 0 ? 1 : 0);
+  ensureSpace(140 + deductionRows * 16);
   const summaryTop = doc.y;
   doc
     .font("Helvetica")
@@ -344,6 +349,13 @@ export function buildInvoicePdf(
     .stroke();
   sy += 6;
   summaryRow("Grand Total", money(totals.totalGbp), true);
+  // What has come off the total, so the balance below reads as a sum.
+  for (const credit of deductions.credits) {
+    summaryRow(`Credit note ${credit.rmaNumber} applied`, `-${money(credit.amountGbp)}`);
+  }
+  if (deductions.receivedGbp > 0) {
+    summaryRow("Payments received", `-${money(deductions.receivedGbp)}`);
+  }
   const dueBoxY = sy + 4;
   const dueBoxH = 28;
   const dueFill = tone === "paid" ? "#ECFDF5" : "#FEF2F2";
@@ -353,7 +365,7 @@ export function buildInvoicePdf(
     .fillColor(dueFg)
     .font("Helvetica-Bold")
     .fontSize(10)
-    .text("Amount due", summaryColX + 8, dueBoxY + 8, { width: summaryColWidth * 0.45 });
+    .text("Balance due", summaryColX + 8, dueBoxY + 8, { width: summaryColWidth * 0.45 });
   doc.text(money(totals.dueGbp), summaryColX + summaryColWidth * 0.45, dueBoxY + 8, {
     width: summaryColWidth * 0.55 - 8,
     align: "right",
