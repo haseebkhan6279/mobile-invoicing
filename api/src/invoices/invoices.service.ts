@@ -181,7 +181,7 @@ export class InvoicesService {
     const status = input.status ?? "PENDING";
     const lines = normalizeLines(input.lines ?? []);
     // Locked in at creation: currency, letterhead and bank can each differ
-    // (Atlantic + GBP + Zempler, Echo + EUR + Wise, etc.).
+    // (Atlantic + GBP + Supreme Tide, Supreme + EUR + Wise, etc.).
     const { currency, rate } = resolvePrintCurrency(input.printCurrency, input.fxRate);
     const issuingEntity = resolveIssuingEntity(input.issuingEntity, currency);
     const bankAccount = resolveBankAccount(input.bankAccount, currency);

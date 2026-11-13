@@ -64,7 +64,7 @@ export function InvoiceIssueForm({
             value={issuingEntity}
             onChange={(event) => setIssuingEntity(event.target.value as IssuingEntityId)}
           >
-            <option value="ECHO">Echo Logic Tech LTD</option>
+            <option value="ECHO">Supreme Retail Solutions LTD</option>
             <option value="ATLANTIC">Atlantic Devices Solutions LTD</option>
           </Select>
         </div>
@@ -92,7 +92,7 @@ export function InvoiceIssueForm({
             value={bankAccount}
             onChange={(event) => setBankAccount(event.target.value as BankAccountId)}
           >
-            <option value="GBP">GBP — Zempler (Echo Logic)</option>
+            <option value="GBP">GBP — Tide (Supreme Retail)</option>
             <option value="EUR">EUR — Wise (Atlantic)</option>
             <option value="TIDE">GBP — Tide (Atlantic)</option>
           </Select>

@@ -1,6 +1,6 @@
 import type { PrintCurrency } from "./money";
 
-// Echo Logic prints Atlantic's company/VAT/EORI numbers: no separate set has
+// Supreme Retail prints Atlantic's company/VAT/EORI numbers: no separate set has
 // been issued for it, so both entities share this block.
 const REGISTRATION = {
   companyNo: "NI742244",
@@ -8,11 +8,11 @@ const REGISTRATION = {
   eoriNumber: "GB048681389000",
 } as const;
 
-/** Issues GBP invoices; paid into its own Zempler account. */
+/** Issues GBP invoices (internal id "ECHO"); paid into its own Tide account. */
 export const echoLogic = {
-  legalName: "Echo Logic Tech LTD",
-  tradingName: "Echo Logic Tech LTD",
-  shortName: "Echo Logic",
+  legalName: "Supreme Retail Solutions LTD",
+  tradingName: "Supreme Retail Solutions LTD",
+  shortName: "Supreme Retail",
   ...REGISTRATION,
   address: {
     line1: "51-B Deptford High Street",
@@ -25,10 +25,11 @@ export const echoLogic = {
   whatsappDisplay: "07561400005",
   email: "echologicltd@gmail.com",
   bank: {
-    bankName: "Zempler",
-    accountName: "Echo Logic Tech LTD",
-    sortCode: "08-71-99",
-    accountNumber: "14800963",
+    bankName: "Tide",
+    accountName: "Supreme Retail Solutions LTD",
+    sortCode: "04-06-05",
+    accountNumber: "33219703",
+    bankAddress: ["4th Floor, The Featherstone Building", "66 City Road", "London EC1Y 2AL"],
   },
 } as const;
 
@@ -67,7 +68,7 @@ const atlanticTide = {
 
 export type CompanyEntity = typeof echoLogic | typeof atlantic;
 export type IssuingEntityId = "ATLANTIC" | "ECHO";
-/** GBP = Echo Zempler, EUR = Atlantic Wise, TIDE = Atlantic Tide (GBP). */
+/** GBP = Supreme Retail Tide, EUR = Atlantic Wise, TIDE = Atlantic Tide (GBP). */
 export type BankAccountId = "GBP" | "EUR" | "TIDE";
 
 export function resolveIssuingEntity(
@@ -90,7 +91,7 @@ export function companyForEntity(entity: IssuingEntityId): CompanyEntity {
   return entity === "ATLANTIC" ? atlantic : echoLogic;
 }
 
-/** Legacy: EUR documents defaulted to Atlantic, GBP to Echo. */
+/** Legacy: EUR documents defaulted to Atlantic, GBP to Supreme Retail (ECHO). */
 export function companyForCurrency(currency: PrintCurrency = "GBP"): CompanyEntity {
   return companyForEntity(resolveIssuingEntity(null, currency));
 }
@@ -125,5 +126,6 @@ function bankLines(bank: CompanyEntity["bank"] | typeof atlanticTide) {
     `Account Name: ${bank.accountName}`,
     `Sort code: ${bank.sortCode}`,
     `Account: ${bank.accountNumber}`,
+    ...("bankAddress" in bank ? [`Bank Address: ${bank.bankAddress.join(", ")}`] : []),
   ];
 }

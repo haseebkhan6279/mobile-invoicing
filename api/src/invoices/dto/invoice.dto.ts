@@ -120,12 +120,12 @@ export class CreateInvoiceDto {
   @Min(0.0001)
   fxRate?: number;
 
-  /** Letterhead: Atlantic Devices or Echo Logic. Independent of currency. */
+  /** Letterhead: Atlantic Devices or Supreme Retail (ECHO). Independent of currency. */
   @IsOptional()
   @IsIn(["ATLANTIC", "ECHO"])
   issuingEntity?: "ATLANTIC" | "ECHO";
 
-  /** Bank block on the PDF: GBP Zempler, EUR Wise, or TIDE (Atlantic GBP). */
+  /** Bank block on the PDF: GBP Supreme Tide, EUR Wise, or TIDE (Atlantic GBP). */
   @IsOptional()
   @IsIn(["GBP", "EUR", "TIDE"])
   bankAccount?: "GBP" | "EUR" | "TIDE";

@@ -407,7 +407,7 @@ export function InvoiceForm({
                 setBankAccount(defaultBankAccount(next, currency));
               }}
             >
-              <option value="ECHO">Echo Logic Tech LTD</option>
+              <option value="ECHO">Supreme Retail Solutions LTD</option>
               <option value="ATLANTIC">Atlantic Devices Solutions LTD</option>
             </Select>
           </div>
@@ -435,7 +435,7 @@ export function InvoiceForm({
               value={bankAccount}
               onChange={(event) => setBankAccount(event.target.value as BankAccountId)}
             >
-              <option value="GBP">GBP — Zempler (Echo Logic)</option>
+              <option value="GBP">GBP — Tide (Supreme Retail)</option>
               <option value="EUR">EUR — Wise (Atlantic)</option>
               <option value="TIDE">GBP — Tide (Atlantic)</option>
             </Select>
@@ -458,7 +458,7 @@ export function InvoiceForm({
         <p className="text-xs text-slate-500 dark:text-slate-400">
           {issuingEntity === "ATLANTIC"
             ? "Letterhead: Atlantic Devices Solutions LTD (Belfast)."
-            : "Letterhead: Echo Logic Tech LTD (Deptford)."}{" "}
+            : "Letterhead: Supreme Retail Solutions LTD (Deptford)."}{" "}
           {printCurrency === "EUR"
             ? `Printed amounts are Euros at ${fxRate} EUR per £1. Line prices below stay in GBP.`
             : "Printed amounts are Pounds (£). Line prices below are entered in GBP."}{" "}
@@ -466,7 +466,7 @@ export function InvoiceForm({
             ? "PDF bank block: Atlantic Wise (IBAN)."
             : bankAccount === "TIDE"
               ? "PDF bank block: Atlantic Tide (sort code / account)."
-              : "PDF bank block: Echo Logic Zempler (sort code / account)."}
+              : "PDF bank block: Supreme Retail Tide (sort code / account)."}
         </p>
         <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
           Printed goods total: {formatMoney(goodsTotal, printCurrency, fxRate)}
