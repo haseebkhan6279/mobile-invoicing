@@ -172,13 +172,14 @@ model Invoice {
   warrantyTerms   String?       @default("3 months")
   marginVatScheme Boolean       @default(true)
   // Amounts are always stored in GBP. printCurrency is GBP/EUR on the PDF.
-  // issuingEntity is the letterhead (ATLANTIC | ECHO). bankAccount is which
-  // payment block to print (GBP Supreme Tide | EUR Wise | TIDE Atlantic GBP). They can differ so
+  // issuingEntity is the letterhead (SUPREME | ATLANTIC | ECHO, the last for
+  // invoices issued before 2026-11-13). bankAccount is which payment block to print
+  // (SUPREME Tide | GBP Echo Zempler | EUR Wise | TIDE Atlantic GBP). They can differ so
   // Atlantic can issue a GBP invoice paid into the GBP account.
   printCurrency   String        @default("GBP")
   fxRate          Float         @default(1.15)
-  issuingEntity   String        @default("ECHO")
-  bankAccount     String        @default("GBP")
+  issuingEntity   String        @default("SUPREME")
+  bankAccount     String        @default("SUPREME")
   paidAmountGbp   Float         @default(0)
   notes           String?
   issuedAt        DateTime      @default(now())

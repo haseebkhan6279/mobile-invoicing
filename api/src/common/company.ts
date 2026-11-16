@@ -1,14 +1,41 @@
 import type { PrintCurrency } from "./money";
 
-// Supreme Retail prints Atlantic's company/VAT/EORI numbers: no separate set has
-// been issued for it, so both entities share this block.
+// Echo Logic and Supreme Retail print Atlantic's company/VAT/EORI numbers: no
+// separate set has been issued for them, so every entity shares this block.
 const REGISTRATION = {
   companyNo: "NI742244",
   vatNumber: "GB048681389",
   eoriNumber: "GB048681389000",
 } as const;
 
-/** Issues GBP invoices (internal id "ECHO"); paid into its own Tide account. */
+/**
+ * Issued GBP invoices until 2026-11-13 (internal id "ECHO"); paid into Zempler.
+ * Kept so invoices issued under Echo Logic keep printing as Echo Logic.
+ */
+export const echoLogic = {
+  legalName: "Echo Logic Tech LTD",
+  tradingName: "Echo Logic Tech LTD",
+  shortName: "Echo Logic",
+  ...REGISTRATION,
+  address: {
+    line1: "51-B Deptford High Street",
+    line2: "",
+    postcode: "SE8 4AD",
+    city: "London",
+    country: "United Kingdom",
+  },
+  phoneDisplay: "07561400005",
+  whatsappDisplay: "07561400005",
+  email: "echologicltd@gmail.com",
+  bank: {
+    bankName: "Zempler",
+    accountName: "Echo Logic Tech LTD",
+    sortCode: "08-71-99",
+    accountNumber: "14800963",
+  },
+} as const;
+
+/** Issues GBP invoices from 2026-11-13 (internal id "SUPREME"); paid into its own Tide account. */
 export const supremeRetail = {
   legalName: "Supreme Retail Solutions LTD",
   tradingName: "Supreme Retail Solutions LTD",
@@ -66,39 +93,47 @@ const atlanticTide = {
   accountNumber: "32778387",
 } as const;
 
-export type CompanyEntity = typeof supremeRetail | typeof atlantic;
-export type IssuingEntityId = "ATLANTIC" | "ECHO";
-/** GBP = Supreme Retail Tide, EUR = Atlantic Wise, TIDE = Atlantic Tide (GBP). */
-export type BankAccountId = "GBP" | "EUR" | "TIDE";
+export type CompanyEntity = typeof echoLogic | typeof supremeRetail | typeof atlantic;
+export type IssuingEntityId = "ATLANTIC" | "SUPREME" | "ECHO";
+/**
+ * SUPREME = Supreme Retail Tide, GBP = Echo Logic Zempler (legacy),
+ * EUR = Atlantic Wise, TIDE = Atlantic Tide (GBP).
+ */
+export type BankAccountId = "SUPREME" | "GBP" | "EUR" | "TIDE";
 
 export function resolveIssuingEntity(
   entity?: string | null,
   printCurrency?: string,
 ): IssuingEntityId {
-  if (entity === "ATLANTIC" || entity === "ECHO") return entity;
-  return printCurrency === "EUR" ? "ATLANTIC" : "ECHO";
+  if (entity === "ATLANTIC" || entity === "SUPREME" || entity === "ECHO") return entity;
+  // Stored invoices always carry an entity; this default only applies to new ones.
+  return printCurrency === "EUR" ? "ATLANTIC" : "SUPREME";
 }
 
 export function resolveBankAccount(
   account?: string | null,
   printCurrency?: string,
 ): BankAccountId {
-  if (account === "EUR" || account === "GBP" || account === "TIDE") return account;
-  return printCurrency === "EUR" ? "EUR" : "GBP";
+  if (account === "SUPREME" || account === "GBP" || account === "EUR" || account === "TIDE") {
+    return account;
+  }
+  return printCurrency === "EUR" ? "EUR" : "SUPREME";
 }
 
 export function companyForEntity(entity: IssuingEntityId): CompanyEntity {
-  return entity === "ATLANTIC" ? atlantic : supremeRetail;
+  if (entity === "ATLANTIC") return atlantic;
+  return entity === "ECHO" ? echoLogic : supremeRetail;
 }
 
-/** Legacy: EUR documents defaulted to Atlantic, GBP to Supreme Retail (ECHO). */
+/** EUR documents default to Atlantic, GBP to Supreme Retail. */
 export function companyForCurrency(currency: PrintCurrency = "GBP"): CompanyEntity {
   return companyForEntity(resolveIssuingEntity(null, currency));
 }
 
 export function bankDetailLinesForAccount(account: BankAccountId) {
   if (account === "TIDE") return bankLines(atlanticTide);
-  return bankDetailLines(account === "EUR" ? atlantic : supremeRetail);
+  if (account === "EUR") return bankDetailLines(atlantic);
+  return bankDetailLines(account === "GBP" ? echoLogic : supremeRetail);
 }
 
 export function companyAddressLines(entity: CompanyEntity) {

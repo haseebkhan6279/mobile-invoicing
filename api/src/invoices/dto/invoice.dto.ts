@@ -120,15 +120,15 @@ export class CreateInvoiceDto {
   @Min(0.0001)
   fxRate?: number;
 
-  /** Letterhead: Atlantic Devices or Supreme Retail (ECHO). Independent of currency. */
+  /** Letterhead: Supreme Retail, Atlantic Devices or (legacy) Echo Logic. Independent of currency. */
   @IsOptional()
-  @IsIn(["ATLANTIC", "ECHO"])
-  issuingEntity?: "ATLANTIC" | "ECHO";
+  @IsIn(["ATLANTIC", "SUPREME", "ECHO"])
+  issuingEntity?: "ATLANTIC" | "SUPREME" | "ECHO";
 
-  /** Bank block on the PDF: GBP Supreme Tide, EUR Wise, or TIDE (Atlantic GBP). */
+  /** Bank block on the PDF: SUPREME Tide, GBP Echo Zempler (legacy), EUR Wise, or TIDE (Atlantic GBP). */
   @IsOptional()
-  @IsIn(["GBP", "EUR", "TIDE"])
-  bankAccount?: "GBP" | "EUR" | "TIDE";
+  @IsIn(["SUPREME", "GBP", "EUR", "TIDE"])
+  bankAccount?: "SUPREME" | "GBP" | "EUR" | "TIDE";
 
   /** Invoice date (YYYY-MM-DD). Defaults to today. */
   @IsOptional()
@@ -216,12 +216,12 @@ export class UpdateInvoiceIssueDto {
   fxRate?: number;
 
   @IsOptional()
-  @IsIn(["ATLANTIC", "ECHO"])
-  issuingEntity?: "ATLANTIC" | "ECHO";
+  @IsIn(["ATLANTIC", "SUPREME", "ECHO"])
+  issuingEntity?: "ATLANTIC" | "SUPREME" | "ECHO";
 
   @IsOptional()
-  @IsIn(["GBP", "EUR", "TIDE"])
-  bankAccount?: "GBP" | "EUR" | "TIDE";
+  @IsIn(["SUPREME", "GBP", "EUR", "TIDE"])
+  bankAccount?: "SUPREME" | "GBP" | "EUR" | "TIDE";
 }
 
 /** Customer file fields shown on this invoice. Does not change invoiceNumber. */

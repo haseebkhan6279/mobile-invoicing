@@ -244,9 +244,9 @@ export function InvoiceForm({
   const [credits, setCredits] = useState<AvailableRmaCredit[]>([]);
   const [selectedCreditIds, setSelectedCreditIds] = useState<string[]>([]);
   const [installmentPlanEnabled, setInstallmentPlanEnabled] = useState(false);
-  const [issuingEntity, setIssuingEntity] = useState<IssuingEntityId>("ECHO");
+  const [issuingEntity, setIssuingEntity] = useState<IssuingEntityId>("SUPREME");
   const [printCurrency, setPrintCurrency] = useState<PrintCurrency>("GBP");
-  const [bankAccount, setBankAccount] = useState<BankAccountId>("GBP");
+  const [bankAccount, setBankAccount] = useState<BankAccountId>("SUPREME");
   const [fxRate, setFxRate] = useState(DEFAULT_GBP_TO_EUR_RATE);
 
   const goodsTotal = lines.reduce(
@@ -407,8 +407,9 @@ export function InvoiceForm({
                 setBankAccount(defaultBankAccount(next, currency));
               }}
             >
-              <option value="ECHO">Supreme Retail Solutions LTD</option>
+              <option value="SUPREME">Supreme Retail Solutions LTD</option>
               <option value="ATLANTIC">Atlantic Devices Solutions LTD</option>
+              <option value="ECHO">Echo Logic Tech LTD (old)</option>
             </Select>
           </div>
           <div>
@@ -435,9 +436,10 @@ export function InvoiceForm({
               value={bankAccount}
               onChange={(event) => setBankAccount(event.target.value as BankAccountId)}
             >
-              <option value="GBP">GBP — Tide (Supreme Retail)</option>
+              <option value="SUPREME">GBP — Tide (Supreme Retail)</option>
               <option value="EUR">EUR — Wise (Atlantic)</option>
               <option value="TIDE">GBP — Tide (Atlantic)</option>
+              <option value="GBP">GBP — Zempler (Echo Logic, old)</option>
             </Select>
           </div>
           {printCurrency === "EUR" ? (
@@ -458,7 +460,9 @@ export function InvoiceForm({
         <p className="text-xs text-slate-500 dark:text-slate-400">
           {issuingEntity === "ATLANTIC"
             ? "Letterhead: Atlantic Devices Solutions LTD (Belfast)."
-            : "Letterhead: Supreme Retail Solutions LTD (Slough)."}{" "}
+            : issuingEntity === "ECHO"
+              ? "Letterhead: Echo Logic Tech LTD (Deptford)."
+              : "Letterhead: Supreme Retail Solutions LTD (Slough)."}{" "}
           {printCurrency === "EUR"
             ? `Printed amounts are Euros at ${fxRate} EUR per £1. Line prices below stay in GBP.`
             : "Printed amounts are Pounds (£). Line prices below are entered in GBP."}{" "}
@@ -466,7 +470,9 @@ export function InvoiceForm({
             ? "PDF bank block: Atlantic Wise (IBAN)."
             : bankAccount === "TIDE"
               ? "PDF bank block: Atlantic Tide (sort code / account)."
-              : "PDF bank block: Supreme Retail Tide (sort code / account)."}
+              : bankAccount === "GBP"
+                ? "PDF bank block: Echo Logic Zempler (sort code / account)."
+                : "PDF bank block: Supreme Retail Tide (sort code / account)."}
         </p>
         <p className="text-sm font-medium text-slate-700 dark:text-slate-200">
           Printed goods total: {formatMoney(goodsTotal, printCurrency, fxRate)}

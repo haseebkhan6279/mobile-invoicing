@@ -9,6 +9,7 @@ import { Select } from "@/components/ui/select";
 import {
   defaultBankAccount,
   resolveBankAccount,
+  resolveIssuingEntity,
   type BankAccountId,
   type IssuingEntityId,
 } from "@/lib/company";
@@ -30,13 +31,13 @@ export function InvoiceIssueForm({
   fxRate?: number | null;
 }) {
   const [issuingEntity, setIssuingEntity] = useState<IssuingEntityId>(
-    initialEntity === "ATLANTIC" ? "ATLANTIC" : "ECHO",
+    resolveIssuingEntity(initialEntity, initialCurrency ?? undefined),
   );
   const [printCurrency, setPrintCurrency] = useState<PrintCurrency>(
     initialCurrency === "EUR" ? "EUR" : "GBP",
   );
   const [bankAccount, setBankAccount] = useState<BankAccountId>(
-    resolveBankAccount(initialBank),
+    resolveBankAccount(initialBank, initialCurrency ?? undefined),
   );
   const [fxRate, setFxRate] = useState(
     initialRate && initialRate > 0 ? initialRate : DEFAULT_GBP_TO_EUR_RATE,
@@ -64,8 +65,9 @@ export function InvoiceIssueForm({
             value={issuingEntity}
             onChange={(event) => setIssuingEntity(event.target.value as IssuingEntityId)}
           >
-            <option value="ECHO">Supreme Retail Solutions LTD</option>
+            <option value="SUPREME">Supreme Retail Solutions LTD</option>
             <option value="ATLANTIC">Atlantic Devices Solutions LTD</option>
+            <option value="ECHO">Echo Logic Tech LTD (old)</option>
           </Select>
         </div>
         <div>
@@ -92,9 +94,10 @@ export function InvoiceIssueForm({
             value={bankAccount}
             onChange={(event) => setBankAccount(event.target.value as BankAccountId)}
           >
-            <option value="GBP">GBP — Tide (Supreme Retail)</option>
+            <option value="SUPREME">GBP — Tide (Supreme Retail)</option>
             <option value="EUR">EUR — Wise (Atlantic)</option>
             <option value="TIDE">GBP — Tide (Atlantic)</option>
+            <option value="GBP">GBP — Zempler (Echo Logic, old)</option>
           </Select>
         </div>
         {printCurrency === "EUR" ? (

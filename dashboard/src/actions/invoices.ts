@@ -8,7 +8,7 @@ import { parseImeiEntriesJson } from "@/lib/imei-notes";
 import { toNumber, toOptionalNumber, toOptionalString } from "@/lib/lookups";
 import { apiClient, ApiError } from "@/lib/api-client";
 import { uploadAttachments } from "@/lib/attachments";
-import { resolveBankAccount } from "@/lib/company";
+import { resolveBankAccount, resolveIssuingEntity } from "@/lib/company";
 import type { InvoiceDoc } from "@/components/invoice-document";
 
 export async function getInvoicePreview(id: string) {
@@ -77,7 +77,7 @@ export async function createInvoice(formData: FormData) {
         marginVatScheme: formData.get("marginVatScheme") === "on",
         printCurrency: formData.get("printCurrency") === "EUR" ? "EUR" : "GBP",
         fxRate: toOptionalNumber(formData.get("fxRate")),
-        issuingEntity: formData.get("issuingEntity") === "ATLANTIC" ? "ATLANTIC" : "ECHO",
+        issuingEntity: resolveIssuingEntity(toOptionalString(formData.get("issuingEntity"))),
         bankAccount: resolveBankAccount(toOptionalString(formData.get("bankAccount"))),
         appliedRmaCredits,
         initialPaymentGbp: toOptionalNumber(formData.get("initialPaymentGbp")),
@@ -210,7 +210,7 @@ export async function updateInvoiceIssue(formData: FormData) {
         issuedAt: toOptionalString(formData.get("issuedAt")),
         printCurrency,
         fxRate: toOptionalNumber(formData.get("fxRate")),
-        issuingEntity: formData.get("issuingEntity") === "ATLANTIC" ? "ATLANTIC" : "ECHO",
+        issuingEntity: resolveIssuingEntity(toOptionalString(formData.get("issuingEntity"))),
         bankAccount: resolveBankAccount(toOptionalString(formData.get("bankAccount"))),
       },
       apiToken,
