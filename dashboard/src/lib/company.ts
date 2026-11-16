@@ -24,7 +24,7 @@ export const supremeRetail = {
   },
   phoneDisplay: "07561400005",
   whatsappDisplay: "07561400005",
-  email: "echologicltd@gmail.com",
+  email: "supremeretailsolutions9@gmail.com",
   tagline: "Wholesale operations",
   bank: {
     bankName: "Tide",
