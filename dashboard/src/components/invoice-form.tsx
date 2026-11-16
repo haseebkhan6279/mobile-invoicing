@@ -458,7 +458,7 @@ export function InvoiceForm({
         <p className="text-xs text-slate-500 dark:text-slate-400">
           {issuingEntity === "ATLANTIC"
             ? "Letterhead: Atlantic Devices Solutions LTD (Belfast)."
-            : "Letterhead: Supreme Retail Solutions LTD (Deptford)."}{" "}
+            : "Letterhead: Supreme Retail Solutions LTD (Slough)."}{" "}
           {printCurrency === "EUR"
             ? `Printed amounts are Euros at ${fxRate} EUR per £1. Line prices below stay in GBP.`
             : "Printed amounts are Pounds (£). Line prices below are entered in GBP."}{" "}

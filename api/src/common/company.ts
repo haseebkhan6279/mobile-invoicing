@@ -9,16 +9,16 @@ const REGISTRATION = {
 } as const;
 
 /** Issues GBP invoices (internal id "ECHO"); paid into its own Tide account. */
-export const echoLogic = {
+export const supremeRetail = {
   legalName: "Supreme Retail Solutions LTD",
   tradingName: "Supreme Retail Solutions LTD",
   shortName: "Supreme Retail",
   ...REGISTRATION,
   address: {
-    line1: "51-B Deptford High Street",
+    line1: "9 Coverdale Way",
     line2: "",
-    postcode: "SE8 4AD",
-    city: "London",
+    postcode: "SL2 2LZ",
+    city: "Slough",
     country: "United Kingdom",
   },
   phoneDisplay: "07561400005",
@@ -66,7 +66,7 @@ const atlanticTide = {
   accountNumber: "32778387",
 } as const;
 
-export type CompanyEntity = typeof echoLogic | typeof atlantic;
+export type CompanyEntity = typeof supremeRetail | typeof atlantic;
 export type IssuingEntityId = "ATLANTIC" | "ECHO";
 /** GBP = Supreme Retail Tide, EUR = Atlantic Wise, TIDE = Atlantic Tide (GBP). */
 export type BankAccountId = "GBP" | "EUR" | "TIDE";
@@ -88,7 +88,7 @@ export function resolveBankAccount(
 }
 
 export function companyForEntity(entity: IssuingEntityId): CompanyEntity {
-  return entity === "ATLANTIC" ? atlantic : echoLogic;
+  return entity === "ATLANTIC" ? atlantic : supremeRetail;
 }
 
 /** Legacy: EUR documents defaulted to Atlantic, GBP to Supreme Retail (ECHO). */
@@ -98,7 +98,7 @@ export function companyForCurrency(currency: PrintCurrency = "GBP"): CompanyEnti
 
 export function bankDetailLinesForAccount(account: BankAccountId) {
   if (account === "TIDE") return bankLines(atlanticTide);
-  return bankDetailLines(account === "EUR" ? atlantic : echoLogic);
+  return bankDetailLines(account === "EUR" ? atlantic : supremeRetail);
 }
 
 export function companyAddressLines(entity: CompanyEntity) {
